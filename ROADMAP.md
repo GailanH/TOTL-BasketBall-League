@@ -38,12 +38,23 @@ This is a working prototype — SwiftUI + local Core Data, single device, no bac
 
 ## Suggested next milestones
 
-1. **Add an `.xcodeproj` to the repo.** The repo currently has no Xcode project file at all — just loose `.swift` sources uploaded directly. That means it can't be opened in Xcode or built by CI as-is. This is the actual next blocker before anything else below is possible.
+1. ~~Add an Xcode project.~~ Done via `project.yml` (XcodeGen) + `.github/workflows/ios.yml` — see "Building & testing" below. One remaining step: run `xcodegen generate` on your Mac, open in Xcode, set your signing Team, and confirm it builds.
 2. **Pick a backend/sync strategy** (CloudKit is the lowest-lift option for an all-Apple app; a custom server API is more work but platform-independent if an Android app or web dashboard is ever wanted).
 3. **Harden auth**: password reset flow, replace the hardcoded employee secret key with a real approval flow, basic input validation.
 4. **Strip debug output, add basic unit tests** around the RP/rank math since that's the core of the product.
 5. **Real app icon + basic branding pass** once the business name/identity is settled.
 6. **Payments/membership billing** — not started; needed before this can actually charge members for Casual vs. Competitive tiers.
+
+## Building & testing
+
+This is a native iOS app (SwiftUI + Core Data), so it can only actually be **run** — tapped through, logged into, visually checked — in Xcode's iOS Simulator or on a physical device. There's no way around that; nothing web-based substitutes for it.
+
+What GitHub *can* do: `.github/workflows/ios.yml` runs on GitHub's macOS runners on every push/PR. It installs XcodeGen, regenerates the Xcode project from `project.yml`, and runs `xcodebuild build` headlessly to catch anything that fails to compile — before you even open Xcode. Once a unit test target exists, this same workflow can run `xcodebuild test` to automatically check the RP/rank math (`RankSystem`) and password hashing (`PasswordHasher`) on every commit. That's real, automated regression testing — it just can't click through login screens for you; that's what XCUITest (also runnable in this same CI) or manual testing in the Simulator is for.
+
+Local setup (one-time, on your Mac):
+1. `brew install xcodegen`
+2. `xcodegen generate` in this repo folder — produces `Project_Comp_B.xcodeproj` (gitignored, regenerate anytime the file list changes)
+3. Open the generated project in Xcode, set your Team under Signing & Capabilities, run on Simulator
 
 ## Out of scope for now
 
