@@ -40,7 +40,7 @@ struct LeaderboardView: View {
                                 Text("\(index + 1). \(player.username ?? "Unknown")")
                                     .font(.headline)
 
-                                Text("\(rankFromPoints(player.rankPoints)) — \(player.rankPoints) RP")
+                                Text("\(RankSystem.rankName(for: player.rankPoints)) — \(player.rankPoints) RP")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                             }
@@ -55,27 +55,5 @@ struct LeaderboardView: View {
         }
         .padding()
         .navigationTitle("Leaderboard")
-    }
-
-    func rankFromPoints(_ points: Int64) -> String {
-        let ranks = [
-            ("Rookie", 0, 100),
-            ("Bronze III", 100, 150),
-            ("Bronze II", 151, 200),
-            ("Bronze I", 201, 250),
-            ("Silver III", 251, 300),
-            ("Silver II", 301, 350),
-            ("Silver I", 351, 400),
-            ("Gold III", 401, 450),
-            ("Gold II", 451, 500),
-            ("Gold I", 501, 550)
-        ]
-
-        for (name, min, max) in ranks {
-            if points >= min && points <= max {
-                return name
-            }
-        }
-        return "Unranked"
     }
 }

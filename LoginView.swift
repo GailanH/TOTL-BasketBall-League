@@ -95,16 +95,20 @@ struct LoginView: View {
     private func login() {
         loginError = nil
         let fetchRequest: NSFetchRequest<Player> = Player.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "username == %@ AND password == %@", username, password)
+        fetchRequest.predicate = NSPredicate(format: "username == %@", username)
         fetchRequest.fetchLimit = 1
 
         do {
             let result = try viewContext.fetch(fetchRequest)
-            if let player = result.first {
-                loggedInPlayer = player
-            } else {
+            guard let player = result.first,
+                  let storedHash = player.password,
+                  let salt = player.passwordSalt,
+                  PasswordHasher.verify(password: password, salt: salt, hash: storedHash)
+            else {
                 loginError = "Invalid username or password."
+                return
             }
+            loggedInPlayer = player
         } catch {
             loginError = "Login failed: \(error.localizedDescription)"
         }
@@ -134,9 +138,11 @@ struct LoginView: View {
                 return
             }
 
+            let salt = PasswordHasher.generateSalt()
             let newPlayer = Player(context: viewContext)
             newPlayer.username = registrationUsername
-            newPlayer.password = registrationPassword
+            newPlayer.password = PasswordHasher.hash(password: registrationPassword, salt: salt)
+            newPlayer.passwordSalt = salt
             newPlayer.role = isEmployee ? "employee" : "player"
             newPlayer.rankPoints = 0
             newPlayer.membership = nil  // Default membership for all

@@ -13,7 +13,7 @@ struct PlayerOverviewView: View {
             Text("👤 \(player.username ?? "Unknown")")
             Text("Role: \((player.role ?? "player").capitalized)")
             Text("Membership: \(player.membership ?? "None")")
-            Text("🏅 Rank: \(rankFromPoints(player.rankPoints)) (\(player.rankPoints) RP)")
+            Text("🏅 Rank: \(RankSystem.rankName(for: player.rankPoints)) (\(player.rankPoints) RP)")
 
             Divider()
 
@@ -56,27 +56,5 @@ struct PlayerOverviewView: View {
                 print("DEBUG: No games found or not linked correctly")
             }
         }
-    }
-
-    func rankFromPoints(_ points: Int64) -> String {
-        let ranks = [
-            ("Rookie", 0, 100),
-            ("Bronze III", 101, 150),
-            ("Bronze II", 151, 200),
-            ("Bronze I", 201, 250),
-            ("Silver III", 251, 300),
-            ("Silver II", 301, 350),
-            ("Silver I", 351, 400),
-            ("Gold III", 401, 450),
-            ("Gold II", 451, 500),
-            ("Gold I", 501, 550)
-        ]
-
-        for (name, min, max) in ranks {
-            if Int(points) >= min && Int(points) <= max {
-                return name
-            }
-        }
-        return "Unranked"
     }
 }

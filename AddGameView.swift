@@ -94,8 +94,8 @@ struct AddGameView: View {
         }
 
 
-        let currentRank = rankFromPoints(player.rankPoints)
-        let averages = rankAverages[currentRank] ?? [:]
+        let currentRank = RankSystem.rankName(for: player.rankPoints)
+        let averages = RankSystem.averages(for: currentRank)
 
         var individualGains: [Int64] = []
 
@@ -112,7 +112,7 @@ struct AddGameView: View {
         let oldPoints = player.rankPoints
         player.rankPoints = max(0, player.rankPoints + gain)
 
-        let newRank = rankFromPoints(player.rankPoints)
+        let newRank = RankSystem.rankName(for: player.rankPoints)
 
         if newRank != currentRank {
             let change = RankChange(context: viewContext)
@@ -154,38 +154,4 @@ struct AddGameView: View {
         steals = ""
     }
 
-    private func rankFromPoints(_ points: Int64) -> String {
-        let ranks = [
-            ("Rookie", 0, 100),
-            ("Bronze III", 100, 150),
-            ("Bronze II", 151, 200),
-            ("Bronze I", 201, 250),
-            ("Silver III", 251, 300),
-            ("Silver II", 301, 350),
-            ("Silver I", 351, 400),
-            ("Gold III", 401, 450),
-            ("Gold II", 451, 500),
-            ("Gold I", 501, 550)
-        ]
-
-        for (name, min, max) in ranks {
-            if Int(points) >= min && Int(points) <= max {
-                return name
-            }
-        }
-        return "Unranked"
-    }
-
-    private let rankAverages: [String: [String: Int64]] = [
-        "Rookie":     ["points": 5,  "rebounds": 3, "assists": 2, "blocks": 0, "steals": 1],
-        "Bronze III": ["points": 7,  "rebounds": 4, "assists": 2, "blocks": 0, "steals": 1],
-        "Bronze II":  ["points": 9,  "rebounds": 4, "assists": 3, "blocks": 0, "steals": 2],
-        "Bronze I":   ["points": 11, "rebounds": 5, "assists": 3, "blocks": 1, "steals": 2],
-        "Silver III": ["points": 10, "rebounds": 4, "assists": 3, "blocks": 1, "steals": 2],
-        "Silver II":  ["points": 11, "rebounds": 5, "assists": 3, "blocks": 1, "steals": 2],
-        "Silver I":   ["points": 12, "rebounds": 6, "assists": 3, "blocks": 1, "steals": 3],
-        "Gold III":   ["points": 10, "rebounds": 5, "assists": 6, "blocks": 1, "steals": 2],
-        "Gold II":    ["points": 9,  "rebounds": 5, "assists": 3, "blocks": 1, "steals": 2],
-        "Gold I":     ["points": 13, "rebounds": 7, "assists": 2, "blocks": 0, "steals": 3]
-    ]
 }

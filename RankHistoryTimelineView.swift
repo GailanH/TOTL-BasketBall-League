@@ -108,24 +108,15 @@ struct RankHistoryTimelineView: View {
     }
 
     // ✅ static so they can be used in ChartViewWrapper
+    // Derived from RankSystem so the chart's rank ordering can never drift
+    // from the actual tier thresholds used everywhere else in the app.
     static func rankIndex(_ rank: String) -> Int? {
-        let ranks = [
-            "Gold I", "Gold II", "Gold III",
-            "Silver I", "Silver II", "Silver III",
-            "Bronze I", "Bronze II", "Bronze III",
-            "Rookie"
-        ]
-        return ranks.firstIndex(of: rank).map { ranks.count - $0 }
+        RankSystem.index(of: rank).map { $0 + 1 }  // 1 = Rookie ... 10 = Gold I
     }
 
     static func rankLabel(for index: Int) -> String {
-        let ranks = [
-            "Gold I", "Gold II", "Gold III",
-            "Silver I", "Silver II", "Silver III",
-            "Bronze I", "Bronze II", "Bronze III",
-            "Rookie"
-        ]
-        return (index >= 1 && index <= ranks.count) ? ranks[ranks.count - index] : "Unranked"
+        guard index >= 1 && index <= RankSystem.tiers.count else { return "Unranked" }
+        return RankSystem.tiers[index - 1].name
     }
 }
 

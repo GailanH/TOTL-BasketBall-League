@@ -125,10 +125,10 @@ struct DashboardView: View {
             if let casted = object as? Player {
                 self.player = casted
 
-                let currentRank = rankFromPoints(casted.rankPoints)
+                let currentRank = RankSystem.rankName(for: casted.rankPoints)
                 if casted.lastRank != currentRank {
                     if let oldRank = casted.lastRank {
-                        if rankIndex(currentRank) > rankIndex(oldRank) {
+                        if (RankSystem.index(of: currentRank) ?? -1) > (RankSystem.index(of: oldRank) ?? -1) {
                             rankAlert = RankChangeMessage(text: "🎉 Promoted to \(currentRank)!")
                         } else {
                             rankAlert = RankChangeMessage(text: "⬇️ Demoted to \(currentRank).")
@@ -146,36 +146,6 @@ struct DashboardView: View {
         }
     }
 
-    func rankFromPoints(_ points: Int64) -> String {
-        let ranks = [
-            ("Rookie", 0, 100),
-            ("Bronze III", 101, 150),
-            ("Bronze II", 151, 200),
-            ("Bronze I", 201, 250),
-            ("Silver III", 251, 300),
-            ("Silver II", 301, 350),
-            ("Silver I", 351, 400),
-            ("Gold III", 401, 450),
-            ("Gold II", 451, 500),
-            ("Gold I", 501, 550)
-        ]
-
-        for (name, min, max) in ranks {
-            if Int(points) >= min && Int(points) <= max {
-                return name
-            }
-        }
-        return "Unranked"
-    }
-
-    func rankIndex(_ rank: String) -> Int {
-        let allRanks = [
-            "Rookie", "Bronze III", "Bronze II", "Bronze I",
-            "Silver III", "Silver II", "Silver I",
-            "Gold III", "Gold II", "Gold I"
-        ]
-        return allRanks.firstIndex(of: rank) ?? -1
-    }
 }
 
 struct RankChangeMessage: Identifiable {

@@ -1,6 +1,8 @@
 # TOTL-BasketBall-League
 App for a ranked basketball league. Tracks ranking, games, and allows for signup to coaching sessions.
 
+**Vision**
+This app is being built out to production as the foundation of a real gym business with two sides: a **casual** side, where members come shoot, train, and play at their own pace, and a **competitive** side, where this app tracks ranked points earned through games and drives a ladder/season structure. The app already models this split (see `Player.membership`: Casual / Competitive / Deactivated). Once the app is fully functional end to end, the next phase is turning it into an actual gym business built around this system. See `ROADMAP.md` for what's left before production.
 
 **General Description**
 This app is a way for a gym to create a basketball league and track the ranks, games, and improvments of players throughout all the games played. 
