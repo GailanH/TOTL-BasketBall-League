@@ -7,6 +7,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-15
@@ -19,12 +22,21 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
-      # Lets a Mac without XcodeGen pick up the generated project (download the artifact).
-      - name: Upload generated Xcode project
-        uses: actions/upload-artifact@v4
-        with:
-          name: Project_Comp_B.xcodeproj
-          path: Project_Comp_B.xcodeproj
+      # Publish the generated project on the `generated-xcodeproj` branch so a Mac without
+      # XcodeGen (or a Claude session) can fetch it with plain git. Only on pushes to main.
+      - name: Publish generated Xcode project
+        if: github.event_name != 'pull_request'
+        run: |
+          SRC=$(git rev-parse --short HEAD)
+          TMP=$(mktemp -d)
+          cp -R Project_Comp_B.xcodeproj "$TMP/"
+          cd "$TMP"
+          git init -q -b generated-xcodeproj
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Generated Project_Comp_B.xcodeproj from $SRC"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" generated-xcodeproj
 
       # Use the runner's default (newest stable) Xcode and whatever iPhone simulator it ships
       # with, instead of hard-coding versions that disappear as GitHub updates its images.
