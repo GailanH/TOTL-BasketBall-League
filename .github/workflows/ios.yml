@@ -1,6 +1,7 @@
 name: iOS Build
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
@@ -17,6 +18,13 @@ jobs:
 
       - name: Generate Xcode project
         run: xcodegen generate
+
+      # Lets a Mac without XcodeGen pick up the generated project (download the artifact).
+      - name: Upload generated Xcode project
+        uses: actions/upload-artifact@v4
+        with:
+          name: Project_Comp_B.xcodeproj
+          path: Project_Comp_B.xcodeproj
 
       # Use the runner's default (newest stable) Xcode and whatever iPhone simulator it ships
       # with, instead of hard-coding versions that disappear as GitHub updates its images.
