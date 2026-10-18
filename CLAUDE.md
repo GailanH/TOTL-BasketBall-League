@@ -26,7 +26,7 @@ Business planning is **not** deferred anymore. When an app decision depends on a
 
 - GitHub: `GailanH/TOTL-BasketBall-League`, branch `main`. Pushing works from Claude sessions with GitHub connected. The Mac's own shell has no GitHub credentials.
 - `project.yml` (XcodeGen) generates `Project_Comp_B.xcodeproj` (gitignored). Run `xcodegen generate` after adding or removing files.
-- CI (`.github/workflows/ios.yml`) runs `xcodebuild test` on GitHub macOS runners.
+- CI (`.github/workflows/ios.yml`) runs `xcodebuild test` on GitHub macOS runners with the default Xcode and an available iPhone simulator. On failure, compiler errors and failed tests appear as a job annotation (readable via `gh api .../check-runs/<job>/annotations`, since raw logs may be blocked).
 - `.claude/` and `build/` are gitignored.
 
 ## Data model (`Project_Comp_B.xcdatamodeld`, versioned, current = v2)
@@ -51,7 +51,7 @@ Business planning is **not** deferred anymore. When an app decision depends on a
 ## Next steps
 
 Full plan is in `ROADMAP.md`. Focus is the app (business and funding work is paused by Gailan's choice). Launch target is a rented 2-court gym.
-1. Build and test on the Mac (`xcodegen generate`, then ⌘U). The seasons and scoring code (iteration 7) was written without a compiler.
+1. Click through on the Simulator (`xcodegen generate`, open, run): record a game, start a season, check migration. CI already builds and passes the unit tests.
 2. Run a sample season in the Simulator and tune `CompetitiveRules` (D8).
 3. Staff MVP/SVP override; season history (final standings, per-season stats).
 4. Robustness: registration validation, password reset, handling of the owner-username auto-admin.

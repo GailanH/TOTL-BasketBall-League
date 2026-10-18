@@ -23,7 +23,7 @@ Unified plan for the business, the app, and the fundraising. These tracks move t
 ---
 
 ## Phase 0: Housekeeping (now)
-- [x] **App:** commit and push the Aug–Sep work (`a105fb1`, 2026-10-18). Confirm CI passes.
+- [x] **App:** commit and push the Aug–Sep work (`a105fb1`, 2026-10-18). CI green since `9c11591`.
 - [x] **Both:** refresh CLAUDE.md and ROADMAP.md, start ITERATIONS.md (2026-10-18).
 - [ ] **Business:** confirm the business plan docx is the current version, then keep it in sync with decisions made here.
 
@@ -33,7 +33,8 @@ Unified plan for the business, the app, and the fundraising. These tracks move t
 - [x] Seasons: `Season` entity, staff Seasons screen, soft reset, placement games, season-scoped leaderboard (`SeasonManager`).
 - [x] Games recorded as two teams with a winner (`Match` entity, Record Game screen, team-based CSV import). Edits and deletes re-score the whole game (`MatchRecorder`).
 - [x] Tests for the rules, recorder, and seasons. Remove the `Item` entity. Gate `print()`s.
-- [ ] Build and run the tests on the Mac (`xcodegen generate`, then ⌘U), and fix anything the compiler finds. This code was written without a Mac.
+- [x] CI builds the app and passes all unit tests (fixed the CI workflow, `9c11591`).
+- [ ] Click through on the Simulator: record a game, start a season, and check that existing data migrated.
 - [ ] Decide whether to keep the owner-username auto-admin path (anyone registering "GailanH" on a fresh install becomes admin).
 - [ ] Staff override for MVP/SVP, if referees should pick them rather than the stats.
 - [ ] Season history views: past-season final standings, per-season stats for each player.

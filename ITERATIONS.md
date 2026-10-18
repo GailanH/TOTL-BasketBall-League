@@ -23,8 +23,9 @@ Changed:
 - `MatchRecorder` is the single path for recording, editing, and deleting games. `SeasonManager` creates seasons and runs the soft reset.
 - UI: Record Game (two teams plus winner), team-based CSV import, Seasons screen, placement status on dashboard and overview, a season-scoped leaderboard that hides players in placement, and W/L and MVP/SVP in game lists.
 - Tests: RankSystemTests rewritten; new MatchScoringTests and MatchRecorderTests.
+- CI fixed: it had been failing since August because of a hard-coded Xcode 16 and iPhone 16 simulator. It now builds and passes all tests (`9c11591`).
 Decided: D1 all 5 stats. D2 50 RP per level. D3 3-month seasons with soft reset and placement. D4 winners gain, only the SVP can gain on the losing team, MVP/SVP awards. D5/D6 deferred. D7 start with a rented 2-court gym. Focus on the app.
-Open: build and test on the Mac (this was written without a compiler); tune the starting numbers with real games (D8); consider a staff MVP/SVP override and season history views.
+Open: click through on the Simulator; tune the starting numbers with real games (D8); consider a staff MVP/SVP override and season history views.
 
 ## Iteration 6: 2026-10-18: Unified project plan + iteration log
 Track: Both
