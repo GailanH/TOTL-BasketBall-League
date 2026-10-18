@@ -18,13 +18,26 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
-      - name: Select Xcode version
-        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
-
+      # Use the runner's default (newest stable) Xcode and whatever iPhone simulator it ships
+      # with, instead of hard-coding versions that disappear as GitHub updates its images.
       - name: Build and test
         run: |
+          set -o pipefail
+          xcodebuild -version
+          SIM_ID=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for r,ds in sorted(d.items(), reverse=True) if 'iOS' in r for x in ds if x['name'].startswith('iPhone')))")
+          echo "Simulator: $SIM_ID"
           xcodebuild test \
             -project Project_Comp_B.xcodeproj \
             -scheme Project_Comp_B \
-            -destination "platform=iOS Simulator,name=iPhone 16" \
-            CODE_SIGNING_ALLOWED=NO
+            -destination "id=$SIM_ID" \
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee build.log
+
+      # Surface compiler errors and test failures as annotations, readable without the full log.
+      - name: Report errors
+        if: failure()
+        run: |
+          touch build.log
+          # One annotation holding up to 60 lines (GitHub caps annotations per step).
+          MSG=$(grep -E "error:|Test Case .* failed|XCTAssert" build.log | sort -u | head -60 | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')
+          [ -n "$MSG" ] && echo "::error::${MSG}"
+          tail -40 build.log
