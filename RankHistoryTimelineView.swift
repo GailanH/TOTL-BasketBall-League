@@ -58,7 +58,11 @@ struct RankHistoryTimelineView: View {
                 .pickerStyle(.segmented)
                 .padding(.bottom)
 
-                if validRankIndices.count >= 2 {
+                if !AppConstants.isRanked(player.membership) {
+                    Text("Rank Timeline is only available for Competitive members.")
+                        .foregroundColor(.gray)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                } else if validRankIndices.count >= 2 {
                     ChartViewWrapper(filteredChanges: filteredChanges, validRankIndices: validRankIndices)
                         .frame(height: 250)
                         .padding()
@@ -67,20 +71,30 @@ struct RankHistoryTimelineView: View {
                         .foregroundColor(.gray)
                 }
 
-                Divider().padding(.vertical)
+                if AppConstants.isRanked(player.membership) {
+                    Divider().padding(.vertical)
 
-                ForEach(filteredChanges) { change in
-                    HStack(spacing: 10) {
-                        Circle()
-                            .frame(width: 10, height: 10)
-                            .foregroundColor(.blue)
+                    if filteredChanges.isEmpty {
+                        Text(rankChangeModels.isEmpty
+                             ? "No rank changes yet — this fills in once games are logged that move you into a new rank tier."
+                             : "No rank changes in this time range.")
+                            .foregroundColor(.gray)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    } else {
+                        ForEach(filteredChanges) { change in
+                            HStack(spacing: 10) {
+                                Circle()
+                                    .frame(width: 10, height: 10)
+                                    .foregroundColor(.blue)
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(change.newRank)
-                                .font(.headline)
-                            Text(change.date.formatted(date: .abbreviated, time: .omitted))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(change.newRank)
+                                        .font(.headline)
+                                    Text(change.date.formatted(date: .abbreviated, time: .omitted))
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
                         }
                     }
                 }
@@ -89,6 +103,7 @@ struct RankHistoryTimelineView: View {
             }
             .padding()
         }
+        .background(Color("AppBackground").ignoresSafeArea())
         .navigationTitle("Rank Timeline")
         .onAppear {
             loadRankChanges()
@@ -111,7 +126,7 @@ struct RankHistoryTimelineView: View {
     // Derived from RankSystem so the chart's rank ordering can never drift
     // from the actual tier thresholds used everywhere else in the app.
     static func rankIndex(_ rank: String) -> Int? {
-        RankSystem.index(of: rank).map { $0 + 1 }  // 1 = Rookie ... 10 = Gold I
+        RankSystem.index(of: rank).map { $0 + 1 }  // 1 = Rookie ... 14 = Elite
     }
 
     static func rankLabel(for index: Int) -> String {

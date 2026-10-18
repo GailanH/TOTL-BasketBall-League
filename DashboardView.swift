@@ -13,6 +13,11 @@ struct DashboardView: View {
     @State private var selectedRoute: DashboardRoute? = nil
     @State private var didLoadPlayer = false
 
+    @FetchRequest(
+        sortDescriptors: [],
+        predicate: NSPredicate(format: "role == %@", AppConstants.employeePendingRole)
+    ) private var pendingEmployees: FetchedResults<Player>
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -25,7 +30,20 @@ struct DashboardView: View {
 
                         Text("Role: \((player.role ?? "player").capitalized)")
                         Text("Membership: \(player.membership ?? "None")")
-                        Text("Rank Points: \(player.rankPoints)")
+                        if AppConstants.isRanked(player.membership) {
+                            Text("Rank Points: \(player.rankPoints)")
+                        } else {
+                            Text("Not Ranked — Competitive membership required")
+                                .foregroundColor(.gray)
+                        }
+
+                        if player.role == AppConstants.employeePendingRole {
+                            Label("Your employee account is pending approval from an existing staff member.", systemImage: "clock.fill")
+                                .font(.footnote)
+                                .foregroundColor(.orange)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                        }
 
                         Divider().padding(.vertical)
 
@@ -54,7 +72,7 @@ struct DashboardView: View {
                         }
                         .buttonStyle(.bordered)
 
-                        if player.role == "employee" {
+                        if AppConstants.isStaff(player.role) {
                             NavigationLink(value: DashboardRoute.addGame) {
                                 Text("Add Game")
                             }
@@ -64,6 +82,14 @@ struct DashboardView: View {
                                 Text("Edit Player Accounts")
                             }
                             .buttonStyle(.bordered)
+
+                            if !pendingEmployees.isEmpty {
+                                NavigationLink(value: DashboardRoute.pendingApprovals) {
+                                    Label("Pending Approvals (\(pendingEmployees.count))", systemImage: "clock.fill")
+                                }
+                                .buttonStyle(.bordered)
+                                .tint(.orange)
+                            }
                         }
 
                         Spacer()
@@ -90,6 +116,10 @@ struct DashboardView: View {
                         if let player = player {
                             EditAccountsView(currentEmployee: player)
                         }
+                    case .pendingApprovals:
+                        if let player = player {
+                            EditAccountsView(currentEmployee: player, filterPendingOnly: true)
+                        }
                     case .overview, .playerOverview:
                         if let player = player {
                             PlayerOverviewView(player: player)
@@ -108,6 +138,7 @@ struct DashboardView: View {
                     Alert(title: Text("Rank Update"), message: Text(alert.text), dismissButton: .default(Text("OK")))
                 }
             }
+            .background(Color("AppBackground").ignoresSafeArea())
             .task {
                 await MainActor.run {
                     loadPlayerSafely()
@@ -126,12 +157,12 @@ struct DashboardView: View {
                 self.player = casted
 
                 let currentRank = RankSystem.rankName(for: casted.rankPoints)
-                if casted.lastRank != currentRank {
+                if AppConstants.isRanked(casted.membership), casted.lastRank != currentRank {
                     if let oldRank = casted.lastRank {
                         if (RankSystem.index(of: currentRank) ?? -1) > (RankSystem.index(of: oldRank) ?? -1) {
-                            rankAlert = RankChangeMessage(text: "🎉 Promoted to \(currentRank)!")
+                            rankAlert = RankChangeMessage(text: "Promoted to \(currentRank)!")
                         } else {
-                            rankAlert = RankChangeMessage(text: "⬇️ Demoted to \(currentRank).")
+                            rankAlert = RankChangeMessage(text: "Demoted to \(currentRank).")
                         }
                     } else {
                         rankAlert = RankChangeMessage(text: "Current Rank: \(currentRank)")

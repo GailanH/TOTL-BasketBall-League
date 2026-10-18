@@ -37,10 +37,18 @@ enum RankSystem {
              averages: ["points": 10, "rebounds": 5, "assists": 6, "blocks": 1, "steals": 2]),
         Tier(name: "Gold II",    minPoints: 451, maxPoints: 500,
              averages: ["points": 9,  "rebounds": 5, "assists": 3, "blocks": 1, "steals": 2]),
+        Tier(name: "Gold I",     minPoints: 501, maxPoints: 550,
+             averages: ["points": 13, "rebounds": 7, "assists": 2, "blocks": 0, "steals": 3]),
+        Tier(name: "Diamond III", minPoints: 551, maxPoints: 600,
+             averages: ["points": 14, "rebounds": 7, "assists": 4, "blocks": 1, "steals": 3]),
+        Tier(name: "Diamond II", minPoints: 601, maxPoints: 650,
+             averages: ["points": 15, "rebounds": 8, "assists": 4, "blocks": 2, "steals": 3]),
+        Tier(name: "Diamond I", minPoints: 651, maxPoints: 700,
+             averages: ["points": 16, "rebounds": 8, "assists": 5, "blocks": 2, "steals": 4]),
         // No upper bound: previously anything over 550 RP fell through every
-        // bracket and displayed as "Unranked". Gold I is now the uncapped top tier.
-        Tier(name: "Gold I",     minPoints: 501, maxPoints: Int64.max,
-             averages: ["points": 13, "rebounds": 7, "assists": 2, "blocks": 0, "steals": 3])
+        // bracket and displayed as "Unranked". Elite is now the uncapped top tier.
+        Tier(name: "Elite",      minPoints: 701, maxPoints: Int64.max,
+             averages: ["points": 18, "rebounds": 9, "assists": 6, "blocks": 2, "steals": 4])
     ]
 
     static var allRankNames: [String] { tiers.map { $0.name } }
@@ -55,8 +63,32 @@ enum RankSystem {
         tiers.first(where: { $0.name == rankName })?.averages ?? [:]
     }
 
-    /// Ordering index, low → high (0 = Rookie ... 9 = Gold I). `nil` if the name isn't a known tier.
+    /// Ordering index, low → high (0 = Rookie ... 13 = Elite). `nil` if the name isn't a known tier.
     static func index(of rankName: String) -> Int? {
         tiers.firstIndex(where: { $0.name == rankName })
+    }
+
+    /// RP gain/loss for one game's stat line, compared against the given rank's averages.
+    /// Capped to [-20, +50] total. Single source of truth so a game recorded via the manual
+    /// form, CSV import, or a later edit all score identically.
+    static func rpGain(points: Int64, rebounds: Int64, assists: Int64, blocks: Int64, steals: Int64, at rank: String) -> Int64 {
+        let averages = averages(for: rank)
+        let total = compareStat(points, averages["points"] ?? 0)
+            + compareStat(rebounds, averages["rebounds"] ?? 0)
+            + compareStat(assists, averages["assists"] ?? 0)
+            + compareStat(blocks, averages["blocks"] ?? 0)
+            + compareStat(steals, averages["steals"] ?? 0)
+        return max(min(total, 50), -20)
+    }
+
+    private static func compareStat(_ value: Int64, _ avg: Int64) -> Int64 {
+        let difference = value - avg
+        if difference > 0 {
+            return min(difference * 2, 50)
+        } else if difference < 0 {
+            return max(difference, -20)
+        } else {
+            return 0
+        }
     }
 }

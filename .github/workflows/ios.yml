@@ -21,14 +21,10 @@ jobs:
       - name: Select Xcode version
         run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
 
-      - name: Build
+      - name: Build and test
         run: |
-          xcodebuild build \
+          xcodebuild test \
             -project Project_Comp_B.xcodeproj \
             -scheme Project_Comp_B \
             -destination "platform=iOS Simulator,name=iPhone 16" \
             CODE_SIGNING_ALLOWED=NO
-
-      # Once a unit test target exists (see ROADMAP.md), swap the step above
-      # for `xcodebuild test ...` so RankSystem/PasswordHasher logic gets
-      # verified automatically on every push.

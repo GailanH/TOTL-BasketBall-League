@@ -10,10 +10,15 @@ struct PlayerOverviewView: View {
             Text("Player Overview")
                 .font(.title2).bold()
 
-            Text("👤 \(player.username ?? "Unknown")")
+            Label(player.username ?? "Unknown", systemImage: "person.crop.circle.fill")
             Text("Role: \((player.role ?? "player").capitalized)")
             Text("Membership: \(player.membership ?? "None")")
-            Text("🏅 Rank: \(RankSystem.rankName(for: player.rankPoints)) (\(player.rankPoints) RP)")
+            if AppConstants.isRanked(player.membership) {
+                Label("Rank: \(RankSystem.rankName(for: player.rankPoints)) (\(player.rankPoints) RP)", systemImage: "rosette")
+            } else {
+                Label("Not Ranked — Competitive membership required", systemImage: "rosette")
+                    .foregroundColor(.gray)
+            }
 
             Divider()
 
@@ -25,7 +30,7 @@ struct PlayerOverviewView: View {
                 Text("No games found.")
                     .italic()
             } else {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 12) {
                     Text("Last 5 Games")
                         .font(.headline)
 
@@ -36,8 +41,8 @@ struct PlayerOverviewView: View {
                             Text("BLK: \(game.blocks)  STL: \(game.steals)")
                         }
                         .padding()
-                        .background(Color(.systemGray6))
-                        .cornerRadius(8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .cardStyle()
                     }
                 }
             }
@@ -45,16 +50,7 @@ struct PlayerOverviewView: View {
             Spacer()
         }
         .padding()
+        .background(Color("AppBackground").ignoresSafeArea())
         .navigationTitle("")
-        .onAppear {
-            if let games = player.games as? Set<Game> {
-                print("DEBUG: Loaded \(games.count) games for \(player.username ?? "unknown")")
-                for game in games {
-                    print("  - Game date: \(game.date?.formatted() ?? "nil") | PTS: \(game.points) | REB: \(game.rebounds)")
-                }
-            } else {
-                print("DEBUG: No games found or not linked correctly")
-            }
-        }
     }
 }

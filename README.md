@@ -25,6 +25,10 @@ All Players start at Rookie Rank. The Ranked Tiers are as follows:
 - Gold III
 - Gold II
 - Gold I
+- Diamond III
+- Diamond II
+- Diamond I
+- Elite
 
 **Players can track their progression using the Ranked History Timeline.**
 

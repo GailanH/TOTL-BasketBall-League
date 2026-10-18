@@ -6,15 +6,27 @@ struct EditAccountsView: View {
     @Environment(\.dismiss) private var dismiss
     
     var currentEmployee: Player
+    var filterPendingOnly: Bool = false
 
-    @FetchRequest(
-        sortDescriptors: [SortDescriptor(\Player.username)],
-        predicate: NSPredicate(format: "role != %@", "employee"),
-        animation: .default
-    ) private var allPlayers: FetchedResults<Player>
+    @FetchRequest private var allPlayers: FetchedResults<Player>
 
     @State private var searchText: String = ""
     @State private var selectedPlayer: Player?
+
+    init(currentEmployee: Player, filterPendingOnly: Bool = false) {
+        self.currentEmployee = currentEmployee
+        self.filterPendingOnly = filterPendingOnly
+
+        let predicate = filterPendingOnly
+            ? NSPredicate(format: "role == %@", AppConstants.employeePendingRole)
+            : NSPredicate(format: "NOT (role IN %@)", AppConstants.staffRoles)
+
+        _allPlayers = FetchRequest(
+            sortDescriptors: [SortDescriptor(\Player.username)],
+            predicate: predicate,
+            animation: .default
+        )
+    }
 
     var filteredPlayers: [Player] {
         if searchText.isEmpty {
@@ -28,7 +40,7 @@ struct EditAccountsView: View {
 
     var body: some View {
         VStack {
-            Text("Edit Player Accounts")
+            Text(filterPendingOnly ? "Pending Approvals" : "Edit Player Accounts")
                 .font(.title2).bold()
 
             TextField("Search by username...", text: $searchText)
@@ -40,15 +52,26 @@ struct EditAccountsView: View {
                     selectedPlayer = player
                 } label: {
                     VStack(alignment: .leading) {
-                        Text(player.username ?? "Unknown")
-                            .font(.headline)
+                        HStack {
+                            Text(player.username ?? "Unknown")
+                                .font(.headline)
+                            if player.role == AppConstants.employeePendingRole {
+                                Text("Pending Approval")
+                                    .font(.caption).bold()
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.orange.opacity(0.2))
+                                    .foregroundColor(.orange)
+                                    .clipShape(Capsule())
+                            }
+                        }
                         Text("Membership: \(player.membership ?? "None")")
                             .font(.subheadline)
                             .foregroundColor(.gray)
                     }
                 }
             }
-
+            .scrollContentBackground(.hidden)
             .sheet(item: $selectedPlayer) { player in
                 EditPlayerDetailView(player: player)
             }
@@ -56,6 +79,7 @@ struct EditAccountsView: View {
             Spacer()
         }
         .padding(.top)
+        .background(Color("AppBackground").ignoresSafeArea())
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Back") {

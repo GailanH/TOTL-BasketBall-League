@@ -12,9 +12,12 @@ struct EditProfileView: View {
     @State private var role: String = ""
     @State private var profileImageData: Data? = nil
     @State private var saveMessage: String?
+    @State private var saveMessageIsError = false
 
     @State private var showImagePicker = false
     @State private var errorLoadingPlayer = false
+
+    private static let membershipOptions = ["Casual", "Competitive"]
 
     var body: some View {
         Form {
@@ -45,14 +48,19 @@ struct EditProfileView: View {
                 TextField("Username", text: $username)
                 TextField("Email", text: $email)
 
-                if role.lowercased() == "employee" {
-                    TextField("Membership", text: $membership)
+                if AppConstants.isStaff(role.lowercased()) {
+                    Picker("Membership", selection: $membership) {
+                        ForEach(Self.membershipOptions, id: \.self) { option in
+                            Text(option)
+                        }
+                    }
+                    .pickerStyle(.segmented)
                 }
             }
 
             if let saveMessage = saveMessage {
-                Text(saveMessage)
-                    .foregroundColor(.green)
+                Label(saveMessage, systemImage: saveMessageIsError ? "xmark.circle.fill" : "checkmark.circle.fill")
+                    .foregroundColor(saveMessageIsError ? .red : .green)
             }
 
             Button("Save Changes") {
@@ -60,6 +68,8 @@ struct EditProfileView: View {
             }
             .disabled(username.isEmpty || email.isEmpty)
         }
+        .scrollContentBackground(.hidden)
+        .background(Color("AppBackground").ignoresSafeArea())
         .navigationTitle("Edit Profile")
         .onAppear {
             loadPlayerData()
@@ -82,7 +92,9 @@ struct EditProfileView: View {
 
             self.username = player.username ?? ""
             self.email = player.email ?? ""
-            self.membership = player.membership ?? ""
+            self.membership = Self.membershipOptions.contains(player.membership ?? "")
+                ? (player.membership ?? Self.membershipOptions[0])
+                : Self.membershipOptions[0]
             self.role = player.role ?? ""
             self.profileImageData = player.profileImage
 
@@ -101,15 +113,17 @@ struct EditProfileView: View {
             player.email = email
             player.profileImage = profileImageData
 
-            if role.lowercased() == "employee" {
+            if AppConstants.isStaff(role.lowercased()) {
                 player.membership = membership
             }
 
             try viewContext.save()
-            saveMessage = "✅ Saved successfully"
+            saveMessageIsError = false
+            saveMessage = "Saved successfully"
         } catch {
             print("❌ Failed to save player: \(error)")
-            saveMessage = "❌ Failed to save changes"
+            saveMessageIsError = true
+            saveMessage = "Failed to save changes"
         }
     }
 }

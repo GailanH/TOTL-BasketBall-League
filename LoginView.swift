@@ -8,18 +8,30 @@ struct LoginView: View {
     @State private var password = ""
     @State private var showRegistration = false
     @State private var registrationUsername = ""
+    @State private var registrationEmail = ""
     @State private var registrationPassword = ""
+    @State private var registrationConfirmPassword = ""
     @State private var isEmployee = false
-    @State private var secretKey = ""
+    @State private var registrationMembership = LoginView.noMembershipOption
     @Binding var loggedInPlayer: Player?
 
     @State private var loginError: String?
     @State private var registrationError: String?
 
+    private static let noMembershipOption = "No membership at this time"
+    private let membershipOptions = ["Casual", "Competitive", LoginView.noMembershipOption]
+
+    enum Field: Hashable {
+        case loginUsername, loginPassword
+        case regUsername, regEmail, regPassword, regConfirmPassword
+    }
+    @FocusState private var focusedField: Field?
+
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(.systemGroupedBackground).ignoresSafeArea()
+                Color("AppBackground").ignoresSafeArea()
+                    .onTapGesture { focusedField = nil }
 
                 VStack(spacing: 20) {
                     Spacer()
@@ -30,15 +42,61 @@ struct LoginView: View {
 
                         TextField("Username", text: $registrationUsername)
                             .textFieldStyle(.roundedBorder)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .focused($focusedField, equals: .regUsername)
+                            .submitLabel(.next)
+                            .onSubmit { focusedField = .regEmail }
 
-                        SecureField("Password", text: $registrationPassword)
+                        TextField("Email", text: $registrationEmail)
                             .textFieldStyle(.roundedBorder)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .keyboardType(.emailAddress)
+                            .focused($focusedField, equals: .regEmail)
+                            .submitLabel(.next)
+                            .onSubmit { focusedField = .regPassword }
+
+                        PasswordField(
+                            title: "Password", text: $registrationPassword,
+                            focusedField: $focusedField, fieldID: .regPassword,
+                            submitLabel: .next, onSubmit: { focusedField = .regConfirmPassword }
+                        )
+                        .textFieldStyle(.roundedBorder)
+
+                        PasswordField(
+                            title: "Confirm Password", text: $registrationConfirmPassword,
+                            focusedField: $focusedField, fieldID: .regConfirmPassword,
+                            submitLabel: .done, onSubmit: { focusedField = nil }
+                        )
+                        .textFieldStyle(.roundedBorder)
+
+                        VStack(spacing: 4) {
+                            Text("Membership")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                            Picker("Membership", selection: $registrationMembership) {
+                                ForEach(membershipOptions, id: \.self) { option in
+                                    Text(option)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        Text("Payment isn't collected yet — membership billing is coming later. \"No membership\" still gets you an account with minimal access.")
+                            .font(.footnote)
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
 
                         Toggle("Register as Employee", isOn: $isEmployee)
 
                         if isEmployee {
-                            SecureField("Secret Key", text: $secretKey)
-                                .textFieldStyle(.roundedBorder)
+                            Text("Employee accounts require approval from an existing staff member before staff features unlock.")
+                                .font(.footnote)
+                                .foregroundColor(.gray)
                         }
 
                         if let error = registrationError {
@@ -65,9 +123,18 @@ struct LoginView: View {
 
                         TextField("Username", text: $username)
                             .textFieldStyle(.roundedBorder)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .focused($focusedField, equals: .loginUsername)
+                            .submitLabel(.next)
+                            .onSubmit { focusedField = .loginPassword }
 
-                        SecureField("Password", text: $password)
-                            .textFieldStyle(.roundedBorder)
+                        PasswordField(
+                            title: "Password", text: $password,
+                            focusedField: $focusedField, fieldID: .loginPassword,
+                            submitLabel: .done, onSubmit: { focusedField = nil; login() }
+                        )
+                        .textFieldStyle(.roundedBorder)
 
                         if let error = loginError {
                             Text(error)
@@ -95,7 +162,7 @@ struct LoginView: View {
     private func login() {
         loginError = nil
         let fetchRequest: NSFetchRequest<Player> = Player.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "username == %@", username)
+        fetchRequest.predicate = NSPredicate(format: "username ==[c] %@", username)
         fetchRequest.fetchLimit = 1
 
         do {
@@ -117,42 +184,97 @@ struct LoginView: View {
     private func register() {
         registrationError = nil
 
-        guard !registrationUsername.isEmpty, !registrationPassword.isEmpty else {
+        let trimmedUsername = registrationUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedEmail = registrationEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmedUsername.isEmpty, !trimmedEmail.isEmpty,
+              !registrationPassword.isEmpty, !registrationConfirmPassword.isEmpty else {
             registrationError = "All fields are required."
             return
         }
 
-        if isEmployee && secretKey != AppConstants.employeeSecretKey {
-            registrationError = "Incorrect secret key."
+        guard Self.isValidUsername(trimmedUsername) else {
+            registrationError = "Username must be 3-20 characters: letters, numbers, and underscores only."
             return
         }
 
-        // Check if username already exists
+        guard Self.isValidEmail(trimmedEmail) else {
+            registrationError = "Enter a valid email address."
+            return
+        }
+
+        guard registrationPassword.count >= 8 else {
+            registrationError = "Password must be at least 8 characters."
+            return
+        }
+
+        guard registrationPassword == registrationConfirmPassword else {
+            registrationError = "Passwords do not match."
+            return
+        }
+
+        // Check if username or email already exists
         let checkRequest: NSFetchRequest<Player> = Player.fetchRequest()
-        checkRequest.predicate = NSPredicate(format: "username == %@", registrationUsername)
+        checkRequest.predicate = NSPredicate(
+            format: "username ==[c] %@ OR email ==[c] %@", trimmedUsername, trimmedEmail
+        )
 
         do {
             let existing = try viewContext.fetch(checkRequest)
-            if !existing.isEmpty {
-                registrationError = "Username already taken."
+            guard existing.isEmpty else {
+                registrationError = "Username or email already taken."
                 return
             }
 
             let salt = PasswordHasher.generateSalt()
             let newPlayer = Player(context: viewContext)
-            newPlayer.username = registrationUsername
+            newPlayer.username = trimmedUsername
+            newPlayer.email = trimmedEmail
             newPlayer.password = PasswordHasher.hash(password: registrationPassword, salt: salt)
             newPlayer.passwordSalt = salt
-            newPlayer.role = isEmployee ? "employee" : "player"
+            if trimmedUsername.caseInsensitiveCompare(AppConstants.ownerUsername) == .orderedSame {
+                newPlayer.role = AppConstants.administratorRole
+            } else {
+                newPlayer.role = isEmployee ? employeeRegistrationRole() : AppConstants.playerRole
+            }
             newPlayer.rankPoints = 0
-            newPlayer.membership = nil  // Default membership for all
-            newPlayer.lastRank = nil
+            newPlayer.membership = registrationMembership == Self.noMembershipOption ? nil : registrationMembership
+
+            let startingRank = RankSystem.rankName(for: 0)
+            newPlayer.lastRank = startingRank
+
+            let initialRankChange = RankChange(context: viewContext)
+            initialRankChange.id = UUID()
+            initialRankChange.date = Date()
+            initialRankChange.newRank = startingRank
+            initialRankChange.player = newPlayer
 
             try viewContext.save()
             loggedInPlayer = newPlayer
         } catch {
             registrationError = "Registration failed: \(error.localizedDescription)"
         }
+    }
+
+    /// The very first staff account on a fresh install is auto-approved so there's always
+    /// someone able to approve the rest. Every employee signup after that starts pending.
+    private func employeeRegistrationRole() -> String {
+        let employeeCheck: NSFetchRequest<Player> = Player.fetchRequest()
+        employeeCheck.predicate = NSPredicate(format: "role IN %@", AppConstants.staffRoles)
+        employeeCheck.fetchLimit = 1
+
+        let alreadyHasApprovedEmployee = ((try? viewContext.count(for: employeeCheck)) ?? 0) > 0
+        return alreadyHasApprovedEmployee ? AppConstants.employeePendingRole : AppConstants.employeeRole
+    }
+
+    private static func isValidEmail(_ email: String) -> Bool {
+        let pattern = #"^[^\s@]+@[^\s@]+\.[^\s@]+$"#
+        return email.range(of: pattern, options: .regularExpression) != nil
+    }
+
+    private static func isValidUsername(_ username: String) -> Bool {
+        let pattern = #"^[A-Za-z0-9_]{3,20}$"#
+        return username.range(of: pattern, options: .regularExpression) != nil
     }
 
     private func clearLoginFields() {
@@ -163,9 +285,11 @@ struct LoginView: View {
 
     private func clearRegistrationFields() {
         registrationUsername = ""
+        registrationEmail = ""
         registrationPassword = ""
+        registrationConfirmPassword = ""
         isEmployee = false
-        secretKey = ""
+        registrationMembership = Self.noMembershipOption
         registrationError = nil
     }
 }
