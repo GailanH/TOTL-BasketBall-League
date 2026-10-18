@@ -30,12 +30,7 @@ struct DashboardView: View {
 
                         Text("Role: \((player.role ?? "player").capitalized)")
                         Text("Membership: \(player.membership ?? "None")")
-                        if AppConstants.isRanked(player.membership) {
-                            Text("Rank Points: \(player.rankPoints)")
-                        } else {
-                            Text("Not Ranked — Competitive membership required")
-                                .foregroundColor(.gray)
-                        }
+                        PlayerRankSummary(player: player)
 
                         if player.role == AppConstants.employeePendingRole {
                             Label("Your employee account is pending approval from an existing staff member.", systemImage: "clock.fill")
@@ -74,9 +69,14 @@ struct DashboardView: View {
 
                         if AppConstants.isStaff(player.role) {
                             NavigationLink(value: DashboardRoute.addGame) {
-                                Text("Add Game")
+                                Text("Record Game")
                             }
                             .buttonStyle(.borderedProminent)
+
+                            NavigationLink(value: DashboardRoute.seasons) {
+                                Text("Seasons")
+                            }
+                            .buttonStyle(.bordered)
 
                             NavigationLink(value: DashboardRoute.editAccounts) {
                                 Text("Edit Player Accounts")
@@ -112,6 +112,8 @@ struct DashboardView: View {
                         }
                     case .leaderboard:
                         LeaderboardView()
+                    case .seasons:
+                        SeasonsView()
                     case .editAccounts:
                         if let player = player {
                             EditAccountsView(currentEmployee: player)
@@ -173,7 +175,9 @@ struct DashboardView: View {
                 }
             }
         } catch {
+            #if DEBUG
             print("❌ Failed to fetch player in DashboardView: \(error)")
+            #endif
         }
     }
 

@@ -16,48 +16,44 @@ Business planning is **not** deferred anymore. When an app decision depends on a
 ## Working rules
 
 - **Log every iteration.** Before ending a session, append an entry to the top of `ITERATIONS.md` (format is in that file). Also mirror a one-line summary into the Claude project memory iteration log when available.
-- **Ask before any git commit or push.**
+- **Ask before any git commit or push.** (Gailan OK'd commits/pushes for iterations 6–7.)
 - Keep replies concise and direct.
 - Prioritize correctness and robustness over new features, unless a feature is needed for the demo or the fundraising plan.
-- Keep business rules in one place in code: `RankSystem.swift` (tiers, averages, RP math), `AppConstants.swift` (roles, memberships), `GameStatBounds.swift` (stat sanity limits). Never duplicate them in views.
+- Keep business rules in one place in code: `CompetitiveRules.swift` (tunable numbers), `RankSystem.swift`/`MatchScoring.swift` (scoring), `AppConstants.swift` (roles, memberships), `GameStatBounds.swift` (stat sanity limits). Never duplicate them in views.
 - Sources of truth if they disagree: Gailan's latest stated decision > `ROADMAP.md` decisions log > business plan docx > code.
 
 ## Repo / build state
 
-- GitHub: `GailanH/TOTL-BasketBall-League`, branch `main`. Commits `cd49512` and `1e70268` are pushed.
-- **About a month of work (Aug 11 – Sep 13) is uncommitted locally.** That includes the 14-tier ladder, staff approval roles, CSV import, game editing, the test target, and new files (`EditGameView`, `GameStatBounds`, `SessionStore`, `PasswordField`, `CardStyle`, `Tests/`, `Info.plist`). Committing it is step 1 in the roadmap (with Gailan's OK).
-- `project.yml` (XcodeGen) generates `Project_Comp_B.xcodeproj`. Run `xcodegen generate` after adding or removing files. The generated project currently exists locally.
+- GitHub: `GailanH/TOTL-BasketBall-League`, branch `main`. Pushing works from Claude sessions with GitHub connected. The Mac's own shell has no GitHub credentials.
+- `project.yml` (XcodeGen) generates `Project_Comp_B.xcodeproj` (gitignored). Run `xcodegen generate` after adding or removing files.
 - CI (`.github/workflows/ios.yml`) runs `xcodebuild test` on GitHub macOS runners.
-- `.claude/settings.local.json` is local tool permissions and shouldn't be committed.
+- `.claude/` and `build/` are gitignored.
 
-## Data model (`Project_Comp_B.xcdatamodeld`)
+## Data model (`Project_Comp_B.xcdatamodeld`, versioned, current = v2)
 
-- **Player**: username, email, password (hash), passwordSalt, role, membership, rankPoints, lastRank, profileImage. Relationships: games, coachingSessions, rankChanges.
-- **Game**: points, rebounds, assists, blocks, steals, rpDelta, date. Relationship: player.
+- **Player**: username, email, password (hash), passwordSalt, role, membership, rankPoints, lastRank, placementGamesRemaining, profileImage. Relationships: games, coachingSessions, rankChanges.
+- **Match**: one played game. id, date, winningTeam ("A"/"B"). Relationships: season, games (one per player, cascade).
+- **Game**: one player's line in a Match. points, rebounds, assists, blocks, steals, team, won, award ("MVP"/"SVP"), isPlacement, rpDelta, date. Relationships: player, match. Older games have no match.
+- **Season**: number, name, startDate, endDate, isActive. Relationships: matches, rankChanges.
+- **RankChange**: id, newRank, date, reason ("game"/"seasonReset"). Relationships: player, season.
 - **CoachingSession**: title, coachName, date, isBooked. Relationship: player.
-- **RankChange**: id, newRank, date. Relationship: player.
-- **Item**: leftover Xcode template entity. Remove it.
 - Roles: `player`, `employee_pending`, `employee`, `administrator`. Memberships: `Casual`, `Competitive`, `Deactivated`. Only Competitive members are ranked.
-- **No Season entity yet.** Rank is all-time, but the competitive concept is per-season.
+- **Schema changes:** add a new model version (never edit the current one in place) so existing data migrates.
 
-## Competitive system as built (`RankSystem.swift`)
+## Competitive system (decided 2026-10-18, see ROADMAP D1–D4)
 
-14 tiers, each 50 RP wide: Rookie (0–100), Bronze III–I, Silver III–I, Gold III–I, Diamond III–I, Elite (701+, uncapped). A game's 5 stats are compared to the player's current-tier averages. Above average earns +2 per unit. Below average costs −1 per unit. Per-stat cap is +50/−20, and the per-game total cap is also +50/−20.
-
-Known conflicts with the business intent (see ROADMAP decisions D1–D4):
-- Project instructions say RP comes from **points, rebounds, assists**. The business plan and code use **5 stats**.
-- The business plan says **100 RP per level**. The code uses 50.
-- The per-stat cap equals the total cap, so a single stat can max out a game.
-- Tier averages aren't monotonic. Silver III is easier than Bronze I, and Gold II/Gold I are easier than Gold III on some stats.
+- 14 tiers, 50 RP each: Rookie (0–100) through Elite (701+, uncapped). Tier averages rise with rank.
+- All 5 stats count. Each stat vs. the player's tier average: +2 per unit above (cap +15), −1 per unit below (cap −10). Per-game base is capped at +50/−20.
+- Winners all gain (min +5). The MVP (best winner vs. own tier) gets +10. Losers can't gain, except the SVP (best loser), who can gain up to +5. If the SVP played below average, they lose RP too.
+- 3-month seasons. Staff start each new season: everyone drops 3 tiers to the bottom of that tier, then plays 5 placement games at 2× RP. Players in placement are hidden from the leaderboard.
+- Numbers live in `CompetitiveRules.swift`. Logic lives in `RankSystem.swift` and `MatchScoring.swift` (pure, unit-tested). All RP changes go through `MatchRecorder.swift`, and seasons through `SeasonManager.swift`.
 
 ## Next steps
 
-Full plan is in `ROADMAP.md`. Short version, in order:
-1. Commit the uncommitted Aug–Sep work and get CI green.
-2. Gailan decides D1–D4 (scoring stats, RP per level, season structure, caps).
-3. App: add Seasons, fix the RP formula and averages to match the decisions, expand tests, and clean up (remove `Item`, gate `print`s).
-4. Business: build the startup-cost and revenue model, and research the San Antonio market (comparable gyms, lease rates).
-5. Decide the backend (CloudKit vs. hosted, e.g. Supabase/Firebase) before real members use the app.
-6. Prepare a demo build: seeded data, branding, TestFlight.
-7. Plan a pop-up ranked league pilot to prove demand and gather campaign footage.
-8. Pick the funding strategy and build the campaign: platform, goal, rewards, video, pitch deck.
+Full plan is in `ROADMAP.md`. Focus is the app (business and funding work is paused by Gailan's choice). Launch target is a rented 2-court gym.
+1. Build and test on the Mac (`xcodegen generate`, then ⌘U). The seasons and scoring code (iteration 7) was written without a compiler.
+2. Run a sample season in the Simulator and tune `CompetitiveRules` (D8).
+3. Staff MVP/SVP override; season history (final standings, per-season stats).
+4. Robustness: registration validation, password reset, handling of the owner-username auto-admin.
+5. Demo readiness: seeded demo data, branding, TestFlight.
+6. Later (deferred): backend/sync (D5), funding strategy (D6).

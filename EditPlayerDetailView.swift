@@ -109,6 +109,14 @@ struct EditPlayerDetailView: View {
                             HStack {
                                 Text(game.date?.formatted(date: .abbreviated, time: .omitted) ?? "Unknown date")
                                     .font(.subheadline).bold()
+                                if game.match != nil {
+                                    Text(game.won ? "W" : "L")
+                                        .font(.caption).bold()
+                                        .foregroundColor(game.won ? .green : .red)
+                                }
+                                if let award = game.award {
+                                    Text(award).font(.caption).bold().foregroundColor(.orange)
+                                }
                                 Spacer()
                                 Text("\(game.rpDelta >= 0 ? "+" : "")\(game.rpDelta) RP")
                                     .font(.caption)
@@ -184,7 +192,7 @@ struct EditPlayerDetailView: View {
             Button("Cancel", role: .cancel) {}
         }
         .confirmationDialog(
-            "Delete this game? This will also undo its effect on rank points.",
+            "Remove this player from the game? The rest of the game is re-scored, or the whole game is removed if a team is left empty.",
             isPresented: Binding(get: { gameToDelete != nil }, set: { if !$0 { gameToDelete = nil } }),
             titleVisibility: .visible
         ) {
@@ -229,22 +237,11 @@ struct EditPlayerDetailView: View {
         }
     }
 
+    /// Removes this player's line from the game. The rest of the game is re-scored, or removed
+    /// entirely if a team is left empty (see `MatchRecorder.delete`).
     private func deleteGame(_ game: Game) {
-        let oldRank = RankSystem.rankName(for: player.rankPoints)
-        player.rankPoints = max(0, player.rankPoints - game.rpDelta)
-        viewContext.delete(game)
-
-        let newRank = RankSystem.rankName(for: player.rankPoints)
-        if newRank != oldRank {
-            let change = RankChange(context: viewContext)
-            change.id = UUID()
-            change.date = Date()
-            change.newRank = newRank
-            change.player = player
-            player.lastRank = newRank
-        }
-
         do {
+            try MatchRecorder.delete(game, in: viewContext)
             try viewContext.save()
             messageIsError = false
             message = "Game deleted."

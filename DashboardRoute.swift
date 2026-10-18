@@ -9,6 +9,7 @@ enum DashboardRoute: Hashable {
     case playerOverview
     case addGame
     case leaderboard
+    case seasons
     case editProfile(playerID: NSManagedObjectID)
     case rankTimeline(player: Player)
 }

@@ -4,9 +4,20 @@ import CoreData
 struct LeaderboardView: View {
     @FetchRequest(
         sortDescriptors: [SortDescriptor(\Player.rankPoints, order: .reverse)],
-        predicate: NSPredicate(format: "membership == %@", AppConstants.competitiveMembership),
+        predicate: NSPredicate(format: "membership == %@ AND placementGamesRemaining <= 0", AppConstants.competitiveMembership),
         animation: .default
     ) private var players: FetchedResults<Player>
+
+    /// Competitive players still playing placement games this season. They appear once placed.
+    @FetchRequest(
+        sortDescriptors: [],
+        predicate: NSPredicate(format: "membership == %@ AND placementGamesRemaining > 0", AppConstants.competitiveMembership)
+    ) private var inPlacement: FetchedResults<Player>
+
+    @FetchRequest(
+        sortDescriptors: [SortDescriptor(\Season.number, order: .reverse)],
+        predicate: NSPredicate(format: "isActive == YES")
+    ) private var activeSeasons: FetchedResults<Season>
 
     var body: some View {
         ScrollView {
@@ -15,8 +26,20 @@ struct LeaderboardView: View {
                     .font(.title).bold()
                     .padding(.top)
 
+                if let season = activeSeasons.first {
+                    Text(season.name ?? "Current Season")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+
+                if !inPlacement.isEmpty {
+                    Text("\(inPlacement.count) player\(inPlacement.count == 1 ? "" : "s") still in placement games")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
                 if players.isEmpty {
-                    Text("No Competitive members yet — the leaderboard only ranks Competitive membership.")
+                    Text("No placed Competitive players yet. Players appear here after their \(CompetitiveRules.placementGames) placement games.")
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)

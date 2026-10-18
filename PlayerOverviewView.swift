@@ -3,54 +3,95 @@ import CoreData
 
 struct PlayerOverviewView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    var player: Player
+    @ObservedObject var player: Player
 
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Player Overview")
-                .font(.title2).bold()
+        ScrollView {
+            VStack(spacing: 20) {
+                Text("Player Overview")
+                    .font(.title2).bold()
 
-            Label(player.username ?? "Unknown", systemImage: "person.crop.circle.fill")
-            Text("Role: \((player.role ?? "player").capitalized)")
-            Text("Membership: \(player.membership ?? "None")")
-            if AppConstants.isRanked(player.membership) {
-                Label("Rank: \(RankSystem.rankName(for: player.rankPoints)) (\(player.rankPoints) RP)", systemImage: "rosette")
-            } else {
-                Label("Not Ranked — Competitive membership required", systemImage: "rosette")
-                    .foregroundColor(.gray)
-            }
+                Label(player.username ?? "Unknown", systemImage: "person.crop.circle.fill")
+                Text("Role: \((player.role ?? "player").capitalized)")
+                Text("Membership: \(player.membership ?? "None")")
+                PlayerRankSummary(player: player)
 
-            Divider()
+                Divider()
 
-            let gameList = (player.games as? Set<Game>)?.sorted(by: {
-                ($0.date ?? .distantPast) > ($1.date ?? .distantPast)
-            }) ?? []
+                let gameList = (player.games as? Set<Game>)?.sorted(by: {
+                    ($0.date ?? .distantPast) > ($1.date ?? .distantPast)
+                }) ?? []
 
-            if gameList.isEmpty {
-                Text("No games found.")
-                    .italic()
-            } else {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Last 5 Games")
-                        .font(.headline)
+                if gameList.isEmpty {
+                    Text("No games found.")
+                        .italic()
+                } else {
+                    let ranked = gameList.filter { $0.match != nil }
+                    if !ranked.isEmpty {
+                        let wins = ranked.filter(\.won).count
+                        let mvps = ranked.filter { $0.award == Award.mvp.rawValue }.count
+                        Text("Record: \(wins)–\(ranked.count - wins) · MVP ×\(mvps)")
+                            .font(.subheadline)
+                    }
 
-                    ForEach(gameList.prefix(5), id: \.self) { game in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Date: \(game.date?.formatted(date: .abbreviated, time: .omitted) ?? "Unknown")")
-                            Text("PTS: \(game.points)  REB: \(game.rebounds)  AST: \(game.assists)")
-                            Text("BLK: \(game.blocks)  STL: \(game.steals)")
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Last 5 Games")
+                            .font(.headline)
+
+                        ForEach(gameList.prefix(5), id: \.self) { game in
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack {
+                                    Text(game.date?.formatted(date: .abbreviated, time: .omitted) ?? "Unknown")
+                                    if game.match != nil {
+                                        Text(game.won ? "W" : "L").bold().foregroundColor(game.won ? .green : .red)
+                                    }
+                                    if let award = game.award {
+                                        Text(award).bold().foregroundColor(.orange)
+                                    }
+                                    if game.isPlacement {
+                                        Text("Placement").font(.caption).foregroundColor(.secondary)
+                                    }
+                                    Spacer()
+                                    Text("\(game.rpDelta >= 0 ? "+" : "")\(game.rpDelta) RP")
+                                        .foregroundColor(game.rpDelta >= 0 ? .green : .red)
+                                }
+                                Text("PTS: \(game.points)  REB: \(game.rebounds)  AST: \(game.assists)")
+                                Text("BLK: \(game.blocks)  STL: \(game.steals)")
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .cardStyle()
                         }
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .cardStyle()
                     }
                 }
-            }
 
-            Spacer()
+                Spacer()
+            }
+            .padding()
         }
-        .padding()
         .background(Color("AppBackground").ignoresSafeArea())
         .navigationTitle("")
+    }
+}
+
+/// Rank, RP, and placement status for a player. Observes the player, so it updates as soon as
+/// a game is recorded instead of waiting for the screen to reload.
+struct PlayerRankSummary: View {
+    @ObservedObject var player: Player
+
+    var body: some View {
+        if !AppConstants.isRanked(player.membership) {
+            Label("Not Ranked — Competitive membership required", systemImage: "rosette")
+                .foregroundColor(.gray)
+        } else if player.placementGamesRemaining > 0 {
+            VStack(spacing: 4) {
+                Label("Placement: \(player.placementGamesRemaining) game\(player.placementGamesRemaining == 1 ? "" : "s") left", systemImage: "rosette")
+                Text("Currently \(RankSystem.rankName(for: player.rankPoints)) (\(player.rankPoints) RP)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        } else {
+            Label("Rank: \(RankSystem.rankName(for: player.rankPoints)) (\(player.rankPoints) RP)", systemImage: "rosette")
+        }
     }
 }

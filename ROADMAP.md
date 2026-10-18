@@ -1,40 +1,42 @@
 # TOTL Project Plan
 
-Unified plan for the business, the app, and the fundraising. These tracks move together: the app is the competitive league's engine *and* the fundraising demo, and the business plan supplies the rules the app enforces. Last updated 2026-10-18. History lives in `ITERATIONS.md`.
+Unified plan for the business, the app, and the fundraising. These tracks move together: the app is the competitive league's engine *and* the fundraising demo, and the business plan supplies the rules the app enforces. Last updated 2026-10-18 (iteration 7). History lives in `ITERATIONS.md`.
 
 **End state:** a funded, opened TOTL gym running its Competitive league on this app.
 **Near-term goal:** a credible fundraising package: a business plan with real numbers, a working demo app, proof of demand, and a campaign ready to launch.
 
 ---
 
-## Open decisions (need Gailan)
+## Decisions
 
-| # | Decision | Options / notes | Blocks |
-|---|---|---|---|
-| D1 | Which stats earn RP? | (a) Points, rebounds, assists, per the project brief. (b) All 5 including blocks and steals, per the business plan and current code. Statisticians would still log all 5 either way. | RP formula, tests |
-| D2 | RP needed per level | 50 (code) vs. 100 (business plan). This sets how many games it takes to climb. | RankSystem tiers |
-| D3 | Season structure | Season length (e.g. 8–12 weeks), and whether RP fully resets or soft-resets (e.g. drop a few tiers). Also whether to run placement games for new players. | Season model |
-| D4 | RP formula and caps | Per-stat cap vs. per-game cap (currently both 50, so one stat can max a game). Stat weighting. Whether a win/loss bonus applies. Averages must increase with tier. | RankSystem, tests |
-| D5 | Backend / sync | CloudKit (Apple-only, cheapest) vs. a hosted backend like Supabase/Firebase (supports a web/Android/front-desk dashboard). | Multi-device, real users |
-| D6 | Funding mix | See the Funding track below. | Campaign planning |
-| D7 | Launch format | Go straight to a 6-court facility, or start with a smaller pilot (rented courts, pop-up league) and fund the full build later. | Cost model, funding goal |
-
-Record each answer in the Decisions log at the bottom.
+| # | Decision | Status |
+|---|---|---|
+| D1 | Which stats earn RP | **Decided:** all 5 (points, rebounds, assists, blocks, steals). |
+| D2 | RP per level | **Decided:** 50 for now. |
+| D3 | Season structure | **Decided:** 3-month seasons, soft reset, placement games. Implemented with these defaults: drop 3 tiers at reset, 5 placement games at 2× RP, staff start each new season. |
+| D4 | RP formula | **Decided:** winners all gain; only the losing team's best player (SVP) can gain, and only a little; MVP for winners, SVP for losers; if everyone plays badly and loses, everyone loses RP including the SVP. Implemented: winner minimum +5, MVP +10, SVP max +5, per-stat cap +15/−10, game cap +50/−20, averages rise with tier. All tunable in `CompetitiveRules.swift`. |
+| D5 | Backend / sync | **Deferred** until the app and fundraising have traction. |
+| D6 | Funding mix | **Deferred.** Focus is the app for now. |
+| D7 | Launch format | **Decided:** start small, likely a rented 2-court gym, not a 6-court build. |
+| D8 | Tune the starting numbers in D3/D4 | Open. Best done with real games from a pilot league. |
 
 ---
 
 ## Phase 0: Housekeeping (now)
-- [ ] **App:** commit the uncommitted Aug–Sep work (staff roles, 14 tiers, CSV import, game edit, tests) and push. Confirm CI passes.
+- [x] **App:** commit and push the Aug–Sep work (`a105fb1`, 2026-10-18). Confirm CI passes.
 - [x] **Both:** refresh CLAUDE.md and ROADMAP.md, start ITERATIONS.md (2026-10-18).
 - [ ] **Business:** confirm the business plan docx is the current version, then keep it in sync with decisions made here.
 
 ## Phase 1: Lock the competitive rules and finish the core app
 **App**
-- [ ] Implement D1–D4 in `RankSystem.swift`: scoring stats, RP per level, differentiated caps, monotonic tier averages.
-- [ ] Add a `Season` entity (name, start/end, active flag). Games and RankChanges belong to a season. Reset RP per D3. Add leaderboard and history filters by season.
-- [ ] Add unit tests for every rule above (boundaries, caps, season reset, Casual players never ranked).
-- [ ] Cleanup: remove the `Item` entity and its preview seed, gate `print()`s behind `#if DEBUG`, and decide whether to keep the owner-username auto-admin path (anyone registering "GailanH" on a fresh install becomes admin).
-- [ ] Data correctness: verify that editing or deleting a game re-derives RP and rank history.
+- [x] Implement D1–D4: win/loss scoring, MVP/SVP, per-stat and per-game caps, monotonic tier averages (`CompetitiveRules`, `RankSystem`, `MatchScoring`).
+- [x] Seasons: `Season` entity, staff Seasons screen, soft reset, placement games, season-scoped leaderboard (`SeasonManager`).
+- [x] Games recorded as two teams with a winner (`Match` entity, Record Game screen, team-based CSV import). Edits and deletes re-score the whole game (`MatchRecorder`).
+- [x] Tests for the rules, recorder, and seasons. Remove the `Item` entity. Gate `print()`s.
+- [ ] Build and run the tests on the Mac (`xcodegen generate`, then ⌘U), and fix anything the compiler finds. This code was written without a Mac.
+- [ ] Decide whether to keep the owner-username auto-admin path (anyone registering "GailanH" on a fresh install becomes admin).
+- [ ] Staff override for MVP/SVP, if referees should pick them rather than the stats.
+- [ ] Season history views: past-season final standings, per-season stats for each player.
 
 **Business**
 - [ ] Write the competitive rulebook: game format, team balancing by tier, referee/statistician process, disputes, stat-confirmation window (2 days per the plan).
@@ -79,14 +81,13 @@ Campaign package to build: funding goal (from the cost model), reward tiers, cam
 
 ## App: current state and known issues
 
-**Built:** login/registration with hashed passwords. Roles: player, employee_pending, employee, administrator, with staff approval. Casual/Competitive/Deactivated memberships, and only Competitive members are ranked. 14-tier ladder with RP from stats vs. tier averages. Manual and CSV game entry, plus game editing. Rank history timeline, leaderboard, player overview, coaching sessions (staff create, players book), profile editing, and unit tests with CI.
+**Built:** seasons with soft reset and placement; team games with win/loss, MVP/SVP. Login/registration with hashed passwords. Roles: player, employee_pending, employee, administrator, with staff approval. Casual/Competitive/Deactivated memberships, and only Competitive members are ranked. 14-tier ladder with RP from stats vs. tier averages. Manual and CSV game entry, plus game editing. Rank history timeline, leaderboard, player overview, coaching sessions (staff create, players book), profile editing, and unit tests with CI.
 
 **Known issues:**
-- Local-only Core Data: no sync or multi-device support, and data is lost if the device is lost (D5).
-- No seasons (Phase 1).
-- RP rules conflict with the brief and the business plan (D1, D2, D4). Tier averages aren't monotonic.
-- No password reset and no input validation on registration.
-- The leftover `Item` entity and some ungated `print()`s.
+- Local-only Core Data: no sync or multi-device support, and data is lost if the device is lost (D5, deferred).
+- Editing or deleting an older game re-scores it against current ranks; later games aren't replayed.
+- Games from finished seasons are locked (can't be edited).
+- No self-service password reset and no input validation on registration.
 - No payments or check-in.
 
 ## Building and testing
@@ -101,6 +102,7 @@ CI runs `xcodebuild test` on every push/PR.
 ## Decisions log
 | Date | Decision |
 |---|---|
+| 2026-10-18 | D1: all 5 stats. D2: 50 RP per level. D3: 3-month seasons, soft reset, placement. D4: win/loss scoring with MVP/SVP. D5/D6 deferred. D7: start with a rented 2-court gym. Focus on the app for now. |
 | 2026-10-18 | Project scope is the business plan, prototype app, and fundraising plan, developed in parallel. Business planning is no longer deferred. |
 | 2026-08 | Only Competitive members are ranked. Ladder expanded to 14 tiers (Diamond, Elite) per the business plan. |
 | 2026-08 | Employee access is by staff approval, not a shared secret key. |

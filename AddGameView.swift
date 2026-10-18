@@ -2,85 +2,78 @@ import SwiftUI
 import CoreData
 import UniformTypeIdentifiers
 
-struct PromotionAlert: Identifiable {
-    let id = UUID()
-    let message: String
-}
-
 struct CSVImportAlert: Identifiable {
     let id = UUID()
     let title: String
     let message: String
 }
 
+/// Staff screen for recording a ranked game: two teams, every player's stat line, and the
+/// winner. Scoring (win/loss, MVP/SVP, placement, caps) happens in `MatchRecorder`.
 struct AddGameView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @Environment(\.dismiss) var dismiss
 
     var employee: Player
 
-    // This app's game history is Competitive-only — Casual members never get a game
-    // recorded, so they're not offered here at all.
+    /// Ranked games are Competitive-only, so Casual members aren't offered.
     @FetchRequest(
         sortDescriptors: [SortDescriptor(\Player.username)],
         predicate: NSPredicate(format: "membership == %@", AppConstants.competitiveMembership),
         animation: .default
     ) private var players: FetchedResults<Player>
 
-    @State private var selectedPlayer: Player?
-    @State private var points = ""
-    @State private var rebounds = ""
-    @State private var assists = ""
-    @State private var blocks = ""
-    @State private var steals = ""
+    struct Draft: Identifiable {
+        let id = UUID()
+        let player: Player
+        var team: Team
+        var points = ""
+        var rebounds = ""
+        var assists = ""
+        var blocks = ""
+        var steals = ""
+    }
+
+    @State private var drafts: [Draft] = []
+    @State private var winner: Team = .a
     @State private var message = ""
     @State private var messageIsError = false
-    @State private var promotionMessage: PromotionAlert? = nil
+    @State private var resultAlert: CSVImportAlert? = nil
 
     @State private var showFileImporter = false
-    @State private var csvSummary: String = ""
-    @State private var csvAlert: CSVImportAlert? = nil
+    @State private var csvSummary = ""
 
-    /// Same fields the manual form collects — a row missing any of these columns is rejected.
-    private static let requiredCSVColumns = ["username", "points", "rebounds", "assists", "blocks", "steals"]
+    private static let requiredCSVColumns = ["game", "username", "team", "result", "points", "rebounds", "assists", "blocks", "steals"]
+
+    private var season: Season? { SeasonManager.activeSeason(in: viewContext) }
 
     var body: some View {
         Form {
-            Section(header: Text("Select Player")) {
-                Picker("Player", selection: $selectedPlayer) {
-                    ForEach(players, id: \.self) { player in
-                        VStack(alignment: .leading) {
-                            Text(player.username ?? "Unknown")
-                            if let staffLabel = staffLabel(for: player) {
-                                Text(staffLabel)
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                        }
-                        .tag(Optional(player))
-                    }
-                }
+            seasonSection
 
-                if players.isEmpty {
-                    Text("No Competitive members yet — games can only be recorded for Competitive membership.")
-                        .font(.caption)
-                        .foregroundColor(.gray)
+            ForEach(Team.allCases) { team in
+                Section(header: Text(team.displayName)) {
+                    ForEach(drafts.filter { $0.team == team }) { draft in
+                        DraftRow(draft: binding(for: draft.id)) {
+                            drafts.removeAll { $0.id == draft.id }
+                        }
+                    }
+                    addPlayerMenu(for: team)
                 }
             }
 
-            Section(header: Text("Enter Game Stats")) {
-                TextField("Points", text: $points).keyboardType(.numberPad)
-                TextField("Rebounds", text: $rebounds).keyboardType(.numberPad)
-                TextField("Assists", text: $assists).keyboardType(.numberPad)
-                TextField("Blocks", text: $blocks).keyboardType(.numberPad)
-                TextField("Steals", text: $steals).keyboardType(.numberPad)
+            Section(header: Text("Result")) {
+                Picker("Winner", selection: $winner) {
+                    ForEach(Team.allCases) { team in
+                        Text("\(team.displayName) won").tag(team)
+                    }
+                }
+                .pickerStyle(.segmented)
             }
 
             Section {
-                Button("Submit Game") {
-                    submitGame()
-                }
-                .buttonStyle(.borderedProminent)
+                Button("Submit Game") { submitGame() }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(drafts.isEmpty)
             }
 
             if !message.isEmpty {
@@ -90,30 +83,12 @@ struct AddGameView: View {
                 }
             }
 
-            Section(header: Text("Batch Upload (CSV)")) {
-                Text("Required columns: \(Self.requiredCSVColumns.joined(separator: ", "))")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-
-                Button("Choose CSV File") {
-                    showFileImporter = true
-                }
-                .buttonStyle(.bordered)
-
-                if !csvSummary.isEmpty {
-                    Text(csvSummary)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
+            csvSection
         }
         .scrollContentBackground(.hidden)
         .background(Color("AppBackground").ignoresSafeArea())
-        .navigationTitle("Add Game")
-        .alert(item: $promotionMessage) { alert in
-            Alert(title: Text("Rank Change!"), message: Text(alert.message), dismissButton: .default(Text("OK")))
-        }
-        .alert(item: $csvAlert) { alert in
+        .navigationTitle("Record Game")
+        .alert(item: $resultAlert) { alert in
             Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("OK")))
         }
         .fileImporter(
@@ -123,89 +98,113 @@ struct AddGameView: View {
         )
     }
 
+    // MARK: Sections
+
+    @ViewBuilder
+    private var seasonSection: some View {
+        Section(header: Text("Season")) {
+            if let season {
+                Text(season.name ?? "Current Season")
+                if SeasonManager.isPastScheduledEnd(season) {
+                    Label("This season's 3 months are up. Start a new season from the Seasons screen.", systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                }
+            } else {
+                Text("Season 1 starts with the first recorded game.")
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+
+    private func addPlayerMenu(for team: Team) -> some View {
+        let taken = Set(drafts.map { $0.player.objectID })
+        let available = players.filter { !taken.contains($0.objectID) }
+        return Menu {
+            ForEach(available, id: \.objectID) { player in
+                Button(player.username ?? "Unknown") {
+                    drafts.append(Draft(player: player, team: team))
+                }
+            }
+        } label: {
+            Label("Add Player", systemImage: "plus.circle")
+        }
+        .disabled(available.isEmpty)
+    }
+
+    @ViewBuilder
+    private var csvSection: some View {
+        Section(header: Text("Batch Upload (CSV)")) {
+            Text("Columns: \(Self.requiredCSVColumns.joined(separator: ", ")). One row per player. Rows with the same \"game\" value are one game. team is A or B, result is W or L.")
+                .font(.caption)
+                .foregroundColor(.gray)
+
+            Button("Choose CSV File") { showFileImporter = true }
+                .buttonStyle(.bordered)
+
+            if !csvSummary.isEmpty {
+                Text(csvSummary)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+
+    private func binding(for id: UUID) -> Binding<Draft> {
+        Binding(
+            get: { drafts.first { $0.id == id } ?? Draft(player: employee, team: .a) },
+            set: { newValue in
+                if let index = drafts.firstIndex(where: { $0.id == id }) { drafts[index] = newValue }
+            }
+        )
+    }
+
+    // MARK: Manual entry
+
     private func submitGame() {
-        guard let player = selectedPlayer,
-              let p = Int64(points),
-              let r = Int64(rebounds),
-              let a = Int64(assists),
-              let b = Int64(blocks),
-              let s = Int64(steals)
-        else {
-            messageIsError = true
-            message = "Please fill out all fields and select a player."
-            return
-        }
-
-        if let boundsError = GameStatBounds.validate(points: p, rebounds: r, assists: a, blocks: b, steals: s) {
-            messageIsError = true
-            message = boundsError
-            return
-        }
-
-        guard let result = recordGame(for: player, points: p, rebounds: r, assists: a, blocks: b, steals: s) else {
-            messageIsError = true
-            message = "\(player.username ?? "This player") is a Casual member — games are only recorded for Competitive members."
-            return
-        }
-
-        if result.rankChanged {
-            let rankMessage = result.gain > 0 ? "Promoted to \(result.newRank)!" : "Demoted to \(result.newRank)."
-            promotionMessage = PromotionAlert(message: rankMessage)
+        var entries: [MatchEntry] = []
+        for draft in drafts {
+            guard let p = Int64(draft.points), let r = Int64(draft.rebounds), let a = Int64(draft.assists),
+                  let b = Int64(draft.blocks), let s = Int64(draft.steals) else {
+                show(error: "Enter all five stats as whole numbers for \(draft.player.username ?? "every player").")
+                return
+            }
+            entries.append(MatchEntry(player: draft.player, team: draft.team,
+                                      stats: StatLine(points: p, rebounds: r, assists: a, blocks: b, steals: s)))
         }
 
         do {
+            let results = try MatchRecorder.record(entries, winner: winner, in: viewContext)
             try viewContext.save()
             messageIsError = false
-            message = "Game recorded. \(result.gain >= 0 ? "+" : "")\(result.gain) RP."
-            clearFields()
+            message = "Game recorded."
+            resultAlert = CSVImportAlert(title: "\(winner.displayName) Wins", message: Self.summary(of: results))
+            drafts = []
         } catch {
-            messageIsError = true
-            message = "Failed to save game: \(error.localizedDescription)"
+            viewContext.rollback()
+            show(error: error.localizedDescription)
         }
     }
 
-    /// Creates the Game record, applies the RP gain/loss, and records a RankChange if the
-    /// player's tier moved. Shared by the single-game form and the CSV batch importer so both
-    /// paths always compute rank the same way. Returns `nil` — and creates nothing — for a
-    /// non-Competitive player: this app's game history is Competitive-only.
-    @discardableResult
-    private func recordGame(
-        for player: Player, points: Int64, rebounds: Int64, assists: Int64, blocks: Int64, steals: Int64
-    ) -> (gain: Int64, rankChanged: Bool, newRank: String)? {
-        guard AppConstants.isRanked(player.membership) else { return nil }
-
-        let game = Game(context: viewContext)
-        game.points = points
-        game.rebounds = rebounds
-        game.assists = assists
-        game.blocks = blocks
-        game.steals = steals
-        game.date = Date()
-        game.player = player
-
-        let currentRank = RankSystem.rankName(for: player.rankPoints)
-        let gain = RankSystem.rpGain(points: points, rebounds: rebounds, assists: assists, blocks: blocks, steals: steals, at: currentRank)
-
-        let oldPoints = player.rankPoints
-        player.rankPoints = max(0, oldPoints + gain)
-        // The actual applied change can differ from `gain` when the 0-floor clamps it —
-        // store the real delta so deleting/editing this game can reverse it exactly.
-        game.rpDelta = player.rankPoints - oldPoints
-        let newRank = RankSystem.rankName(for: player.rankPoints)
-
-        var rankChanged = false
-        if newRank != currentRank {
-            let change = RankChange(context: viewContext)
-            change.id = UUID()
-            change.date = Date()
-            change.newRank = newRank
-            change.player = player
-            player.lastRank = newRank
-            rankChanged = true
-        }
-
-        return (game.rpDelta, rankChanged, newRank)
+    private func show(error: String) {
+        messageIsError = true
+        message = error
     }
+
+    static func summary(of results: [MatchRecorder.PlayerResult]) -> String {
+        results
+            .sorted { ($0.won ? 0 : 1, -$0.rpDelta) < ($1.won ? 0 : 1, -$1.rpDelta) }
+            .map { result in
+                var line = "\(result.player.username ?? "?")"
+                if let award = result.award { line += " (\(award.rawValue))" }
+                line += ": \(result.rpDelta >= 0 ? "+" : "")\(result.rpDelta) RP"
+                if result.rankChanged { line += ", now \(result.newRank)" }
+                return line
+            }
+            .joined(separator: "\n")
+    }
+
+    // MARK: CSV
 
     private func handleCSVImport(_ result: Result<URL, Error>) {
         switch result {
@@ -216,12 +215,17 @@ struct AddGameView: View {
         }
     }
 
-    /// Surfaces the outcome two ways: an alert (so it's impossible to miss that something
-    /// happened) and a persistent inline summary (so the detail — e.g. which rows were
-    /// skipped — is still there after the alert is dismissed).
     private func finishCSVImport(title: String, message: String) {
         csvSummary = message
-        csvAlert = CSVImportAlert(title: title, message: message)
+        resultAlert = CSVImportAlert(title: title, message: message)
+    }
+
+    private struct CSVRow {
+        let line: Int
+        let username: String
+        let team: Team
+        let won: Bool
+        let stats: StatLine
     }
 
     private func importCSV(from url: URL) {
@@ -241,119 +245,154 @@ struct AddGameView: View {
 
         let headers = headerLine.split(separator: ",", omittingEmptySubsequences: false)
             .map { Self.cleanField(String($0)).lowercased() }
-
-        let missingColumns = Self.requiredCSVColumns.filter { !headers.contains($0) }
-        guard missingColumns.isEmpty else {
-            finishCSVImport(
-                title: "Import Failed",
-                message: "CSV is missing required column(s): \(missingColumns.joined(separator: ", "))."
-            )
+        let missing = Self.requiredCSVColumns.filter { !headers.contains($0) }
+        guard missing.isEmpty else {
+            finishCSVImport(title: "Import Failed", message: "CSV is missing required column(s): \(missing.joined(separator: ", ")).")
             return
         }
+        var column: [String: Int] = [:]
+        for (index, header) in headers.enumerated() { column[header] = index }
 
-        var columnIndex: [String: Int] = [:]
-        for (index, header) in headers.enumerated() {
-            columnIndex[header] = index
-        }
-
-        var recordedCount = 0
-        var rowErrors: [String] = []
+        var errors: [String] = []
+        var gameOrder: [String] = []
+        var rowsByGame: [String: [CSVRow]] = [:]
+        var badGames = Set<String>()
 
         for (offset, rawLine) in lines.dropFirst().enumerated() {
-            let displayRow = offset + 2  // +1 for the header row, +1 for 1-based row numbers
+            let lineNumber = offset + 2
             let line = rawLine.trimmingCharacters(in: .whitespaces)
             guard !line.isEmpty else { continue }
+            let fields = line.split(separator: ",", omittingEmptySubsequences: false).map { Self.cleanField(String($0)) }
+            func field(_ name: String) -> String? {
+                guard let index = column[name], index < fields.count else { return nil }
+                return fields[index]
+            }
 
-            let fields = line.split(separator: ",", omittingEmptySubsequences: false)
-                .map { Self.cleanField(String($0)) }
+            guard let gameKey = field("game"), !gameKey.isEmpty else {
+                errors.append("Row \(lineNumber): missing game.")
+                continue
+            }
+            if rowsByGame[gameKey] == nil { gameOrder.append(gameKey); rowsByGame[gameKey] = [] }
 
-            guard
-                let usernameIdx = columnIndex["username"], usernameIdx < fields.count,
-                let pointsIdx = columnIndex["points"], pointsIdx < fields.count,
-                let reboundsIdx = columnIndex["rebounds"], reboundsIdx < fields.count,
-                let assistsIdx = columnIndex["assists"], assistsIdx < fields.count,
-                let blocksIdx = columnIndex["blocks"], blocksIdx < fields.count,
-                let stealsIdx = columnIndex["steals"], stealsIdx < fields.count
+            guard let username = field("username"), !username.isEmpty,
+                  let team = field("team").flatMap({ Team(rawValue: $0.uppercased()) }),
+                  let result = field("result")?.uppercased(), result == "W" || result == "L",
+                  let p = field("points").flatMap({ Int64($0) }),
+                  let r = field("rebounds").flatMap({ Int64($0) }),
+                  let a = field("assists").flatMap({ Int64($0) }),
+                  let b = field("blocks").flatMap({ Int64($0) }),
+                  let s = field("steals").flatMap({ Int64($0) })
             else {
-                rowErrors.append("Row \(displayRow): fewer columns than the header row.")
+                errors.append("Row \(lineNumber): needs a username, team A/B, result W/L, and whole-number stats.")
+                badGames.insert(gameKey)
                 continue
             }
-
-            let username = fields[usernameIdx]
-            guard !username.isEmpty else {
-                rowErrors.append("Row \(displayRow): missing username.")
-                continue
-            }
-
-            guard let p = Int64(fields[pointsIdx]),
-                  let r = Int64(fields[reboundsIdx]),
-                  let a = Int64(fields[assistsIdx]),
-                  let b = Int64(fields[blocksIdx]),
-                  let s = Int64(fields[stealsIdx])
-            else {
-                rowErrors.append("Row \(displayRow): stats must be whole numbers.")
-                continue
-            }
-
-            if let boundsError = GameStatBounds.validate(points: p, rebounds: r, assists: a, blocks: b, steals: s) {
-                rowErrors.append("Row \(displayRow): \(boundsError)")
-                continue
-            }
-
-            let fetchRequest: NSFetchRequest<Player> = Player.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "username ==[c] %@", username)
-            fetchRequest.fetchLimit = 1
-
-            guard let player = try? viewContext.fetch(fetchRequest).first else {
-                rowErrors.append("Row \(displayRow): no player found with username '\(username)'.")
-                continue
-            }
-
-            guard recordGame(for: player, points: p, rebounds: r, assists: a, blocks: b, steals: s) != nil else {
-                rowErrors.append("Row \(displayRow): '\(username)' is a Casual member — no game recorded.")
-                continue
-            }
-            recordedCount += 1
+            rowsByGame[gameKey]?.append(CSVRow(line: lineNumber, username: username, team: team, won: result == "W",
+                                               stats: StatLine(points: p, rebounds: r, assists: a, blocks: b, steals: s)))
         }
 
-        if recordedCount > 0 {
+        var recorded = 0
+        for gameKey in gameOrder {
+            guard !badGames.contains(gameKey) else {
+                errors.append("Game \(gameKey): skipped because of the row error(s) above.")
+                continue
+            }
+            let rows = rowsByGame[gameKey] ?? []
+            let winners = Set(rows.filter(\.won).map(\.team))
+            let losers = Set(rows.filter { !$0.won }.map(\.team))
+            guard winners.count == 1, let winner = winners.first, !losers.contains(winner) else {
+                errors.append("Game \(gameKey): exactly one team must be W and the other L.")
+                continue
+            }
+
+            var entries: [MatchEntry] = []
+            var missingPlayer: String?
+            for row in rows {
+                let request: NSFetchRequest<Player> = Player.fetchRequest()
+                request.predicate = NSPredicate(format: "username ==[c] %@", row.username)
+                request.fetchLimit = 1
+                guard let player = try? viewContext.fetch(request).first else { missingPlayer = row.username; break }
+                entries.append(MatchEntry(player: player, team: row.team, stats: row.stats))
+            }
+            if let missingPlayer {
+                errors.append("Game \(gameKey): no player found with username '\(missingPlayer)'.")
+                continue
+            }
+
+            do {
+                try MatchRecorder.record(entries, winner: winner, in: viewContext)
+                recorded += 1
+            } catch {
+                errors.append("Game \(gameKey): \(error.localizedDescription)")
+            }
+        }
+
+        if recorded > 0 {
             do {
                 try viewContext.save()
             } catch {
-                rowErrors.append("Save failed: \(error.localizedDescription)")
-                recordedCount = 0
+                viewContext.rollback()
+                errors.append("Save failed: \(error.localizedDescription)")
+                recorded = 0
             }
         }
 
-        var summary = "\(recordedCount) game(s) recorded from CSV."
-        if !rowErrors.isEmpty {
-            let shown = rowErrors.prefix(10)
-            summary += " \(rowErrors.count) row(s) skipped:\n" + shown.joined(separator: "\n")
-            if rowErrors.count > shown.count {
-                summary += "\n…and \(rowErrors.count - shown.count) more."
-            }
+        var summary = "\(recorded) game(s) recorded from CSV."
+        if !errors.isEmpty {
+            let shown = errors.prefix(10)
+            summary += " \(errors.count) problem(s):\n" + shown.joined(separator: "\n")
+            if errors.count > shown.count { summary += "\n…and \(errors.count - shown.count) more." }
         }
-        finishCSVImport(title: recordedCount > 0 ? "Import Complete" : "Nothing Imported", message: summary)
+        finishCSVImport(title: recorded > 0 ? "Import Complete" : "Nothing Imported", message: summary)
     }
 
     private static func cleanField(_ field: String) -> String {
-        field.trimmingCharacters(in: .whitespaces)
-            .trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+        field.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "\""))
     }
+}
 
-    private func staffLabel(for player: Player) -> String? {
-        switch player.role {
-        case AppConstants.employeeRole: return "Employee"
-        case AppConstants.administratorRole: return "Administrator"
-        default: return nil
+/// One player's stat entry inside the Record Game form.
+private struct DraftRow: View {
+    @Binding var draft: AddGameView.Draft
+    let onRemove: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(draft.player.username ?? "Unknown").font(.headline)
+                    Text(rankCaption).font(.caption).foregroundColor(.secondary)
+                }
+                Spacer()
+                Button(role: .destructive, action: onRemove) {
+                    Image(systemName: "minus.circle.fill")
+                }
+                .buttonStyle(.borderless)
+            }
+            HStack(spacing: 6) {
+                statField("PTS", $draft.points)
+                statField("REB", $draft.rebounds)
+                statField("AST", $draft.assists)
+                statField("BLK", $draft.blocks)
+                statField("STL", $draft.steals)
+            }
         }
+        .padding(.vertical, 4)
     }
 
-    private func clearFields() {
-        points = ""
-        rebounds = ""
-        assists = ""
-        blocks = ""
-        steals = ""
+    private var rankCaption: String {
+        let rank = RankSystem.rankName(for: draft.player.rankPoints)
+        let left = draft.player.placementGamesRemaining
+        return left > 0 ? "\(rank) · placement (\(left) left)" : "\(rank) · \(draft.player.rankPoints) RP"
+    }
+
+    private func statField(_ label: String, _ text: Binding<String>) -> some View {
+        VStack(spacing: 2) {
+            Text(label).font(.caption2).foregroundColor(.secondary)
+            TextField("0", text: text)
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.center)
+                .textFieldStyle(.roundedBorder)
+        }
     }
 }

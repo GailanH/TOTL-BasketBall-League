@@ -99,7 +99,9 @@ struct EditProfileView: View {
             self.profileImageData = player.profileImage
 
         } catch {
+            #if DEBUG
             print("❌ Failed to load Player for editing: \(error)")
+            #endif
             errorLoadingPlayer = true
         }
     }
@@ -121,7 +123,9 @@ struct EditProfileView: View {
             saveMessageIsError = false
             saveMessage = "Saved successfully"
         } catch {
+            #if DEBUG
             print("❌ Failed to save player: \(error)")
+            #endif
             saveMessageIsError = true
             saveMessage = "Failed to save changes"
         }

@@ -14,6 +14,18 @@ Open: what's left / next step
 
 ---
 
+## Iteration 7: 2026-10-18: Seasons, win/loss scoring, MVP/SVP
+Track: App
+Changed:
+- Committed and pushed the Aug–Sep work as `a105fb1`.
+- Core Data model v2 (versioned, migrates automatically): new `Season` and `Match` entities. `Game` gained team, won, award, isPlacement. `Player` gained placementGamesRemaining. `RankChange` gained season and reason. Removed the template `Item` entity.
+- `CompetitiveRules.swift` holds every tunable number. `RankSystem` has rebuilt tier averages that rise with rank, plus per-stat caps. `MatchScoring` handles win/loss, MVP/SVP, and placement.
+- `MatchRecorder` is the single path for recording, editing, and deleting games. `SeasonManager` creates seasons and runs the soft reset.
+- UI: Record Game (two teams plus winner), team-based CSV import, Seasons screen, placement status on dashboard and overview, a season-scoped leaderboard that hides players in placement, and W/L and MVP/SVP in game lists.
+- Tests: RankSystemTests rewritten; new MatchScoringTests and MatchRecorderTests.
+Decided: D1 all 5 stats. D2 50 RP per level. D3 3-month seasons with soft reset and placement. D4 winners gain, only the SVP can gain on the losing team, MVP/SVP awards. D5/D6 deferred. D7 start with a rented 2-court gym. Focus on the app.
+Open: build and test on the Mac (this was written without a compiler); tune the starting numbers with real games (D8); consider a staff MVP/SVP override and season history views.
+
 ## Iteration 6: 2026-10-18: Unified project plan + iteration log
 Track: Both
 Changed:
