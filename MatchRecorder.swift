@@ -47,6 +47,8 @@ enum MatchRecorder {
         let rpDelta: Int64
         let newRank: String
         let rankChanged: Bool
+        /// True for winners of an underdog win (see `CompetitiveRules.underdogWinBonus`).
+        let underdogBonus: Bool
     }
 
     // MARK: Record
@@ -234,7 +236,19 @@ enum MatchRecorder {
     private static func finish(
         _ match: Match, ranksBefore: [NSManagedObjectID: String], reason: RankChangeReason, in context: NSManagedObjectContext
     ) -> [PlayerResult] {
-        games(in: match).compactMap { game in
+        // Whether this was an underdog win, judged on ranks going into the game.
+        let lines = games(in: match)
+        let winner = Team(rawValue: match.winningTeam ?? "") ?? .a
+        let underdog = MatchScoring.isUnderdogWin(lines.map { game in
+            MatchScoring.Participant(
+                team: Team(rawValue: game.team ?? "") ?? .a,
+                stats: stats(of: game),
+                rank: game.player.flatMap { ranksBefore[$0.objectID] } ?? "Rookie",
+                isPlacement: game.isPlacement
+            )
+        }, winner: winner)
+
+        return lines.compactMap { game in
             guard let player = game.player else { return nil }
             let before = ranksBefore[player.objectID] ?? RankSystem.rankName(for: player.rankPoints)
             let changed = recordRankChangeIfNeeded(
@@ -246,7 +260,8 @@ enum MatchRecorder {
                 award: game.award.flatMap(Award.init(rawValue:)),
                 rpDelta: game.rpDelta,
                 newRank: RankSystem.rankName(for: player.rankPoints),
-                rankChanged: changed
+                rankChanged: changed,
+                underdogBonus: underdog && game.won
             )
         }
     }

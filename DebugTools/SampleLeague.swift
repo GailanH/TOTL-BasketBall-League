@@ -4,8 +4,9 @@ import CoreData
 
 /// TEST TOOL, Debug builds only. A ready-made league for trying the leaderboard and rank
 /// timeline: 16 Competitive players (Rookie to Elite, two still in placement), 2 Casual
-/// members, and 40 three-on-three games from Sep 7 to Oct 17 (about 15 per player) with
-/// promotions, a few demotions, and both placements finished. Every test account's password is `totl-demo-123`.
+/// members, and 41 three-on-three games from Sep 7 to Oct 18 (about 15 per player) with
+/// promotions, demotions, both placements finished, and an underdog win to finish (G41: three
+/// Silvers beat three Gold-or-better players). Every test account's password is `totl-demo-123`.
 ///
 /// Loaded with "Load Sample League" on Edit Player Accounts. The players are created directly
 /// (test accounts only; real members always sign up). The games go through the real
@@ -343,6 +344,12 @@ G40,2026-10-16 19:30,tyler_r,A,W,9,5,2,0,1
 G40,2026-10-16 19:30,tasha_b,B,L,14,6,4,2,4
 G40,2026-10-16 19:30,rico_s,B,L,11,5,4,2,1
 G40,2026-10-16 19:30,rookie_jen,B,L,3,2,1,0,1
+G41,2026-10-18 19:00,bree_c,A,W,13,6,4,1,2
+G41,2026-10-18 19:00,nina_p,A,W,12,6,3,1,2
+G41,2026-10-18 19:00,omar_h,A,W,11,5,4,1,2
+G41,2026-10-18 19:00,rico_s,B,L,11,5,3,1,1
+G41,2026-10-18 19:00,jaylen_w,B,L,12,5,3,1,2
+G41,2026-10-18 19:00,dev_o,B,L,13,6,4,1,2
 """
 }
 #endif

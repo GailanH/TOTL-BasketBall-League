@@ -15,7 +15,7 @@ final class SampleLeagueTests: XCTestCase {
         let players: NSFetchRequest<Player> = Player.fetchRequest()
         XCTAssertEqual(try context.count(for: players), 18)
         let matches: NSFetchRequest<Match> = Match.fetchRequest()
-        XCTAssertEqual(try context.count(for: matches), 40)
+        XCTAssertEqual(try context.count(for: matches), 41)
 
         func rp(_ name: String) -> (Int64, Int16) {
             players.predicate = NSPredicate(format: "username == %@", name)
@@ -28,6 +28,7 @@ final class SampleLeagueTests: XCTestCase {
         XCTAssertEqual(rp("rookie_ray").1, 0, "Placement should be finished")
         XCTAssertEqual(rp("rookie_jen").0, 46)
         XCTAssertEqual(rp("luis_g").0, 48)
+        XCTAssertEqual(rp("bree_c").0, 327, "G41 underdog win (three Silvers over Gold+)")
 
         XCTAssertEqual(SampleLeague.load(in: context).title, "Already Loaded")
     }

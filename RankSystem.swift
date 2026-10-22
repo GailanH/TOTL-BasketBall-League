@@ -55,6 +55,14 @@ enum RankSystem {
         tiers.first(where: { $0.name == rankName })?.averages
     }
 
+    /// The metal group of a tier, low → high: Rookie 0, Bronze 1, Silver 2, Gold 3, Diamond 4,
+    /// Elite 5. Sub-levels (III, II, I) share their metal. `nil` for an unknown tier.
+    static func metal(of rankName: String) -> Int? {
+        guard index(of: rankName) != nil else { return nil }
+        let metals = ["Rookie", "Bronze", "Silver", "Gold", "Diamond", "Elite"]
+        return metals.firstIndex { rankName == $0 || rankName.hasPrefix($0 + " ") }
+    }
+
     /// Ordering index, low → high (0 = Rookie ... 13 = Elite). `nil` if the name isn't a known tier.
     static func index(of rankName: String) -> Int? {
         tiers.firstIndex(where: { $0.name == rankName })

@@ -14,6 +14,14 @@ Open: what's left / next step
 
 ---
 
+## Iteration 12: 2026-10-21: Underdog wins
+Track: App
+Changed:
+- Underdog bonus: if every winner is in a lower metal (Rookie, Bronze, Silver, Gold, Diamond, Elite) than every loser, each winner gets +5 extra (`CompetitiveRules.underdogWinBonus`). The results popup says "Underdog win!".
+- Sample league gained G41 (Oct 18): three Silvers beat rico_s, jaylen_w and dev_o.
+Decided: underdog bonus only with a full metal gap between the teams (Gailan): 3 Silvers vs 3 Golds qualifies; 2 Silvers + 1 Gold vs 3 Golds doesn't.
+Open: whether the losing favorites should also lose extra; whether a two-metal gap should pay more.
+
 ## Iteration 11: 2026-10-21: Anti-inflation rebalance, Your Standing card
 Track: App
 Changed:

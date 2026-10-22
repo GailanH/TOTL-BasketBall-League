@@ -17,7 +17,7 @@ struct SampleLeagueButton: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(.orange)
-            Text("Testing only (Debug builds): adds 18 test players and 40 games.")
+            Text("Testing only (Debug builds): adds 18 test players and 41 games.")
                 .font(.caption2)
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)

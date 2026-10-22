@@ -22,6 +22,8 @@ enum Award: String {
 ///   MVP gets a bonus on top.
 /// - Losers lose the loss penalty, softened by a good stat score but never turning into a gain.
 ///   The SVP loses half as much, and a great SVP game can still earn a little.
+/// - Underdog win: if every winner is in a lower metal than every loser, each winner gets
+///   `underdogWinBonus` on top.
 /// - Placement games multiply the final result by `placementMultiplier`.
 /// - MVP/SVP go to the best `performanceScore` on each team. Ties go to more points, then to
 ///   whoever is listed first.
@@ -41,6 +43,16 @@ enum MatchScoring {
         let performance: Int64
         /// RP change before the 0-RP floor is applied (the recorder applies the floor).
         let rpChange: Int64
+        /// True for winners of an underdog win (their change includes `underdogWinBonus`).
+        var underdogBonus = false
+    }
+
+    /// True if every winner is in a lower metal than every loser (see `underdogWinBonus`).
+    static func isUnderdogWin(_ participants: [Participant], winner: Team) -> Bool {
+        let winnerMetals = participants.filter { $0.team == winner }.compactMap { RankSystem.metal(of: $0.rank) }
+        let loserMetals = participants.filter { $0.team != winner }.compactMap { RankSystem.metal(of: $0.rank) }
+        guard let highestWinner = winnerMetals.max(), let lowestLoser = loserMetals.min() else { return false }
+        return highestWinner < lowestLoser
     }
 
     /// A human-readable problem with the line-up, or `nil` if it can be scored.
@@ -72,6 +84,7 @@ enum MatchScoring {
         let loser: Team = (winner == .a) ? .b : .a
         let mvpIndex = bestIndex(on: winner)
         let svpIndex = bestIndex(on: loser)
+        let underdog = isUnderdogWin(participants, winner: winner)
 
         return participants.indices.map { i in
             let p = participants[i]
@@ -89,6 +102,9 @@ enum MatchScoring {
                     award = .mvp
                     change += CompetitiveRules.mvpBonus
                 }
+                if underdog {
+                    change += CompetitiveRules.underdogWinBonus
+                }
                 change = min(change, CompetitiveRules.gameGainCap)
             } else if i == svpIndex {
                 award = .svp
@@ -102,7 +118,8 @@ enum MatchScoring {
                 change *= CompetitiveRules.placementMultiplier
             }
 
-            return Outcome(won: won, award: award, performance: performances[i], rpChange: change)
+            return Outcome(won: won, award: award, performance: performances[i], rpChange: change,
+                           underdogBonus: won && underdog)
         }
     }
 }

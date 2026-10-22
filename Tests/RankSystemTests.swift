@@ -59,6 +59,12 @@ final class RankSystemTests: XCTestCase {
         }
     }
 
+    func testMetalGroups() {
+        XCTAssertEqual(["Rookie", "Bronze III", "Bronze I", "Silver II", "Gold I", "Diamond III", "Elite"]
+                        .map { RankSystem.metal(of: $0) }, [0, 1, 1, 2, 3, 4, 5])
+        XCTAssertNil(RankSystem.metal(of: "Platinum"))
+    }
+
     func testIndexOfKnownTiers() {
         XCTAssertEqual(RankSystem.index(of: "Rookie"), 0)
         XCTAssertEqual(RankSystem.index(of: "Elite"), 13)

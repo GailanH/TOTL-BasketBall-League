@@ -107,6 +107,7 @@ CI runs `xcodebuild test` on every push/PR.
 ## Decisions log
 | Date | Decision |
 |---|---|
+| 2026-10-21 | Underdog win: +5 per winner when every winner is a full metal below every loser. |
 | 2026-10-21 | Cost model v1 built. D10 (staged launch) proposed. |
 | 2026-10-21 | D8 rebalanced against RP inflation: win +10, loss -15, SVP -7, MVP +5, stats ±2 both ways at half weight. |
 | 2026-10-18 | D1: all 5 stats. D2: 50 RP per level. D3: 3-month seasons, soft reset, placement. D4: win/loss scoring with MVP/SVP. D5/D6 deferred. D7: start with a rented 2-court gym. Focus on the app for now. |

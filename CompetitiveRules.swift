@@ -54,6 +54,13 @@ enum CompetitiveRules {
     /// The stat score counts 1/divisor toward the change, so the result matters most.
     static let performanceDivisor: Int64 = 2
 
+    // MARK: Underdog win (decided 2026-10-21)
+
+    /// Extra RP for each winner when the whole winning team is at least one full metal below
+    /// the whole losing team: every winner's metal (Bronze, Silver, Gold...) is lower than every
+    /// loser's. 3 Silvers beating 3 Golds qualifies; 2 Silvers + 1 Gold beating 3 Golds doesn't.
+    static let underdogWinBonus: Int64 = 5
+
     // MARK: Seasons and placement (D3)
 
     static let seasonLengthMonths = 3

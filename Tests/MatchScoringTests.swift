@@ -110,4 +110,38 @@ final class MatchScoringTests: XCTestCase {
         XCTAssertNotNil(MatchScoring.validate([]))
         XCTAssertNil(MatchScoring.validate([p(.a, 1, 1, 1, 1, 1), p(.b, 1, 1, 1, 1, 1)]))
     }
+
+    // MARK: Underdog wins
+
+    private func atAverage(_ team: Team, _ rank: String) -> MatchScoring.Participant {
+        let a = RankSystem.averages(for: rank)!
+        return p(team, a.points, a.rebounds, a.assists, a.blocks, a.steals, rank: rank)
+    }
+
+    func testThreeSilversBeatingThreeGoldsIsAnUnderdogWin() {
+        let lineup = [atAverage(.a, "Silver I"), atAverage(.a, "Silver I"), atAverage(.a, "Silver I"),
+                      atAverage(.b, "Gold III"), atAverage(.b, "Gold III"), atAverage(.b, "Gold III")]
+        XCTAssertTrue(MatchScoring.isUnderdogWin(lineup, winner: .a))
+        let outcomes = MatchScoring.score(lineup, winner: .a)
+        XCTAssertEqual(outcomes.map(\.rpChange), [20, 15, 15, -7, -15, -15])
+        XCTAssertEqual(outcomes.map(\.underdogBonus), [true, true, true, false, false, false])
+    }
+
+    func testOneGoldOnTheWinningTeamMeansNoUnderdogBonus() {
+        let lineup = [atAverage(.a, "Silver I"), atAverage(.a, "Silver I"), atAverage(.a, "Gold III"),
+                      atAverage(.b, "Gold III"), atAverage(.b, "Gold III"), atAverage(.b, "Gold III")]
+        XCTAssertFalse(MatchScoring.isUnderdogWin(lineup, winner: .a))
+        XCTAssertEqual(MatchScoring.score(lineup, winner: .a).map(\.rpChange), [10, 10, 15, -7, -15, -15])
+    }
+
+    func testFavoritesWinningIsNotAnUnderdogWin() {
+        let lineup = [atAverage(.a, "Silver I"), atAverage(.b, "Gold III")]
+        XCTAssertFalse(MatchScoring.isUnderdogWin(lineup, winner: .b))
+    }
+
+    func testMixedHigherTeamStillCountsWhenAllAreAboveTheWinners() {
+        let lineup = [atAverage(.a, "Silver III"), atAverage(.a, "Silver I"), atAverage(.a, "Silver II"),
+                      atAverage(.b, "Gold III"), atAverage(.b, "Gold I"), atAverage(.b, "Diamond III")]
+        XCTAssertTrue(MatchScoring.isUnderdogWin(lineup, winner: .a))
+    }
 }
