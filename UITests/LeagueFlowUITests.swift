@@ -154,7 +154,8 @@ final class LeagueFlowUITests: XCTestCase {
         snap("game/seasons-before")
 
         tap(app.buttons["startSeasonButton"])
-        tap(app.buttons["confirmStartSeason"])
+        // iOS 26+ exposes the confirmation button twice (dialog + its accessibility proxy).
+        tap(app.buttons.matching(identifier: "confirmStartSeason").firstMatch)
         XCTAssertTrue(app.staticTexts["Season 2"].waitForExistence(timeout: 5), "Season 2 didn't start")
         snap("game/seasons-after-reset")
 
