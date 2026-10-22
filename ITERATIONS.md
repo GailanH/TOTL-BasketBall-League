@@ -25,6 +25,11 @@ Changed:
 - Sample league adds 2 test venues and 6 upcoming nights (1 cancelled). Tests: model rules, formatting, store behaviour; UI tests for staff creating a venue and night and a player opening one.
 Decided: push as you go during the MVP build (Gailan).
 Open: step 2 (RSVP, waitlist, check-in, balanced teams). Spots left needs RSVPs, so the list shows capacity for now.
+Paused 2026-10-21 21:15 (end of day). State at pause:
+- Everything committed and pushed (`bf23d21`); the Mac's repo matches GitHub. CI: the app builds and all unit tests and UI tests pass except one: the leaderboard standing card doesn't collapse into the pinned bar in the CI simulator (`testRankJourneyForAClimber`). Not yet confirmed whether that's the test or the app; check on the Mac first.
+- Business files in `~/Documents/Project Comp-B` are not in git. Backed up as text in the claude.ai Project (`backup/`) and as original files in the chat.
+- The GitHub repo is **public**; planning docs in it are visible to anyone. Gailan to decide whether to make it private.
+- Next: step 2 of `APP_MVP_BRIEF.md` (RSVP, waitlist, check-in, balanced teams), after a look at the collapse bar.
 
 ## Iteration 13: 2026-10-21: Underdog wins
 Track: App
