@@ -14,6 +14,16 @@ Open: what's left / next step
 
 ---
 
+## Iteration 9: 2026-10-21: Podium celebration, rank journey timeline
+Track: App
+Changed:
+- Leaderboard: players in 1st–3rd get a celebration header (medal, "You're #1!", one-time confetti, skipped with Reduce Motion). Top-3 rows show medals and a gold/silver/bronze outline for everyone. A "You" tag marks the viewer.
+- Rank Timeline is now a season journey: RP after every ranked game, plotted by date with tier boundaries, plus a start → now summary and the list of rank changes. Players who never change tier now see their season too (the old chart needed two tier changes).
+- Record Game: "Add Player" opens a searchable player list instead of a menu (scales to many members; the menu never opened in UI tests).
+- Sample league backdates the season start to the first sample game. New `-loadSampleLeague` launch argument for UI tests.
+Decided: top 3 get a celebratory leaderboard (Gailan's idea); podium medals are visible to everyone.
+Open: confirm the look on the simulator; tune copy and animation.
+
 ## Iteration 8: 2026-10-18 → 10-21: Running it on the Mac, UI tests, test tooling
 Track: App
 Changed:

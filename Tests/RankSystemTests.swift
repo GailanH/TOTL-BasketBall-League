@@ -115,3 +115,35 @@ final class RankSystemTests: XCTestCase {
         XCTAssertEqual(RankSystem.softResetPoints(from: 210), 0)     // Bronze I → Rookie
     }
 }
+
+final class RankJourneyTests: XCTestCase {
+
+    private func day(_ n: Int) -> Date { Date(timeIntervalSince1970: 1_790_000_000 + Double(n) * 86_400) }
+
+    func testRebuildsRPBackwardsFromCurrent() {
+        let journey = RankJourney(games: [
+            .init(date: day(3), rpDelta: -10, won: false, award: nil, isPlacement: false),
+            .init(date: day(1), rpDelta: 25, won: true, award: "MVP", isPlacement: false),
+            .init(date: day(2), rpDelta: 5, won: true, award: nil, isPlacement: false)
+        ], currentRP: 720, seasonStart: day(0))
+
+        XCTAssertEqual(journey.points.map(\.rankPoints), [700, 725, 730, 720])
+        XCTAssertEqual(journey.points.map(\.delta), [0, 25, 5, -10])
+        XCTAssertEqual(journey.points.first?.date, day(0))
+        XCTAssertEqual(journey.startRank, "Diamond I")
+        XCTAssertEqual(journey.currentRank, "Elite")
+        XCTAssertEqual(journey.peak?.rankPoints, 730)
+    }
+
+    func testStartPointIsBeforeFirstGameWhenSeasonStartsLate() {
+        let journey = RankJourney(games: [.init(date: day(5), rpDelta: 10, won: true, award: nil, isPlacement: false)],
+                                  currentRP: 60, seasonStart: day(9))
+        XCTAssertEqual(journey.points.first?.date, day(4))
+        XCTAssertEqual(journey.points.first?.rankPoints, 50)
+    }
+
+    func testNoGamesIsJustTheStartingPoint() {
+        let journey = RankJourney(games: [], currentRP: 300, seasonStart: day(0))
+        XCTAssertEqual(journey.points.count, 1)
+    }
+}

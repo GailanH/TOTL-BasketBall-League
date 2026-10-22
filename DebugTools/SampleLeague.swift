@@ -34,6 +34,7 @@ enum SampleLeague {
             return LoadResult(title: "Nothing Loaded", message: "Couldn't save the sample players: \(error.localizedDescription)")
         }
         let games = GameCSVImporter.importCSV(gamesCSV, in: context)
+        backdateSeasonStart(in: context)
         return LoadResult(
             title: "Sample League Loaded",
             message: "\(members.count) test players added.\n\(games.summary)\n\nTest accounts use the password \(password)."
@@ -65,6 +66,18 @@ enum SampleLeague {
 
     static let password = "totl-demo-123"
     static let joined = CSVTable.parseDate("2026-09-01")!
+
+    /// The sample games are backdated (Sep 7 – Oct 18). If the current season was created later
+    /// (e.g. by a game recorded today), start it at the first sample game so the timeline and
+    /// Seasons screen read sensibly.
+    private static func backdateSeasonStart(in context: NSManagedObjectContext) {
+        guard let season = SeasonManager.activeSeason(in: context),
+              let firstGame = ((season.matches as? Set<Match>) ?? []).compactMap(\.date).min(),
+              let start = season.startDate, firstGame < start else { return }
+        season.startDate = firstGame
+        season.endDate = SeasonManager.scheduledEnd(from: firstGame)
+        try? context.save()
+    }
 
     private static func addPlayer(_ username: String, membership: String, startingRP: Int64?,
                                   in context: NSManagedObjectContext) {

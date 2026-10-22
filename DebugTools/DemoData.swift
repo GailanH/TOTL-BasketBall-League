@@ -9,6 +9,7 @@ import CoreData
 /// - `-uiTesting`: use a fresh in-memory database and forget any saved login.
 /// - `-seedDemoData`: fill the database with a staff account, Competitive players across
 ///   several ranks, a Casual member, and an active Season 1.
+/// - `-loadSampleLeague`: load the SampleLeague (16 players, 18 backdated games).
 /// - `-loginAs <username>`: start already logged in as that user.
 enum DemoData {
 
@@ -39,6 +40,7 @@ enum DemoData {
     static func prepareLaunch(in context: NSManagedObjectContext) -> Player? {
         if isUITesting { SessionStore.save(nil) }
         seedIfRequested(in: context)
+        if arguments.contains("-loadSampleLeague") { _ = SampleLeague.load(in: context) }
         return loginPlayer(in: context)
     }
 

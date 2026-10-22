@@ -2,101 +2,38 @@ import SwiftUI
 import CoreData
 import Charts
 
+/// A player's journey through the ranks this season: RP after every ranked game, with the tier
+/// boundaries drawn in, plus their rank changes. A player who never changes tier still sees
+/// their whole season.
 struct RankHistoryTimelineView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    let player: Player
+    @ObservedObject var player: Player
 
-    @State private var selectedFilter: FilterOption = .all
-    @State private var playerName: String = "Player"
-    @State private var rankChangeModels: [RankChangeModel] = []
+    @State private var journey: RankJourney?
+    @State private var seasonName = ""
+    @State private var rankChanges: [RankChangeRow] = []
 
-    struct RankChangeModel: Identifiable, Hashable {
+    struct RankChangeRow: Identifiable {
         let id: UUID
-        let newRank: String
+        let rank: String
         let date: Date
-    }
-
-    enum FilterOption: String, CaseIterable, Identifiable {
-        case all = "All"
-        case last5 = "Last 5"
-        case last30Days = "Last 30 Days"
-        var id: String { self.rawValue }
-    }
-
-    var filteredChanges: [RankChangeModel] {
-        let sorted = rankChangeModels.sorted { $0.date < $1.date }
-        let filtered: [RankChangeModel]
-
-        switch selectedFilter {
-        case .all:
-            filtered = sorted
-        case .last5:
-            filtered = Array(sorted.suffix(5))
-        case .last30Days:
-            let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? .distantPast
-            filtered = sorted.filter { $0.date >= cutoff }
-        }
-
-        return filtered.filter { RankHistoryTimelineView.rankIndex($0.newRank) != nil }
-    }
-
-    var validRankIndices: [Int] {
-        filteredChanges.compactMap { RankHistoryTimelineView.rankIndex($0.newRank) }
+        let isSeasonReset: Bool
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("\(playerName)'s Rank History")
+                Text("\(player.username ?? "Player")'s Rank Journey")
                     .font(.title2).bold()
 
-                Picker("Filter", selection: $selectedFilter) {
-                    ForEach(FilterOption.allCases) { option in
-                        Text(option.rawValue).tag(option)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.bottom)
-
                 if !AppConstants.isRanked(player.membership) {
-                    Text("Rank Timeline is only available for Competitive members.")
+                    Text("The rank timeline is only available for Competitive members.")
                         .foregroundColor(.gray)
                         .frame(maxWidth: .infinity, alignment: .center)
-                } else if validRankIndices.count >= 2 {
-                    ChartViewWrapper(filteredChanges: filteredChanges, validRankIndices: validRankIndices)
-                        .frame(height: 250)
-                        .padding()
                 } else {
-                    Text("Not enough unique rank changes to display chart.")
-                        .foregroundColor(.gray)
-                }
-
-                if AppConstants.isRanked(player.membership) {
-                    Divider().padding(.vertical)
-
-                    if filteredChanges.isEmpty {
-                        Text(rankChangeModels.isEmpty
-                             ? "No rank changes yet — this fills in once games are logged that move you into a new rank tier."
-                             : "No rank changes in this time range.")
-                            .foregroundColor(.gray)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                    } else {
-                        ForEach(filteredChanges) { change in
-                            HStack(spacing: 10) {
-                                Circle()
-                                    .frame(width: 10, height: 10)
-                                    .foregroundColor(.blue)
-
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(change.newRank)
-                                        .font(.headline)
-                                    Text(change.date.formatted(date: .abbreviated, time: .omitted))
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                        }
-                    }
+                    seasonSection
+                    Divider().padding(.vertical, 4)
+                    rankChangesSection
                 }
 
                 Spacer()
@@ -105,75 +42,146 @@ struct RankHistoryTimelineView: View {
         }
         .background(Color("AppBackground").ignoresSafeArea())
         .navigationTitle("Rank Timeline")
-        .onAppear {
-            loadRankChanges()
+        .onAppear(perform: load)
+    }
+
+    // MARK: Season chart
+
+    @ViewBuilder
+    private var seasonSection: some View {
+        Text(seasonName.isEmpty ? "This Season" : seasonName)
+            .font(.headline)
+
+        if let journey, journey.points.count >= 2 {
+            summary(journey)
+            JourneyChart(journey: journey)
+                .frame(height: 280)
+                .padding(.vertical, 8)
+            Text("Each dot is a ranked game: green gained RP, red lost RP. Dashed lines mark where each tier starts.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        } else {
+            Text("No ranked games yet this season. Your journey fills in after your first game.")
+                .foregroundColor(.gray)
         }
     }
 
-    private func loadRankChanges() {
-        self.playerName = player.username ?? "Player"
-
-        let rawChanges = (player.rankChanges as? Set<RankChange>) ?? []
-        self.rankChangeModels = rawChanges.compactMap { change in
-            if let id = change.id, let rank = change.newRank, let date = change.date {
-                return RankChangeModel(id: id, newRank: rank, date: date)
+    private func summary(_ journey: RankJourney) -> some View {
+        let games = journey.points.count - 1
+        let wins = journey.points.filter { $0.won == true }.count
+        let net = (journey.points.last?.rankPoints ?? 0) - (journey.points.first?.rankPoints ?? 0)
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                statBlock("Started", journey.startRank ?? "—")
+                Image(systemName: "arrow.right").foregroundColor(.secondary)
+                statBlock("Now", journey.currentRank ?? "—")
+                Spacer()
+                statBlock("Net RP", "\(net >= 0 ? "+" : "")\(net)", color: net >= 0 ? .green : .red)
             }
-            return nil
+            Text("\(games) games · \(wins)–\(games - wins) · peak \(journey.peak?.rankPoints ?? 0) RP (\(journey.peak?.rank ?? "—"))")
+                .font(.caption)
+                .foregroundColor(.secondary)
         }
     }
 
-    // ✅ static so they can be used in ChartViewWrapper
-    // Derived from RankSystem so the chart's rank ordering can never drift
-    // from the actual tier thresholds used everywhere else in the app.
-    static func rankIndex(_ rank: String) -> Int? {
-        RankSystem.index(of: rank).map { $0 + 1 }  // 1 = Rookie ... 14 = Elite
+    private func statBlock(_ label: String, _ value: String, color: Color = .primary) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label).font(.caption2).foregroundColor(.secondary)
+            Text(value).font(.subheadline).bold().foregroundColor(color)
+        }
     }
 
-    static func rankLabel(for index: Int) -> String {
-        guard index >= 1 && index <= RankSystem.tiers.count else { return "Unranked" }
-        return RankSystem.tiers[index - 1].name
+    // MARK: Rank changes
+
+    @ViewBuilder
+    private var rankChangesSection: some View {
+        Text("Rank Changes").font(.headline)
+        if rankChanges.isEmpty {
+            Text("No rank changes yet.")
+                .foregroundColor(.gray)
+        } else {
+            ForEach(rankChanges) { change in
+                HStack(spacing: 10) {
+                    Circle()
+                        .frame(width: 10, height: 10)
+                        .foregroundColor(change.isSeasonReset ? .orange : .blue)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(change.rank).font(.headline)
+                        Text(change.date.formatted(date: .abbreviated, time: .omitted) + (change.isSeasonReset ? " · season reset" : ""))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: Data
+
+    private func load() {
+        let season = SeasonManager.activeSeason(in: viewContext)
+        seasonName = season?.name ?? ""
+
+        let allGames = (player.games as? Set<Game>) ?? []
+        let seasonGames = allGames.filter { game in
+            guard let gameSeason = game.match?.season else { return false }
+            return season != nil && gameSeason == season
+        }
+        let steps = seasonGames.compactMap { game -> RankJourney.GameStep? in
+            guard let date = game.date else { return nil }
+            return RankJourney.GameStep(date: date, rpDelta: game.rpDelta, won: game.won,
+                                        award: game.award, isPlacement: game.isPlacement)
+        }
+        journey = RankJourney(games: steps, currentRP: player.rankPoints, seasonStart: season?.startDate)
+
+        rankChanges = ((player.rankChanges as? Set<RankChange>) ?? [])
+            .compactMap { change in
+                guard let id = change.id, let rank = change.newRank, let date = change.date else { return nil }
+                return RankChangeRow(id: id, rank: rank, date: date,
+                                     isSeasonReset: change.reason == RankChangeReason.seasonReset.rawValue)
+            }
+            .sorted { $0.date > $1.date }
     }
 }
 
-// ✅ Extracted chart into its own struct to prevent memory crash
-private struct ChartViewWrapper: View {
-    let filteredChanges: [RankHistoryTimelineView.RankChangeModel]
-    let validRankIndices: [Int]
+/// RP over the season with tier boundaries. Kept in its own view so the chart only rebuilds
+/// when the journey changes.
+private struct JourneyChart: View {
+    let journey: RankJourney
 
     var body: some View {
-        let yMin = validRankIndices.min() ?? 1
-        let yMax = validRankIndices.max() ?? 10
-        let domain = yMin...yMax
+        let values = journey.points.map(\.rankPoints)
+        let low = max(0, (values.min() ?? 0) - 30)
+        let high = (values.max() ?? 100) + 30
+        let boundaries = RankSystem.tiers.dropFirst().filter { $0.minPoints >= low && $0.minPoints <= high }
 
         Chart {
-            ForEach(filteredChanges) { change in
-                if let rankY = RankHistoryTimelineView.rankIndex(change.newRank) {
-                    LineMark(
-                        x: .value("Date", change.date),
-                        y: .value("Rank", rankY)
-                    )
+            ForEach(Array(boundaries), id: \.name) { tier in
+                RuleMark(y: .value("Tier start", tier.minPoints))
+                    .foregroundStyle(.gray.opacity(0.35))
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                    .annotation(position: .top, alignment: .leading) {
+                        Text(tier.name).font(.caption2).foregroundColor(.secondary)
+                    }
+            }
+
+            ForEach(journey.points) { point in
+                LineMark(x: .value("Date", point.date), y: .value("RP", point.rankPoints))
                     .interpolationMethod(.monotone)
-                    .symbol(Circle())
-                    .foregroundStyle(
-                        LinearGradient(
-                            gradient: Gradient(colors: [.green, .blue]),
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                }
+                    .foregroundStyle(.blue)
+            }
+
+            ForEach(journey.points.dropFirst()) { point in
+                PointMark(x: .value("Date", point.date), y: .value("RP", point.rankPoints))
+                    .foregroundStyle(point.delta >= 0 ? Color.green : Color.red)
+                    .symbolSize(point.award == Award.mvp.rawValue ? 120 : 40)
             }
         }
-        .chartYScale(domain: domain)
-        .chartYAxis {
-            AxisMarks(position: .leading) { value in
-                if let intVal = value.as(Int.self) {
-                    AxisGridLine()
-                    AxisTick()
-                    AxisValueLabel {
-                        Text(RankHistoryTimelineView.rankLabel(for: intVal))
-                    }
-                }
+        .chartYScale(domain: low...high)
+        .chartXAxis {
+            AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+                AxisGridLine()
+                AxisValueLabel(format: .dateTime.month(.abbreviated).day())
             }
         }
     }

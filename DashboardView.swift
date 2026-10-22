@@ -111,7 +111,7 @@ struct DashboardView: View {
                             CoachingListView(player: player)
                         }
                     case .leaderboard:
-                        LeaderboardView()
+                        LeaderboardView(viewer: player)
                     case .seasons:
                         SeasonsView()
                     case .editAccounts:

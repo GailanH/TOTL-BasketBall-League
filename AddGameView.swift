@@ -34,6 +34,7 @@ struct AddGameView: View {
     }
 
     @State private var drafts: [Draft] = []
+    @State private var pickingTeam: Team?
     @State private var winner: Team = .a
     @State private var message = ""
     @State private var messageIsError = false
@@ -56,7 +57,7 @@ struct AddGameView: View {
                             drafts.removeAll { $0.id == draft.id }
                         }
                     }
-                    addPlayerMenu(for: team)
+                    addPlayerButton(for: team)
                 }
             }
 
@@ -99,6 +100,11 @@ struct AddGameView: View {
         .alert(item: $resultAlert) { alert in
             Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("OK")))
         }
+        .sheet(item: $pickingTeam) { team in
+            PlayerPickerSheet(team: team, players: availablePlayers) { player in
+                drafts.append(Draft(player: player, team: team))
+            }
+        }
         .fileImporter(
             isPresented: $showFileImporter,
             allowedContentTypes: [.commaSeparatedText, .plainText],
@@ -125,20 +131,18 @@ struct AddGameView: View {
         }
     }
 
-    private func addPlayerMenu(for team: Team) -> some View {
+    private var availablePlayers: [Player] {
         let taken = Set(drafts.map { $0.player.objectID })
-        let available = players.filter { !taken.contains($0.objectID) }
-        return Menu {
-            ForEach(available, id: \.objectID) { player in
-                Button(player.username ?? "Unknown") {
-                    drafts.append(Draft(player: player, team: team))
-                }
-                .accessibilityIdentifier("pick-\(player.username ?? "")")
-            }
+        return players.filter { !taken.contains($0.objectID) }
+    }
+
+    private func addPlayerButton(for team: Team) -> some View {
+        Button {
+            pickingTeam = team
         } label: {
             Label("Add Player", systemImage: "plus.circle")
         }
-        .disabled(available.isEmpty)
+        .disabled(availablePlayers.isEmpty)
         .accessibilityIdentifier("addPlayer-\(team.rawValue)")
     }
 
@@ -285,6 +289,58 @@ private struct DraftRow: View {
                 .accessibilityIdentifier("stat-\(draft.player.username ?? "")-\(label)")
                 .multilineTextAlignment(.center)
                 .textFieldStyle(.roundedBorder)
+        }
+    }
+}
+
+/// Searchable list of Competitive players not yet in this game. Tapping one adds them to the
+/// team and closes the sheet.
+private struct PlayerPickerSheet: View {
+    let team: Team
+    let players: [Player]
+    let onPick: (Player) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var search = ""
+
+    private var filtered: [Player] {
+        guard !search.isEmpty else { return players }
+        return players.filter { $0.username?.localizedCaseInsensitiveContains(search) ?? false }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List(filtered, id: \.objectID) { player in
+                Button {
+                    onPick(player)
+                    dismiss()
+                } label: {
+                    HStack {
+                        Text(player.username ?? "Unknown")
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Text(player.placementGamesRemaining > 0
+                             ? "Placement"
+                             : RankSystem.rankName(for: player.rankPoints))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .accessibilityIdentifier("pick-\(player.username ?? "")")
+            }
+            .searchable(text: $search, prompt: "Search players")
+            .navigationTitle("Add to \(team.displayName)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+            .overlay {
+                if filtered.isEmpty {
+                    Text("No players match.").foregroundColor(.secondary)
+                }
+            }
         }
     }
 }

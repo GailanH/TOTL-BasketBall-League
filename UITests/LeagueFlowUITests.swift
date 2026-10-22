@@ -61,36 +61,13 @@ final class LeagueFlowUITests: XCTestCase {
         return scroll.exists ? scroll : app
     }
 
-    /// Opens a team's "Add Player" menu and chooses a player. The identifier sits on the form
-    /// row; the menu opens from the button inside it. Menu items are matched by label.
+    /// Opens a team's "Add Player" list and chooses a player.
     private func pick(_ username: String, forTeam team: String) {
-        let row = app.buttons["addPlayer-\(team)"]
-        XCTAssertTrue(row.waitForExistence(timeout: 5))
-        let inner = row.buttons.firstMatch
-        let opener = inner.exists ? inner : row
-        tap(opener)
-
-        func menuItem() -> XCUIElement? {
-            [app.buttons[username], app.menuItems[username], app.staticTexts[username]]
-                .first { $0.exists && $0.isHittable }
-        }
-        var item: XCUIElement?
-        for attempt in 0..<3 {
-            let deadline = Date().addingTimeInterval(3)
-            while item == nil && Date() < deadline {
-                item = menuItem()
-                if item == nil { usleep(200_000) }
-            }
-            if item != nil { break }
-            if attempt == 0 {
-                opener.tap()
-            } else {
-                opener.press(forDuration: 0.6)  // some menus open on long press
-            }
-        }
-        if item == nil { snap("debug/menu-not-open-\(username)") }
-        XCTAssertNotNil(item, "Menu item \(username) didn't appear")
-        item?.tap()
+        tap(app.buttons["addPlayer-\(team)"])
+        let item = app.buttons["pick-\(username)"]
+        XCTAssertTrue(item.waitForExistence(timeout: 5), "\(username) isn't in the Add Player list")
+        item.tap()
+        XCTAssertTrue(app.buttons["addPlayer-\(team)"].waitForExistence(timeout: 5))
     }
 
     private func type(_ text: String, into element: XCUIElement) {
@@ -170,6 +147,38 @@ final class LeagueFlowUITests: XCTestCase {
         tap(app.buttons["Leaderboard"])
         XCTAssertTrue(app.staticTexts["Season 2"].waitForExistence(timeout: 5))
         snap("game/leaderboard-after-reset")
+    }
+
+    // MARK: Sample league: podium celebration and rank journey
+
+    func testPodiumCelebrationAndRankJourney() {
+        launch(["-loadSampleLeague", "-loginAs", "marcus_j"])
+        XCTAssertTrue(app.staticTexts["Welcome, marcus_j!"].waitForExistence(timeout: 10))
+
+        tap(app.buttons["Leaderboard"])
+        XCTAssertTrue(app.staticTexts["You're #1!"].waitForExistence(timeout: 5), "No celebration for 1st place")
+        sleep(1)  // let the confetti fall a little
+        snap("podium/leaderboard-first-place")
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        tap(app.buttons["Rank Timeline"])
+        XCTAssertTrue(app.staticTexts["Rank Changes"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["No ranked games yet this season. Your journey fills in after your first game."].exists)
+        snap("podium/rank-journey-marcus")
+    }
+
+    func testRankJourneyForAClimber() {
+        launch(["-loadSampleLeague", "-loginAs", "kev_m"])
+        XCTAssertTrue(app.staticTexts["Welcome, kev_m!"].waitForExistence(timeout: 10))
+        tap(app.buttons["Rank Timeline"])
+        XCTAssertTrue(app.staticTexts["Rank Changes"].waitForExistence(timeout: 5))
+        snap("journey/rank-journey-kev")
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        tap(app.buttons["Leaderboard"])
+        XCTAssertFalse(app.staticTexts["You're #1!"].exists || app.staticTexts["You're #2!"].exists || app.staticTexts["You're #3!"].exists,
+                       "4th place shouldn't get the podium celebration")
+        snap("journey/leaderboard-fourth-place")
     }
 
     // MARK: Player view
