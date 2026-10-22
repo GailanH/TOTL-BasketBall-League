@@ -14,13 +14,21 @@ Open: what's left / next step
 
 ---
 
-## Iteration 12: 2026-10-21: Underdog wins
+## Iteration 13: 2026-10-21: Underdog wins
 Track: App
 Changed:
 - Underdog bonus: if every winner is in a lower metal (Rookie, Bronze, Silver, Gold, Diamond, Elite) than every loser, each winner gets +5 extra (`CompetitiveRules.underdogWinBonus`). The results popup says "Underdog win!".
 - Sample league gained G41 (Oct 18): three Silvers beat rico_s, jaylen_w and dev_o.
 Decided: underdog bonus only with a full metal gap between the teams (Gailan): 3 Silvers vs 3 Golds qualifies; 2 Silvers + 1 Gold vs 3 Golds doesn't.
 Open: whether the losing favorites should also lose extra; whether a two-metal gap should pay more.
+
+## Iteration 12: 2026-10-21: MVP scope: proof-of-concept league on rented courts
+Track: Both
+Changed:
+- Added the MVP section to `ROADMAP.md` (app, courts, website, social, legal/ops, fundraising prep, cost, order of work) and updated `CLAUDE.md` next steps.
+- Researched San Antonio venues: City of SA community-center gyms (Ramirez $30/hr; Garza, Hamilton, Woodlawn Lake $50–90/hr), Alamo City All-Stars Sportsplex (Universal City, $90–100 per full court/hr, multiple courts), Factory of Champions (call), Order On The Court ($36/hr, 1 basketball court). Northside ISD is out (youth non-profits only).
+Decided: MVP first. Start by renting courts for a proof of concept. The app is the main selling point, with fundraising and marketing alongside. Coaching, merch and the full 6-court facility are the end goal. Game times and places go on social media and in the app (D10).
+Open: choose the backend (D5); set success gates (D11); call venues; TrueLoyal agreement check; name clearance and LLC.
 
 ## Iteration 11: 2026-10-21: Anti-inflation rebalance, Your Standing card
 Track: App

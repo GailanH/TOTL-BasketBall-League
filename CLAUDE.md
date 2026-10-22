@@ -45,17 +45,16 @@ Business planning is **not** deferred anymore. When an app decision depends on a
 ## Competitive system (decided 2026-10-18, see ROADMAP D1–D4)
 
 - 14 tiers, 50 RP each: Rookie (0–100) through Elite (701+, uncapped). Tier averages rise with rank.
-- All 5 stats count. Each stat vs. the player's tier average: +2 per unit above (cap +15), −1 per unit below (cap −10). Per-game base is capped at +50/−20.
-- Winners all gain (min +5). The MVP (best winner vs. own tier) gets +10. Losers can't gain, except the SVP (best loser), who can gain up to +5. If the SVP played below average, they lose RP too.
+- All 5 stats count. Each stat vs. the player's tier average: ±2 per unit, capped ±15 per stat; the game's stat score is clamped to +50/−20 and counts at half weight.
+- Result-led scoring (rebalanced 2026-10-21 against RP inflation): win +10 (never below +3), MVP +5 more, loss −15 (never a gain), SVP −7 (a great game can still earn up to +5). Underdog win (every winner a full metal below every loser): +5 per winner. Typical: win +10, MVP +20, loss −17, SVP −4.
 - 3-month seasons. Staff start each new season: everyone drops 3 tiers to the bottom of that tier, then plays 5 placement games at 2× RP. Players in placement are hidden from the leaderboard.
 - Numbers live in `CompetitiveRules.swift`. Logic lives in `RankSystem.swift` and `MatchScoring.swift` (pure, unit-tested). All RP changes go through `MatchRecorder.swift`, and seasons through `SeasonManager.swift`.
 
 ## Next steps
 
-Full plan is in `ROADMAP.md`. Focus is the app (business and funding work is paused by Gailan's choice). Launch target is a rented 2-court gym.
-1. Click through on the Simulator (`xcodegen generate`, open, run): record a game, start a season, check migration. CI already builds and passes the unit tests.
-2. Run a sample season in the Simulator and tune `CompetitiveRules` (D8).
-3. Staff MVP/SVP override; season history (final standings, per-season stats).
-4. Robustness: registration validation, password reset, handling of the owner-username auto-admin.
-5. Demo readiness: seeded demo data, branding, TestFlight.
-6. Later (deferred): backend/sync (D5), funding strategy (D6).
+Current focus is the **MVP** (decided 2026-10-21): a proof-of-concept ranked league on rented courts in San Antonio, with the app as the main selling point, plus a website and social media. Coaching, merch and the 6-court facility are the end goal, not the MVP. Full plan: the MVP section of `ROADMAP.md`.
+1. Backend + real accounts (D5, recommended Supabase) so every player uses the app on their own phone.
+2. Game Nights: venues, dates and times, RSVP with capacity, check-in, reminders. Waiver acceptance at sign-up.
+3. Robustness: password reset, registration validation, owner auto-admin decision, staff MVP/SVP override, season history.
+4. Website reading the same backend: schedule, leaderboard, sign-up, waitlist.
+5. TestFlight for pilot players.
