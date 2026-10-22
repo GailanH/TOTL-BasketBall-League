@@ -8,6 +8,8 @@ import Foundation
 struct RankJourney: Equatable {
 
     struct Point: Equatable, Identifiable {
+        /// Position in the journey (0 = starting point). Unique even when two games share a date.
+        let id: Int
         let date: Date
         let rankPoints: Int64
         /// Change from the previous point (0 for the starting point).
@@ -15,7 +17,6 @@ struct RankJourney: Equatable {
         let won: Bool?
         let award: String?
         let isPlacement: Bool
-        var id: Date { date }
         var rank: String { RankSystem.rankName(for: rankPoints) }
     }
 
@@ -48,11 +49,11 @@ struct RankJourney: Equatable {
             startDate = min(startDate, first.addingTimeInterval(-86_400))
         }
 
-        var result = [Point(date: startDate, rankPoints: startRP, delta: 0, won: nil, award: nil, isPlacement: false)]
+        var result = [Point(id: 0, date: startDate, rankPoints: startRP, delta: 0, won: nil, award: nil, isPlacement: false)]
         var running = startRP
-        for game in ordered {
+        for (index, game) in ordered.enumerated() {
             running += game.rpDelta
-            result.append(Point(date: game.date, rankPoints: running, delta: game.rpDelta,
+            result.append(Point(id: index + 1, date: game.date, rankPoints: running, delta: game.rpDelta,
                                 won: game.won, award: game.award, isPlacement: game.isPlacement))
         }
         points = result

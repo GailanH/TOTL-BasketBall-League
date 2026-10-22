@@ -144,40 +144,56 @@ struct RankHistoryTimelineView: View {
     }
 }
 
-/// RP over the season with tier boundaries. Kept in its own view so the chart only rebuilds
-/// when the journey changes.
+/// RP over the season. Tier starts are the y-axis gridlines, labelled with the tier name.
+/// Deliberately plain Swift Charts (one line series, one point series with unique ids, no
+/// annotations) to stay clear of Charts rendering bugs.
 private struct JourneyChart: View {
     let journey: RankJourney
+
+    private struct Dot: Identifiable {
+        let id: Int
+        let date: Date
+        let rankPoints: Int64
+        let gained: Bool
+        let isMVP: Bool
+    }
 
     var body: some View {
         let values = journey.points.map(\.rankPoints)
         let low = max(0, (values.min() ?? 0) - 30)
         let high = (values.max() ?? 100) + 30
-        let boundaries = RankSystem.tiers.dropFirst().filter { $0.minPoints >= low && $0.minPoints <= high }
+        let tierStarts = RankSystem.tiers.dropFirst()
+            .map(\.minPoints)
+            .filter { $0 >= low && $0 <= high }
+        let dots = journey.points.dropFirst().map {
+            Dot(id: $0.id, date: $0.date, rankPoints: $0.rankPoints, gained: $0.delta >= 0,
+                isMVP: $0.award == Award.mvp.rawValue)
+        }
 
         Chart {
-            ForEach(Array(boundaries), id: \.name) { tier in
-                RuleMark(y: .value("Tier start", tier.minPoints))
-                    .foregroundStyle(.gray.opacity(0.35))
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                    .annotation(position: .top, alignment: .leading) {
-                        Text(tier.name).font(.caption2).foregroundColor(.secondary)
-                    }
-            }
-
             ForEach(journey.points) { point in
-                LineMark(x: .value("Date", point.date), y: .value("RP", point.rankPoints))
-                    .interpolationMethod(.monotone)
-                    .foregroundStyle(.blue)
+                LineMark(x: .value("Date", point.date), y: .value("RP", point.rankPoints),
+                         series: .value("Series", "RP"))
+                    .foregroundStyle(Color.blue)
             }
-
-            ForEach(journey.points.dropFirst()) { point in
-                PointMark(x: .value("Date", point.date), y: .value("RP", point.rankPoints))
-                    .foregroundStyle(point.delta >= 0 ? Color.green : Color.red)
-                    .symbolSize(point.award == Award.mvp.rawValue ? 120 : 40)
+            ForEach(dots) { dot in
+                PointMark(x: .value("Date", dot.date), y: .value("RP", dot.rankPoints))
+                    .foregroundStyle(dot.gained ? Color.green : Color.red)
+                    .symbolSize(dot.isMVP ? 110 : 40)
             }
         }
         .chartYScale(domain: low...high)
+        .chartYAxis {
+            AxisMarks(position: .leading, values: tierStarts) { value in
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                AxisValueLabel {
+                    if let rp = value.as(Int64.self) {
+                        Text(RankSystem.rankName(for: rp)).font(.caption2)
+                    }
+                }
+            }
+            AxisMarks(position: .trailing)
+        }
         .chartXAxis {
             AxisMarks(values: .automatic(desiredCount: 4)) { _ in
                 AxisGridLine()

@@ -15,19 +15,19 @@ final class SampleLeagueTests: XCTestCase {
         let players: NSFetchRequest<Player> = Player.fetchRequest()
         XCTAssertEqual(try context.count(for: players), 18)
         let matches: NSFetchRequest<Match> = Match.fetchRequest()
-        XCTAssertEqual(try context.count(for: matches), 18)
+        XCTAssertEqual(try context.count(for: matches), 40)
 
         func rp(_ name: String) -> (Int64, Int16) {
             players.predicate = NSPredicate(format: "username == %@", name)
             let p = try! context.fetch(players).first!
             return (p.rankPoints, p.placementGamesRemaining)
         }
-        XCTAssertEqual(rp("marcus_j").0, 725)
-        XCTAssertEqual(rp("kev_m").0, 562)
-        XCTAssertEqual(rp("rookie_ray").0, 169)
+        XCTAssertEqual(rp("marcus_j").0, 821)
+        XCTAssertEqual(rp("kev_m").0, 684)
+        XCTAssertEqual(rp("rookie_ray").0, 247)
         XCTAssertEqual(rp("rookie_ray").1, 0, "Placement should be finished")
-        XCTAssertEqual(rp("rookie_jen").0, 20)
-        XCTAssertEqual(rp("luis_g").0, 40)
+        XCTAssertEqual(rp("rookie_jen").0, 88)
+        XCTAssertEqual(rp("luis_g").0, 137)
 
         XCTAssertEqual(SampleLeague.load(in: context).title, "Already Loaded")
     }

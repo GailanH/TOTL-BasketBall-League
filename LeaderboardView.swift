@@ -25,10 +25,6 @@ struct LeaderboardView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                Label("Leaderboard", systemImage: "trophy.fill")
-                    .font(.title).bold()
-                    .padding(.top)
-
                 if let season = activeSeasons.first {
                     Text(season.name ?? "Current Season")
                         .font(.subheadline)

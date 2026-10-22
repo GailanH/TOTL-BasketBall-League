@@ -32,18 +32,32 @@ final class LeagueFlowUITests: XCTestCase {
         add(attachment)
     }
 
-    /// Scrolls until the element is on screen, clear of the keyboard, and tappable; then taps it.
+    /// Finds the element (scrolling down, then back up, through long forms whose off-screen
+    /// rows don't exist yet), makes sure it's clear of the keyboard, and taps it.
     private func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
-        XCTAssertTrue(element.waitForExistence(timeout: 5), "Missing: \(element)", file: file, line: line)
+        if !element.waitForExistence(timeout: 3) {
+            for direction in [1.0, -1.0] {
+                for _ in 0..<6 where !element.exists {
+                    drag(by: direction)
+                }
+            }
+        }
+        XCTAssertTrue(element.exists, "Missing: \(element)", file: file, line: line)
         var swipes = 0
         while (!element.isHittable || isUnderKeyboard(element)) && swipes < 8 {
-            // Drag within the top of the screen so the gesture never starts on the keyboard.
-            let area = scrollArea()
-            area.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
-                .press(forDuration: 0.05, thenDragTo: area.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)))
+            drag(by: 1)
             swipes += 1
         }
         element.tap()
+    }
+
+    /// Drags the content within the upper part of the screen (so it never starts on the
+    /// keyboard). Positive moves further down the page, negative back up.
+    private func drag(by direction: Double) {
+        let area = scrollArea()
+        let from = area.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: direction > 0 ? 0.45 : 0.15))
+        let to = area.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: direction > 0 ? 0.15 : 0.45))
+        from.press(forDuration: 0.05, thenDragTo: to)
     }
 
     private func isUnderKeyboard(_ element: XCUIElement) -> Bool {
@@ -67,7 +81,8 @@ final class LeagueFlowUITests: XCTestCase {
         let item = app.buttons["pick-\(username)"]
         XCTAssertTrue(item.waitForExistence(timeout: 5), "\(username) isn't in the Add Player list")
         item.tap()
-        XCTAssertTrue(app.buttons["addPlayer-\(team)"].waitForExistence(timeout: 5))
+        let sheetTitle = app.navigationBars["Add to Team \(team)"]
+        XCTAssertTrue(sheetTitle.waitForNonExistence(timeout: 5), "Player list didn't close")
     }
 
     private func type(_ text: String, into element: XCUIElement) {
@@ -167,15 +182,18 @@ final class LeagueFlowUITests: XCTestCase {
         snap("podium/rank-journey-marcus")
     }
 
+    /// Timeline → back → Leaderboard (the path that crashed on 2026-10-21), as a mid-table player.
     func testRankJourneyForAClimber() {
-        launch(["-loadSampleLeague", "-loginAs", "kev_m"])
-        XCTAssertTrue(app.staticTexts["Welcome, kev_m!"].waitForExistence(timeout: 10))
+        launch(["-loadSampleLeague", "-loginAs", "jaylen_w"])
+        XCTAssertTrue(app.staticTexts["Welcome, jaylen_w!"].waitForExistence(timeout: 10))
         tap(app.buttons["Rank Timeline"])
         XCTAssertTrue(app.staticTexts["Rank Changes"].waitForExistence(timeout: 5))
-        snap("journey/rank-journey-kev")
+        snap("journey/rank-journey-jaylen")
 
         app.navigationBars.buttons.element(boundBy: 0).tap()
         tap(app.buttons["Leaderboard"])
+        XCTAssertTrue(app.staticTexts["5. jaylen_w"].waitForExistence(timeout: 5), "Leaderboard didn't load after the timeline")
+        XCTAssertEqual(app.state, .runningForeground, "App crashed opening the leaderboard after the timeline")
         XCTAssertFalse(app.staticTexts["You're #1!"].exists || app.staticTexts["You're #2!"].exists || app.staticTexts["You're #3!"].exists,
                        "4th place shouldn't get the podium celebration")
         snap("journey/leaderboard-fourth-place")
