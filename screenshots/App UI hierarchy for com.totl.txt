@@ -1,0 +1,85 @@
+Application, 0x104867890, pid: 5445, label: 'TOTL' <App element pid: 5445>
+  Window (Main), 0x104868680, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 5445, elementOrHash.elementID: 4313007984.4>
+    Other, 0x104866740, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 5445, elementOrHash.elementID: 4310736416.5>
+      Other, 0x104869780, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 5445, elementOrHash.elementID: 4311013104.6>
+        Other, 0x10485c180, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 5445, elementOrHash.elementID: 4311014944.7>
+          Other, 0x10486b650, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 5445, elementOrHash.elementID: 4310017680.8>
+            Other, 0x10484cbe0, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 5445, elementOrHash.elementID: 4311140352.9>
+              NavigationBar, 0x104867f90, {{0.0, 56.3}, {402.0, 44.0}}, identifier: 'Leaderboard' <AX element pid: 5445, elementOrHash.elementID: 4313232144.10>
+                Button, 0x104863730, {{0.0, 56.3}, {113.7, 44.0}}, identifier: 'BackButton', label: 'Dashboard' <AX element pid: 5445, elementOrHash.elementID: 105553140759296.57>
+                StaticText, 0x1048689e0, {{150.3, 68.0}, {101.3, 20.3}}, label: 'Leaderboard' <AX element pid: 5445, elementOrHash.elementID: 4658972048.165>
+              Other, 0x104863390, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 5445, elementOrHash.elementID: 4311142320.11>
+                Other, 0x104864810, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 5445, elementOrHash.elementID: 4313256016.13>
+                  Other, 0x10486af50, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 5445, elementOrHash.elementID: 4665170192.93>
+                    Other, 0x104866ac0, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 5445, elementOrHash.elementID: 4658889456.94>
+                      ScrollView, 0x10486bd60, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 5445, elementOrHash.elementID: 4339032064.95>
+                        Other, 0x104847760, {{0.0, -829.7}, {402.0, 1669.7}} <AX element pid: 5445, elementOrHash.elementID: 4310337712.96>
+                          StaticText, 0x104869e60, {{170.3, -829.7}, {61.3, 18.0}}, label: 'Season 1' <AX element pid: 5445, elementOrHash.elementID: 4311173936.98>
+                          ProgressIndicator, 0x10486b9d0, {{15.2, -796.4}, {371.5, 213.8}}, identifier: 'standingCard', label: 'Your Standing · Season 1, #5, of 16, Gold I · 525 RP, 26 RP to Diamond III, 63 RP behind #4 dev_o, 73 RP ahead of #6 rico_s', value: 48% <AX element pid: 5445, elementOrHash.elementID: 4658902800.99>
+                            StaticText, 0x104862960, {{115.8, -779.7}, {170.3, 14.3}}, label: 'YOUR STANDING · SEASON 1' <AX element pid: 5445, elementOrHash.elementID: 4311220864.153>
+                            StaticText, 0x104845580, {{147.0, -755.3}, {58.3, 52.7}}, label: '#5' <AX element pid: 5445, elementOrHash.elementID: 4311188752.154>
+                            StaticText, 0x104860e40, {{211.3, -732.3}, {43.7, 24.0}}, label: 'of 16' <AX element pid: 5445, elementOrHash.elementID: 4311164288.155>
+                            StaticText, 0x104869af0, {{142.7, -692.7}, {116.7, 20.3}}, label: 'Gold I · 525 RP' <AX element pid: 5445, elementOrHash.elementID: 4311218544.156>
+                            ProgressIndicator, 0x1048611b0, {{56.0, -662.3}, {290.0, 4.0}}, value: 48% <AX element pid: 5445, elementOrHash.elementID: 4311185952.157>
+                              ProgressIndicator, 0x10486a890, {{56.0, -672.3}, {290.0, 24.0}}, value: 48% <AX element pid: 5445, elementOrHash.elementID: 4311220368.163>
+                            StaticText, 0x104864b70, {{143.3, -654.3}, {115.3, 14.3}}, label: '26 RP to Diamond III' <AX element pid: 5445, elementOrHash.elementID: 4309833872.158>
+                            Image, 0x104861500, {{127.0, -628.7}, {9.0, 11.3}}, identifier: 'arrow.up', label: 'Up' <AX element pid: 5445, elementOrHash.elementID: 4310102976.159>
+                            StaticText, 0x104868d30, {{127.0, -630.0}, {149.5, 14.3}}, label: '63 RP behind #4 dev_o' <AX element pid: 5445, elementOrHash.elementID: 4658892368.160>
+                            Image, 0x10486abe0, {{121.7, -612.3}, {9.0, 11.3}}, identifier: 'arrow.down', label: 'Down' <AX element pid: 5445, elementOrHash.elementID: 4658970848.161>
+                            StaticText, 0x104862280, {{121.7, -613.7}, {160.2, 14.3}}, label: '73 RP ahead of #6 rico_s' <AX element pid: 5445, elementOrHash.elementID: 4658899056.162>
+                          Image, 0x10480a1e0, {{32.0, -549.7}, {40.0, 40.0}}, identifier: 'person.crop.circle.fill', label: 'Account' <AX element pid: 5445, elementOrHash.elementID: 4658968432.100>
+                          Image, 0x104863e00, {{86.0, -550.3}, {16.0, 19.0}}, identifier: 'medal.fill', label: '1st place' <AX element pid: 5445, elementOrHash.elementID: 4658840112.101>
+                          StaticText, 0x104849a30, {{110.0, -551.0}, {91.3, 20.3}}, label: '1. marcus_j' <AX element pid: 5445, elementOrHash.elementID: 4658904320.102>
+                          StaticText, 0x104862cc0, {{84.0, -526.3}, {99.3, 18.0}}, label: 'Elite — 748 RP' <AX element pid: 5445, elementOrHash.elementID: 4658905856.103>
+                          Image, 0x104867520, {{32.0, -462.7}, {40.0, 40.0}}, identifier: 'person.crop.circle.fill', label: 'Account' <AX element pid: 5445, elementOrHash.elementID: 4658969328.104>
+                          Image, 0x1048655d0, {{86.0, -463.3}, {16.0, 19.0}}, identifier: 'medal.fill', label: '2nd place' <AX element pid: 5445, elementOrHash.elementID: 4658907392.105>
+                          StaticText, 0x104865250, {{110.0, -464.0}, {84.0, 20.3}}, label: '2. tasha_b' <AX element pid: 5445, elementOrHash.elementID: 4658908928.106>
+                          StaticText, 0x10486c100, {{84.0, -439.3}, {139.0, 18.0}}, label: 'Diamond I — 677 RP' <AX element pid: 5445, elementOrHash.elementID: 4658911216.107>
+                          Image, 0x104869430, {{32.0, -375.7}, {40.0, 40.0}}, identifier: 'person.crop.circle.fill', label: 'Account' <AX element pid: 5445, elementOrHash.elementID: 4658915936.108>
+                          Image, 0x104865940, {{86.0, -376.3}, {16.0, 19.0}}, identifier: 'medal.fill', label: '3rd place' <AX element pid: 5445, elementOrHash.elementID: 4658919840.109>
+                          StaticText, 0x1048690b0, {{110.0, -377.0}, {70.7, 20.3}}, label: '3. kev_m' <AX element pid: 5445, elementOrHash.elementID: 4310257424.110>
+                          StaticText, 0x10486b2f0, {{84.0, -352.3}, {144.0, 18.0}}, label: 'Diamond II — 629 RP' <AX element pid: 5445, elementOrHash.elementID: 4310465904.111>
+                          Image, 0x10486c480, {{32.0, -289.3}, {40.0, 40.0}}, identifier: 'person.crop.circle.fill', label: 'Account' <AX element pid: 5445, elementOrHash.elementID: 4658847520.112>
+                          StaticText, 0x10486c820, {{84.0, -290.3}, {67.0, 20.3}}, label: '4. dev_o' <AX element pid: 5445, elementOrHash.elementID: 4658850000.113>
+                          StaticText, 0x10486cb80, {{84.0, -266.0}, {148.0, 18.0}}, label: 'Diamond III — 588 RP' <AX element pid: 5445, elementOrHash.elementID: 4658848752.114>
+                          Image, 0x10486cf00, {{32.0, -203.0}, {40.0, 40.0}}, identifier: 'person.crop.circle.fill', label: 'Account' <AX element pid: 5445, elementOrHash.elementID: 4310143680.115>
+                          StaticText, 0x10486d280, {{84.0, -204.0}, {88.0, 20.3}}, label: '5. jaylen_w' <AX element pid: 5445, elementOrHash.elementID: 4658966368.116>
+                          StaticText, 0x10486d5f0, {{184.0, -201.0}, {22.0, 14.3}}, label: 'You' <AX element pid: 5445, elementOrHash.elementID: 4658854496.117>
+                          StaticText, 0x10486d990, {{84.0, -179.7}, {110.7, 18.0}}, label: 'Gold I — 525 RP' <AX element pid: 5445, elementOrHash.elementID: 4658992768.118>
+                          Image, 0x10486dd10, {{32.0, -116.3}, {40.0, 40.0}}, identifier: 'person.crop.circle.fill', label: 'Account' <AX element pid: 5445, elementOrHash.elementID: 4658991456.119>
+                          StaticText, 0x10486e070, {{84.0, -117.7}, {68.0, 20.3}}, label: '6. rico_s' <AX element pid: 5445, elementOrHash.elementID: 4658990144.120>
+                          StaticText, 0x10486e3c0, {{84.0, -93.3}, {114.7, 18.0}}, label: 'Gold II — 452 RP' <AX element pid: 5445, elementOrHash.elementID: 4658858320.121>
+                          Image, 0x10486eed0, {{32.0, -30.0}, {40.0, 40.0}}, identifier: 'person.crop.circle.fill', label: 'Account' <AX element pid: 5445, elementOrHash.elementID: 4658857040.122>
+                          StaticText, 0x10486f220, {{84.0, -31.3}, {71.7, 20.3}}, label: '7. bree_c' <AX element pid: 5445, elementOrHash.elementID: 4658861648.123>
+                          StaticText, 0x10486f590, {{84.0, -7.0}, {119.3, 18.0}}, label: 'Silver II — 327 RP' <AX element pid: 5445, elementOrHash.elementID: 4658860352.124>
+                          Image, 0x10486fc20, {{32.0, 56.3}, {40.0, 40.0}}, identifier: 'person.crop.circle.fill', label: 'Account' <AX element pid: 5445, elementOrHash.elementID: 4658863696.125>
+                          StaticText, 0x10486ff90, {{84.0, 55.0}, {74.0, 20.3}}, label: '8. nina_p' <AX element pid: 5445, elementOrHash.elementID: 4658865024.126>
+                          StaticText, 0x104870300, {{84.0, 79.3}, {120.3, 18.0}}, label: 'Silver II — 302 RP' <AX element pid: 5445, elementOrHash.elementID: 4658869024.127>
+                          Image, 0x104870650, {{32.0, 142.7}, {40.0, 40.0}}, identifier: 'person.crop.circle.fill', label: 'Account' <AX element pid: 5445, elementOrHash.elementID: 4659071488.128>
+                          StaticText, 0x1048709b0, {{84.0, 141.3}, {79.7, 20.3}}, label: '9. omar_h' <AX element pid: 5445, elementOrHash.elementID: 4658875232.129>
+                          StaticText, 0x104870d10, {{84.0, 165.7}, {124.3, 18.0}}, label: 'Silver III — 288 RP' <AX element pid: 5445, elementOrHash.elementID: 4658994080.130>
+                          Image, 0x104871070, {{32.0, 229.0}, {40.0, 40.0}}, identifier: 'person.crop.circle.fill', label: 'Account' <AX element pid: 5445, elementOrHash.elementID: 4658880144.131>
+                          StaticText, 0x1048713d0, {{84.0, 227.7}, {75.0, 20.3}}, label: '10. zoe_k' <AX element pid: 5445, elementOrHash.elementID: 4658882976.132>
+                          StaticText, 0x104871730, {{84.0, 252.0}, {126.7, 18.0}}, label: 'Bronze I — 226 RP' <AX element pid: 5445, elementOrHash.elementID: 4658881552.133>
+                          Image, 0x104871ad0, {{32.0, 315.3}, {40.0, 40.0}}, identifier: 'person.crop.circle.fill', label: 'Account' <AX element pid: 5445, elementOrHash.elementID: 4658887104.134>
+                          StaticText, 0x104871e70, {{84.0, 314.0}, {77.0, 20.3}}, label: '11. tyler_r' <AX element pid: 5445, elementOrHash.elementID: 4310470640.135>
+                          StaticText, 0x1048721f0, {{84.0, 338.3}, {124.3, 18.0}}, label: 'Bronze I — 213 RP' <AX element pid: 5445, elementOrHash.elementID: 4310471424.136>
+                          Image, 0x104872570, {{32.0, 401.7}, {40.0, 40.0}}, identifier: 'person.crop.circle.fill', label: 'Account' <AX element pid: 5445, elementOrHash.elementID: 4310531600.137>
+                          StaticText, 0x1048728e0, {{84.0, 400.3}, {111.7, 20.3}}, label: '12. rookie_ray' <AX element pid: 5445, elementOrHash.elementID: 4310534400.138>
+                          StaticText, 0x104872c80, {{84.0, 424.7}, {127.3, 18.0}}, label: 'Bronze II — 173 RP' <AX element pid: 5445, elementOrHash.elementID: 4310534832.139>
+                          Image, 0x104872ff0, {{32.0, 488.0}, {40.0, 40.0}}, identifier: 'person.crop.circle.fill', label: 'Account' <AX element pid: 5445, elementOrHash.elementID: 4310535616.140>
+                          StaticText, 0x10486f8d0, {{84.0, 486.7}, {72.0, 20.3}}, label: '13. mia_f' <AX element pid: 5445, elementOrHash.elementID: 4659009216.141>
+                          StaticText, 0x104873350, {{84.0, 511.0}, {132.0, 18.0}}, label: 'Bronze III — 123 RP' <AX element pid: 5445, elementOrHash.elementID: 4659009648.142>
+                          Image, 0x1048736b0, {{32.0, 574.3}, {40.0, 40.0}}, identifier: 'person.crop.circle.fill', label: 'Account' <AX element pid: 5445, elementOrHash.elementID: 4659001376.143>
+                          StaticText, 0x104873a20, {{84.0, 573.0}, {87.7, 20.3}}, label: '14. andre_l' <AX element pid: 5445, elementOrHash.elementID: 4659002160.144>
+                          StaticText, 0x104873da0, {{84.0, 597.3}, {108.7, 18.0}}, label: 'Rookie — 93 RP' <AX element pid: 5445, elementOrHash.elementID: 4658987584.145>
+                          Image, 0x104874130, {{32.0, 660.7}, {40.0, 40.0}}, identifier: 'person.crop.circle.fill', label: 'Account' <AX element pid: 5445, elementOrHash.elementID: 4658988368.146>
+                          StaticText, 0x1048744b0, {{84.0, 659.3}, {74.7, 20.3}}, label: '15. luis_g' <AX element pid: 5445, elementOrHash.elementID: 4658989152.147>
+                          StaticText, 0x104874820, {{84.0, 683.7}, {109.0, 18.0}}, label: 'Rookie — 48 RP' <AX element pid: 5445, elementOrHash.elementID: 4658976768.148>
+                          Image, 0x104874ba0, {{32.0, 747.0}, {40.0, 40.0}}, identifier: 'person.crop.circle.fill', label: 'Account' <AX element pid: 5445, elementOrHash.elementID: 4658964240.149>
+                          StaticText, 0x104874f20, {{84.0, 745.7}, {112.0, 20.3}}, label: '16. rookie_jen' <AX element pid: 5445, elementOrHash.elementID: 4658965024.150>
+                          StaticText, 0x104875290, {{84.0, 770.0}, {109.0, 18.0}}, label: 'Rookie — 46 RP' <AX element pid: 5445, elementOrHash.elementID: 4658983040.151>
+                        Other, 0x104875610, {{369.0, 106.0}, {30.0, 712.0}}, label: 'Vertical scroll bar, 3 pages', value: 100% <AX element pid: 5445, elementOrHash.elementID: 4310678944.97>
+                          Other, 0x1048759b0, {{396.0, 473.0}, {3.0, 342.0}} <AX element pid: 5445, elementOrHash.elementID: 4658957696.152>
+                        Other, 0x104875d00, {{369.0, 106.0}, {30.0, 712.0}}, label: 'Vertical scroll bar, 3 pages', value: 100% <AX element pid: 5445, elementOrHash.elementID: 4310678944.97>
+                          Other, 0x104876060, {{396.0, 473.0}, {3.0, 342.0}} <AX element pid: 5445, elementOrHash.elementID: 4658957696.152>

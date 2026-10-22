@@ -1,0 +1,4 @@
+Query chain:
+ →Find: Target Application 'com.totl.ProjectCompB'
+  ↪︎Find: Descendants matching type Button
+    ↪︎Find: Elements matching predicate '"compactStandingBar" IN identifiers'
