@@ -2,8 +2,11 @@ import SwiftUI
 import CoreData
 
 struct LeaderboardView: View {
-    /// The logged-in player. If they're in the top 3, the leaderboard opens with a celebration.
+    /// The logged-in player. Placed players see a "Your Standing" card (a celebration in the
+    /// top 3) that collapses into a pinned bar once it scrolls off screen.
     var viewer: Player? = nil
+
+    @State private var standingCardVisible = true
 
     @FetchRequest(
         sortDescriptors: [SortDescriptor(\Player.rankPoints, order: .reverse)],
@@ -23,6 +26,7 @@ struct LeaderboardView: View {
     ) private var activeSeasons: FetchedResults<Season>
 
     var body: some View {
+        ScrollViewReader { proxy in
         ScrollView {
             VStack(spacing: 16) {
                 if let season = activeSeasons.first {
@@ -31,15 +35,14 @@ struct LeaderboardView: View {
                         .foregroundColor(.secondary)
                 }
 
-                if let place = viewerPlace, let viewer {
-                    PodiumCelebrationBanner(
-                        place: place,
-                        seasonName: activeSeasons.first?.name ?? "this season",
-                        rank: RankSystem.rankName(for: viewer.rankPoints),
-                        rankPoints: viewer.rankPoints
-                    )
+                standingHeader
                     .padding(.horizontal)
-                }
+                    .background(
+                        GeometryReader { geo in
+                            Color.clear.preference(key: StandingCardBottomKey.self,
+                                                   value: geo.frame(in: .named("leaderboard")).maxY)
+                        }
+                    )
 
                 if !inPlacement.isEmpty {
                     Text("\(inPlacement.count) player\(inPlacement.count == 1 ? "" : "s") still in placement games")
@@ -110,6 +113,7 @@ struct LeaderboardView: View {
                             }
                             .padding()
                             .cardStyle()
+                            .id(player.objectID)
                             .overlay {
                                 if let medal = Podium.color(for: index + 1) {
                                     RoundedRectangle(cornerRadius: 16)
@@ -124,16 +128,57 @@ struct LeaderboardView: View {
                 Spacer(minLength: 20)
             }
         }
+        .coordinateSpace(name: "leaderboard")
+        .onPreferenceChange(StandingCardBottomKey.self) { bottom in
+            let visible = bottom > 0
+            if visible != standingCardVisible {
+                withAnimation(.easeInOut(duration: 0.2)) { standingCardVisible = visible }
+            }
+        }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if !standingCardVisible, let standing, let viewer {
+                CompactStandingBar(standing: standing) {
+                    withAnimation { proxy.scrollTo(viewer.objectID, anchor: .center) }
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        }
         .background(Color("AppBackground").ignoresSafeArea())
         .navigationTitle("Leaderboard")
     }
 
-    /// The viewer's 1-based place if they're in the top 3 of placed Competitive players.
-    private var viewerPlace: Int? {
-        guard let viewer, let index = players.firstIndex(where: { $0.objectID == viewer.objectID }), index < 3 else {
-            return nil
+    /// Celebration for the top 3, a standing card for everyone else who's placed, and a
+    /// placement note for Competitive players who aren't placed yet.
+    @ViewBuilder
+    private var standingHeader: some View {
+        let seasonName = activeSeasons.first?.name ?? "this season"
+        if let standing {
+            if standing.place <= 3 {
+                PodiumCelebrationBanner(standing: standing, seasonName: seasonName)
+            } else {
+                StandingCard(standing: standing, seasonName: seasonName)
+            }
+        } else if let viewer, AppConstants.isRanked(viewer.membership), viewer.placementGamesRemaining > 0 {
+            VStack(spacing: 6) {
+                Text("You're in placement")
+                    .font(.headline)
+                Text("\(viewer.placementGamesRemaining) placement game\(viewer.placementGamesRemaining == 1 ? "" : "s") left. You'll appear on the leaderboard once you're placed.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(RoundedRectangle(cornerRadius: 20).fill(Color.accentColor.opacity(0.08)))
         }
-        return index + 1
+    }
+
+    /// The viewer's standing, if they're on the leaderboard.
+    private var standing: LeaderboardStanding? {
+        guard let viewer, let index = players.firstIndex(where: { $0.objectID == viewer.objectID }) else { return nil }
+        let ranking = players.map { (username: $0.username ?? "Unknown", rankPoints: $0.rankPoints) }
+        return LeaderboardStanding(ranking: ranking, index: index)
     }
 
     private func staffLabel(for player: Player) -> String? {
@@ -143,4 +188,11 @@ struct LeaderboardView: View {
         default: return nil
         }
     }
+}
+
+/// The bottom edge of the standing card in the leaderboard's scroll space. When it goes above
+/// 0, the card has scrolled off and the compact bar takes over.
+private struct StandingCardBottomKey: PreferenceKey {
+    static var defaultValue: CGFloat = .infinity
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
 }

@@ -42,10 +42,10 @@ final class MatchRecorderTests: XCTestCase {
 
     func testRecordAppliesRPAndAwards() throws {
         let players = try recordBasicGame()
-        XCTAssertEqual(players.map(\.rankPoints), [82, 55, 55, 39])
+        XCTAssertEqual(players.map(\.rankPoints), [76, 60, 49, 25])
 
         let games = players.compactMap { ($0.games as? Set<Game>)?.first }
-        XCTAssertEqual(games.map(\.rpDelta), [32, 5, 5, -11])
+        XCTAssertEqual(games.map(\.rpDelta), [26, 10, -1, -25])
         XCTAssertEqual(games.map(\.award), ["MVP", nil, "SVP", nil])
         XCTAssertEqual(games.map(\.won), [true, true, false, false])
         XCTAssertNotNil(games.first?.match?.season, "First game should start Season 1")
@@ -69,7 +69,7 @@ final class MatchRecorderTests: XCTestCase {
             MatchEntry(player: rookie, team: .a, stats: line(10, 5, 4, 1, 2)),
             MatchEntry(player: other, team: .b, stats: line(5, 3, 2, 0, 1))
         ], winner: .a, in: context)
-        XCTAssertEqual(rookie.rankPoints, 64)
+        XCTAssertEqual(rookie.rankPoints, 52)
         XCTAssertEqual(rookie.placementGamesRemaining, 4)
         XCTAssertEqual((rookie.games as? Set<Game>)?.first?.isPlacement, true)
     }
@@ -113,8 +113,8 @@ final class MatchRecorderTests: XCTestCase {
         try MatchRecorder.updateStats(of: a2Game, to: line(20, 8, 5, 1, 2), in: context)  // perf 35 > a1's 22
         XCTAssertEqual(a2Game.award, "MVP")
         XCTAssertNil((players[0].games as? Set<Game>)!.first!.award)
-        XCTAssertEqual(players[0].rankPoints, 50 + 22)
-        XCTAssertEqual(players[1].rankPoints, 50 + 45)
+        XCTAssertEqual(players[0].rankPoints, 50 + 21)
+        XCTAssertEqual(players[1].rankPoints, 50 + 32)
     }
 
     func testDeletingLastPlayerOnATeamRemovesTheWholeGame() throws {
@@ -140,7 +140,7 @@ final class MatchRecorderTests: XCTestCase {
 
     func testDeletingOneLineRescoresTheRest() throws {
         let players = try recordBasicGame()
-        // Remove a1 (the MVP). a2 becomes the only winner and MVP: max(0, 5) + 10 = 15.
+        // Remove a1 (the MVP). a2 becomes the only winner and MVP: win 10 + MVP 5 = 15.
         try MatchRecorder.delete((players[0].games as? Set<Game>)!.first!, in: context)
         XCTAssertEqual(players[0].rankPoints, 50)
         XCTAssertEqual(players[1].rankPoints, 65)

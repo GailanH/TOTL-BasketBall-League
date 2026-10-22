@@ -91,7 +91,7 @@ final class RankSystemTests: XCTestCase {
 
     func testBaseRPCapsAtGameLossCap() {
         let line = StatLine()
-        XCTAssertEqual(RankSystem.performanceScore(line, at: "Gold I"), -23)
+        XCTAssertEqual(RankSystem.performanceScore(line, at: "Gold I"), -41)
         XCTAssertEqual(RankSystem.baseRP(line, at: "Gold I"), -CompetitiveRules.gameLossCap)
     }
 

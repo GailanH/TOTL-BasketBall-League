@@ -195,8 +195,18 @@ final class LeagueFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["5. jaylen_w"].waitForExistence(timeout: 5), "Leaderboard didn't load after the timeline")
         XCTAssertEqual(app.state, .runningForeground, "App crashed opening the leaderboard after the timeline")
         XCTAssertFalse(app.staticTexts["You're #1!"].exists || app.staticTexts["You're #2!"].exists || app.staticTexts["You're #3!"].exists,
-                       "4th place shouldn't get the podium celebration")
-        snap("journey/leaderboard-fourth-place")
+                       "5th place shouldn't get the podium celebration")
+        XCTAssertTrue(app.descendants(matching: .any)["standingCard"].exists, "No Your Standing card for 5th place")
+        snap("journey/leaderboard-fifth-place")
+
+        // Scroll down: the card collapses into the pinned bar; tapping it jumps back to your row.
+        for _ in 0..<4 { drag(by: 1) }
+        let bar = app.buttons["compactStandingBar"]
+        XCTAssertTrue(bar.waitForExistence(timeout: 3), "Standing card didn't collapse into the pinned bar")
+        snap("journey/leaderboard-collapsed-bar")
+        bar.tap()
+        XCTAssertTrue(app.staticTexts["5. jaylen_w"].waitForExistence(timeout: 3))
+        snap("journey/leaderboard-after-tapping-bar")
     }
 
     // MARK: Player view

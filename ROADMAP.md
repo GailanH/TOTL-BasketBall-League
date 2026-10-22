@@ -18,7 +18,9 @@ Unified plan for the business, the app, and the fundraising. These tracks move t
 | D5 | Backend / sync | **Deferred** until the app and fundraising have traction. |
 | D6 | Funding mix | **Deferred.** Focus is the app for now. |
 | D7 | Launch format | **Decided:** start small, likely a rented 2-court gym, not a 6-court build. |
-| D8 | Tune the starting numbers in D3/D4 | Open. Best done with real games from a pilot league. |
+| D8 | Tune the starting numbers in D3/D4 | **Rebalanced 2026-10-21** against RP inflation (larger loss penalty, smaller for the SVP, symmetric stat scoring; drift +5.6 → +0.3 RP per player-game in simulation). Final tuning with pilot-league data. |
+| D9 | Included coaching format (1-on-1, group clinics, or paid add-on) | Open. At 1-on-1, Competitive members barely cover their own coaching (see cost model, Facility Monthly §1). |
+| D10 | Launch path | **Proposed 2026-10-21 (Gailan to confirm):** pilot league on rented courts first; lease own space only after pilot success gates are met. Gailan keeps the TrueLoyal job meanwhile. |
 
 ---
 
@@ -45,7 +47,9 @@ Unified plan for the business, the app, and the fundraising. These tracks move t
 
 ## Phase 2: Numbers and market
 **Business**
-- [ ] Startup cost model: lease/build-out, courts and flooring, equipment, F&B kitchen, POS/software, insurance, permits, pre-opening payroll. Do two scenarios, a pilot and the full 6-court facility.
+- [x] Startup cost model v1 (2026-10-21): `Project Comp-B/TOTL Startup Cost Model.xlsx`. Pilot league + own 2-court facility, break-even, 36-month projection, launch checklist. F&B kitchen and the 6-court facility left out for now.
+- [ ] Replace the yellow estimates with real quotes (court rental, insurance, lease NNN, contractor).
+- [ ] Close the facility gap: decide D9, test youth-club rentals, pricing, smaller/shared space.
 - [ ] Revenue model: memberships (Casual $35/$400, Competitive $45/$500), coaching, F&B, merchandise/jerseys, events/rentals, spectators. Include break-even member count and a 3-year projection.
 - [ ] San Antonio market research: comparable gyms and leagues, pricing, lease rates for warehouse/flex space, demand signals.
 - [ ] Legal/admin: business entity (e.g. LLC), name/trademark check for "TOTL", bank account, insurance, liability waivers.
@@ -103,6 +107,8 @@ CI runs `xcodebuild test` on every push/PR.
 ## Decisions log
 | Date | Decision |
 |---|---|
+| 2026-10-21 | Cost model v1 built. D10 (staged launch) proposed. |
+| 2026-10-21 | D8 rebalanced against RP inflation: win +10, loss -15, SVP -7, MVP +5, stats ±2 both ways at half weight. |
 | 2026-10-18 | D1: all 5 stats. D2: 50 RP per level. D3: 3-month seasons, soft reset, placement. D4: win/loss scoring with MVP/SVP. D5/D6 deferred. D7: start with a rented 2-court gym. Focus on the app for now. |
 | 2026-10-18 | Project scope is the business plan, prototype app, and fundraising plan, developed in parallel. Business planning is no longer deferred. |
 | 2026-08 | Only Competitive members are ranked. Ladder expanded to 14 tiers (Diamond, Elite) per the business plan. |

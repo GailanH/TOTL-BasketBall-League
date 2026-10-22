@@ -14,6 +14,26 @@ Open: what's left / next step
 
 ---
 
+## Iteration 11: 2026-10-21: Anti-inflation rebalance, Your Standing card
+Track: App
+Changed:
+- Fixed the crash when opening the Leaderboard after the Rank Timeline: rebuilt the journey chart from plain Swift Charts (unique ids, axis labels instead of RuleMark annotations). Confirmed by Gailan on the simulator.
+- Sample league: 40 games, about 15 per player.
+- Rebalanced scoring (simulated): old rules drifted +5.6 RP per player-game (about +83 a season) because winners always gained while losers barely lost, and below-average stats cost half what above-average stats earned. New rules: result-led, with win +10, loss -15, SVP -7 (a great game can still reach +5), MVP +5, winner minimum +3, stat score at half weight, stats ±2 per unit both ways. Drift is now about +0.3 per game. On the sample season, league-wide inflation fell from +1,416 to +367 RP (about 220 of that is placements), with 16 demotions instead of 4.
+- Leaderboard: every placed player gets a "Your Standing" card (place of total, tier progress bar, RP to next tier, gaps to the players above and below). The top 3 keep the celebration and also show their gaps. Players in placement get a note. When the card scrolls off it collapses into a pinned bar; tapping the bar jumps to your row.
+Decided: larger loss penalties, smaller for the SVP (Gailan). Inflation is handled in the scoring itself, with the season soft reset still re-spreading the ladder each season.
+Open: tune with pilot data (D8); consider an underdog adjustment (beating a higher-ranked team pays more).
+
+## Iteration 10: 2026-10-21: Startup cost model, staged launch plan
+Track: Business
+Changed:
+- Built `~/Documents/Project Comp-B/TOTL Startup Cost Model.xlsx` (formulas, all inputs on one Assumptions tab with sources). Tabs: Summary, Assumptions, Pilot League, Facility Monthly, Facility Startup, 3-Year Projection, Launch Checklist, Sources.
+- Researched San Antonio inputs: court rental ($36/hr Order On The Court; $50–90/hr City of SA Woodlawn Lake gym), CBRE Q1 2026 warehouse rent ($7.84/sf NNN), SA league prices (YMCA $70–100/team; Sportskind $125 free agent / $925 team), flooring and goal costs, insurance medians, Texas LLC ($300), USPTO ($350/class), SBA 7(a) basics.
+- Base-case results: business setup ~$4k. Pilot season (1 night, 60 players, $150 fee) loses ~$1.4k; ~69 players breaks even; ~$17k worst-case cash to launch. Own 2-court facility (15,000 sf warehouse): ~$680k cash to open (~$136k owner/crowdfunding + ~$544k loan at 20% equity), ~$48k/month fixed incl. loan.
+- Findings: (1) included coaching as 1-on-1 makes Competitive members worth ~$1/month after coaching cost; break-even 2,700 members. As group clinics: ~1,080 members. (2) Even with group clinics, the facility needs ~$310k more than the startup total during the ramp at 40 net members/month. (3) Texas Health Spa Act: annual plans or auto-pay require SOS registration ($100) + $20–50k security.
+Decided: open to renting court time or leasing a 2-court space ("whichever is possible"); takes it in steps. Running TOTL alongside the TrueLoyal job; no set cap on personal investment.
+Open: confirm D10 staged launch (proposed); D9 coaching format; get real quotes (court rental, insurance, lease NNN, contractor); set pilot success gates; check TrueLoyal employment agreement for outside-business/IP clauses; levers to close the facility gap (youth club rentals, pricing, smaller/shared space).
+
 ## Iteration 9: 2026-10-21: Podium celebration, rank journey timeline
 Track: App
 Changed:

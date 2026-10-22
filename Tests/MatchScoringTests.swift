@@ -13,13 +13,13 @@ final class MatchScoringTests: XCTestCase {
 
     func testBasicGame() {
         let outcomes = MatchScoring.score([
-            p(.a, 10, 5, 4, 1, 2),  // perf 22, winner, MVP → 22 + 10
-            p(.a, 5, 3, 2, 0, 1),   // perf 0, winner → minimum 5
-            p(.b, 9, 4, 3, 0, 1),   // perf 12, best loser (SVP) → capped at 5
-            p(.b, 0, 0, 0, 0, 0)    // perf -11, loser → -11
+            p(.a, 10, 5, 4, 1, 2),  // perf 22: win 10 + 22/2 + MVP 5 = 26
+            p(.a, 5, 3, 2, 0, 1),   // perf 0: win 10
+            p(.b, 9, 4, 3, 0, 1),   // perf 12, best loser (SVP): -7 + 6 = -1
+            p(.b, 0, 0, 0, 0, 0)    // perf -22 (stat score -20): -15 - 10 = -25
         ], winner: .a)
 
-        XCTAssertEqual(outcomes.map(\.rpChange), [32, 5, 5, -11])
+        XCTAssertEqual(outcomes.map(\.rpChange), [26, 10, -1, -25])
         XCTAssertEqual(outcomes.map(\.award), [.mvp, nil, .svp, nil])
         XCTAssertEqual(outcomes.map(\.won), [true, true, false, false])
     }
@@ -44,16 +44,34 @@ final class MatchScoringTests: XCTestCase {
     func testSVPLosesWhenEveryLoserPlayedBadly() {
         let outcomes = MatchScoring.score([
             p(.a, 20, 8, 5, 1, 2),
-            p(.b, 2, 1, 1, 0, 0),   // perf -7, still the best loser
-            p(.b, 0, 0, 0, 0, 0)    // perf -11
+            p(.b, 2, 1, 1, 0, 0),   // perf -14, still the best loser: -7 - 7 = -14
+            p(.b, 0, 0, 0, 0, 0)    // perf -22: -25
         ], winner: .a)
-        XCTAssertEqual(outcomes.map(\.rpChange), [45, -7, -11])
+        XCTAssertEqual(outcomes.map(\.rpChange), [32, -14, -25])
         XCTAssertEqual(outcomes[1].award, .svp)
     }
 
-    func testWinnerGainIsCapped() {
+    func testWinnerGainIsBounded() {
+        // Stat score clamps at +50, counts half: 10 + 25 + MVP 5.
         let outcomes = MatchScoring.score([p(.a, 99, 99, 99, 99, 99), p(.b, 5, 3, 2, 0, 1)], winner: .a)
-        XCTAssertEqual(outcomes[0].rpChange, CompetitiveRules.gameGainCap)
+        XCTAssertEqual(outcomes[0].rpChange, 40)
+    }
+
+    /// The SVP can still gain a little with a great game, even though their team lost.
+    func testGreatSVPGameCanGainALittle() {
+        let outcomes = MatchScoring.score([
+            p(.a, 5, 3, 2, 0, 1),
+            p(.b, 30, 10, 8, 2, 3),
+            p(.b, 0, 0, 0, 0, 0)
+        ], winner: .a)
+        XCTAssertEqual(outcomes.map(\.rpChange), [15, CompetitiveRules.svpMaxGain, -25])
+    }
+
+    /// The core anti-inflation property: losing costs more than winning earns at equal play.
+    func testAverageLossCostsMoreThanAverageWinEarns() {
+        let outcomes = MatchScoring.score([p(.a, 5, 3, 2, 0, 1), p(.a, 5, 3, 2, 0, 1),
+                                           p(.b, 5, 3, 2, 0, 1), p(.b, 5, 3, 2, 0, 1)], winner: .a)
+        XCTAssertEqual(outcomes.map(\.rpChange), [15, 10, -7, -15])
     }
 
     func testPlacementDoublesGainsAndLosses() {
@@ -61,7 +79,7 @@ final class MatchScoringTests: XCTestCase {
             p(.a, 10, 5, 4, 1, 2, placement: true),
             p(.b, 0, 0, 0, 0, 0, placement: true)
         ], winner: .a)
-        XCTAssertEqual(outcomes.map(\.rpChange), [64, -22])
+        XCTAssertEqual(outcomes.map(\.rpChange), [52, -34])
     }
 
     /// MVP is judged against each player's own tier, not raw stats, so a lower-ranked player
@@ -69,12 +87,12 @@ final class MatchScoringTests: XCTestCase {
     func testMVPUsesPerformanceAgainstOwnTier() {
         let outcomes = MatchScoring.score([
             p(.a, 18, 9, 6, 2, 4, rank: "Elite"),   // exactly Elite average → perf 0
-            p(.a, 10, 5, 3, 1, 2, rank: "Rookie"),  // well above Rookie → perf 20
+            p(.a, 10, 5, 3, 1, 2, rank: "Rookie"),  // well above Rookie → perf 20 → 10 + 10 + 5
             p(.b, 5, 3, 2, 0, 1)
         ], winner: .a)
         XCTAssertNil(outcomes[0].award)
         XCTAssertEqual(outcomes[1].award, .mvp)
-        XCTAssertEqual(outcomes.map(\.rpChange), [5, 30, 0])
+        XCTAssertEqual(outcomes.map(\.rpChange), [10, 25, -7])
     }
 
     func testTieGoesToMorePointsThenFirstListed() {

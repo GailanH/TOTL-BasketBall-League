@@ -22,12 +22,12 @@ final class SampleLeagueTests: XCTestCase {
             let p = try! context.fetch(players).first!
             return (p.rankPoints, p.placementGamesRemaining)
         }
-        XCTAssertEqual(rp("marcus_j").0, 821)
-        XCTAssertEqual(rp("kev_m").0, 684)
-        XCTAssertEqual(rp("rookie_ray").0, 247)
+        XCTAssertEqual(rp("marcus_j").0, 748)
+        XCTAssertEqual(rp("kev_m").0, 629)
+        XCTAssertEqual(rp("rookie_ray").0, 173)
         XCTAssertEqual(rp("rookie_ray").1, 0, "Placement should be finished")
-        XCTAssertEqual(rp("rookie_jen").0, 88)
-        XCTAssertEqual(rp("luis_g").0, 137)
+        XCTAssertEqual(rp("rookie_jen").0, 46)
+        XCTAssertEqual(rp("luis_g").0, 48)
 
         XCTAssertEqual(SampleLeague.load(in: context).title, "Already Loaded")
     }

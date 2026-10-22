@@ -16,11 +16,12 @@ enum Award: String {
 
 /// Pure win/loss scoring for one game (D4). No Core Data, so it's fully unit-testable.
 ///
-/// Rules (numbers in `CompetitiveRules`):
-/// - Each player's base RP is their stat line vs. their own tier's averages (`RankSystem.baseRP`).
-/// - Winners always gain: at least `winnerMinimumGain`. The MVP gets `mvpBonus` on top.
-/// - Losers can't gain, only break even or lose. The exception is the SVP, who can gain up to
-///   `svpMaxGain`. If the SVP also played below average, they lose RP like everyone else.
+/// Rules (numbers and formulas in `CompetitiveRules`):
+/// - Each player's stat score is their stat line vs. their own tier's averages (`RankSystem.baseRP`).
+/// - Winners gain the win bonus plus part of their stat score, never less than the minimum; the
+///   MVP gets a bonus on top.
+/// - Losers lose the loss penalty, softened by a good stat score but never turning into a gain.
+///   The SVP loses half as much, and a great SVP game can still earn a little.
 /// - Placement games multiply the final result by `placementMultiplier`.
 /// - MVP/SVP go to the best `performanceScore` on each team. Ties go to more points, then to
 ///   whoever is listed first.
@@ -79,8 +80,11 @@ enum MatchScoring {
             var award: Award? = nil
             var change: Int64
 
+            // Swift's `/` truncates toward zero, so -15 / 2 == -7.
+            let statPart = base / CompetitiveRules.performanceDivisor
+
             if won {
-                change = max(base, CompetitiveRules.winnerMinimumGain)
+                change = max(CompetitiveRules.winBonus + statPart, CompetitiveRules.winnerMinimumGain)
                 if i == mvpIndex {
                     award = .mvp
                     change += CompetitiveRules.mvpBonus
@@ -88,10 +92,11 @@ enum MatchScoring {
                 change = min(change, CompetitiveRules.gameGainCap)
             } else if i == svpIndex {
                 award = .svp
-                change = base > 0 ? min(base, CompetitiveRules.svpMaxGain) : base
+                change = min(-CompetitiveRules.svpLossPenalty + statPart, CompetitiveRules.svpMaxGain)
             } else {
-                change = min(base, 0)
+                change = min(-CompetitiveRules.lossPenalty + statPart, 0)
             }
+            change = max(change, -CompetitiveRules.maxGameLoss)
 
             if p.isPlacement {
                 change *= CompetitiveRules.placementMultiplier
