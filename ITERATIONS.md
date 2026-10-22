@@ -20,9 +20,9 @@ Changed:
 - Ran the app on Gailan's Mac (Xcode, iPhone 17 Pro Max simulator). It launched cleanly on the v2 data model. CI now publishes the generated Xcode project to the `generated-xcodeproj` branch, since the Mac has no XcodeGen.
 - UI tests (`UITests/LeagueFlowUITests`): record a game end to end, leaderboard rules, season reset, player view, sign-up. Screenshots go to the `ui-screenshots` branch.
 - Games CSV import (real staff feature) gained an optional `date` column and records games oldest first. Shared `CSVTable` reader and `AccountValidation` rules (sign-up uses them).
-- `DebugTools/` (Debug builds only, removable): demo launch arguments, plus "Load Sample League" (16 players, 18 games, built in because simulator file drag-and-drop didn't work) and "Import Test Accounts (CSV)" on Edit Player Accounts.
+- `DebugTools/` (Debug builds only, removable): demo launch arguments, plus "Load Sample League" on Edit Player Accounts (18 test players and 18 games, built in because simulator file drag-and-drop didn't work). A test-account CSV import was built and then removed: the sample league covers testing, and real members only come from sign-up.
 - The games CSV logic moved out of the Record Game screen into `GameCSVImporter`, shared by the file import and the sample league.
-Decided: test-account import is for testing only; real accounts always come from sign-up with a user-chosen password; nothing builds on DebugTools.
+Decided: no member/account import at all (removed; Gailan sees no future need); real accounts always come from sign-up with a user-chosen password; nothing builds on DebugTools.
 Open: Gailan to try the sample league; UI test for game flow to confirm green.
 
 ## Iteration 7: 2026-10-18: Seasons, win/loss scoring, MVP/SVP

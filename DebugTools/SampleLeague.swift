@@ -7,8 +7,9 @@ import CoreData
 /// members, and 18 three-on-three games from Sep 7 to Oct 18 that produce promotions and
 /// finish both placements. Every test account's password is `totl-demo-123`.
 ///
-/// Loaded with "Load Sample League" on Edit Player Accounts. It goes through the same importers
-/// as the CSV buttons (TestMemberImporter, then the real GameCSVImporter).
+/// Loaded with "Load Sample League" on Edit Player Accounts. The players are created directly
+/// (test accounts only; real members always sign up). The games go through the real
+/// GameCSVImporter and MatchRecorder, so they're scored exactly like real games.
 enum SampleLeague {
 
     struct LoadResult {
@@ -23,38 +24,69 @@ enum SampleLeague {
             return LoadResult(title: "Already Loaded", message: "The sample league is already in this app. Delete the app from the Simulator to start fresh.")
         }
 
-        let members = TestMemberImporter.importCSV(membersCSV, in: context)
-        guard !members.imported.isEmpty else {
-            return LoadResult(title: "Nothing Loaded", message: members.summary)
+        for (username, membership, startingRP) in members {
+            addPlayer(username, membership: membership, startingRP: startingRP, in: context)
+        }
+        do {
+            try context.save()
+        } catch {
+            context.rollback()
+            return LoadResult(title: "Nothing Loaded", message: "Couldn't save the sample players: \(error.localizedDescription)")
         }
         let games = GameCSVImporter.importCSV(gamesCSV, in: context)
         return LoadResult(
             title: "Sample League Loaded",
-            message: "\(members.summary)\n\(games.summary)\n\nTest accounts use the password totl-demo-123."
+            message: "\(members.count) test players added.\n\(games.summary)\n\nTest accounts use the password \(password)."
         )
     }
 
-    static let membersCSV = """
-username,email,membership,password,rank_points,joined
-marcus_j,marcus_j@example.com,Competitive,totl-demo-123,720,2026-09-01
-tasha_b,tasha_b@example.com,Competitive,totl-demo-123,640,2026-09-01
-dev_o,dev_o@example.com,Competitive,totl-demo-123,585,2026-09-01
-kev_m,kev_m@example.com,Competitive,totl-demo-123,530,2026-09-01
-rico_s,rico_s@example.com,Competitive,totl-demo-123,470,2026-09-01
-jaylen_w,jaylen_w@example.com,Competitive,totl-demo-123,430,2026-09-01
-bree_c,bree_c@example.com,Competitive,totl-demo-123,380,2026-09-01
-omar_h,omar_h@example.com,Competitive,totl-demo-123,330,2026-09-01
-nina_p,nina_p@example.com,Competitive,totl-demo-123,290,2026-09-01
-tyler_r,tyler_r@example.com,Competitive,totl-demo-123,240,2026-09-01
-zoe_k,zoe_k@example.com,Competitive,totl-demo-123,190,2026-09-01
-andre_l,andre_l@example.com,Competitive,totl-demo-123,140,2026-09-01
-mia_f,mia_f@example.com,Competitive,totl-demo-123,90,2026-09-01
-luis_g,luis_g@example.com,Competitive,totl-demo-123,40,2026-09-01
-rookie_ray,rookie_ray@example.com,Competitive,totl-demo-123,,2026-09-01
-rookie_jen,rookie_jen@example.com,Competitive,totl-demo-123,,2026-09-01
-casual_cam,casual_cam@example.com,Casual,totl-demo-123,,2026-09-01
-casual_dana,casual_dana@example.com,Casual,totl-demo-123,,2026-09-01
-"""
+    /// (username, membership, starting RP). Competitive players with a starting RP count as
+    /// already placed; `nil` means a new player who still has placement games.
+    static let members: [(String, String, Int64?)] = [
+        ("marcus_j", "Competitive", 720),
+        ("tasha_b", "Competitive", 640),
+        ("dev_o", "Competitive", 585),
+        ("kev_m", "Competitive", 530),
+        ("rico_s", "Competitive", 470),
+        ("jaylen_w", "Competitive", 430),
+        ("bree_c", "Competitive", 380),
+        ("omar_h", "Competitive", 330),
+        ("nina_p", "Competitive", 290),
+        ("tyler_r", "Competitive", 240),
+        ("zoe_k", "Competitive", 190),
+        ("andre_l", "Competitive", 140),
+        ("mia_f", "Competitive", 90),
+        ("luis_g", "Competitive", 40),
+        ("rookie_ray", "Competitive", nil),
+        ("rookie_jen", "Competitive", nil),
+        ("casual_cam", "Casual", nil),
+        ("casual_dana", "Casual", nil)
+    ]
+
+    static let password = "totl-demo-123"
+    static let joined = CSVTable.parseDate("2026-09-01")!
+
+    private static func addPlayer(_ username: String, membership: String, startingRP: Int64?,
+                                  in context: NSManagedObjectContext) {
+        let salt = PasswordHasher.generateSalt()
+        let player = Player(context: context)
+        player.username = username
+        player.email = "\(username)@example.com"
+        player.passwordSalt = salt
+        player.password = PasswordHasher.hash(password: password, salt: salt)
+        player.role = AppConstants.playerRole
+        player.membership = membership
+        player.rankPoints = startingRP ?? 0
+        player.placementGamesRemaining = startingRP == nil && membership == AppConstants.competitiveMembership
+            ? CompetitiveRules.placementGames : 0
+        let rank = RankSystem.rankName(for: player.rankPoints)
+        player.lastRank = rank
+        let change = RankChange(context: context)
+        change.id = UUID()
+        change.date = joined
+        change.newRank = rank
+        change.player = player
+    }
 
     static let gamesCSV = """
 game,date,username,team,result,points,rebounds,assists,blocks,steals

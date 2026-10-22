@@ -61,17 +61,36 @@ final class LeagueFlowUITests: XCTestCase {
         return scroll.exists ? scroll : app
     }
 
-    /// Opens a team's "Add Player" menu and chooses a player. Menu items are matched by their
-    /// label (the username); identifiers on menu items aren't reliably exposed.
+    /// Opens a team's "Add Player" menu and chooses a player. The identifier sits on the form
+    /// row; the menu opens from the button inside it. Menu items are matched by label.
     private func pick(_ username: String, forTeam team: String) {
-        let menu = app.buttons["addPlayer-\(team)"]
-        tap(menu)
-        let item = app.buttons[username].firstMatch
-        if !item.waitForExistence(timeout: 3) {
-            menu.tap()  // the first tap sometimes only focuses the row
+        let row = app.buttons["addPlayer-\(team)"]
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        let inner = row.buttons.firstMatch
+        let opener = inner.exists ? inner : row
+        tap(opener)
+
+        func menuItem() -> XCUIElement? {
+            [app.buttons[username], app.menuItems[username], app.staticTexts[username]]
+                .first { $0.exists && $0.isHittable }
         }
-        XCTAssertTrue(item.waitForExistence(timeout: 5), "Menu item \(username) didn't appear")
-        item.tap()
+        var item: XCUIElement?
+        for attempt in 0..<3 {
+            let deadline = Date().addingTimeInterval(3)
+            while item == nil && Date() < deadline {
+                item = menuItem()
+                if item == nil { usleep(200_000) }
+            }
+            if item != nil { break }
+            if attempt == 0 {
+                opener.tap()
+            } else {
+                opener.press(forDuration: 0.6)  // some menus open on long press
+            }
+        }
+        if item == nil { snap("debug/menu-not-open-\(username)") }
+        XCTAssertNotNil(item, "Menu item \(username) didn't appear")
+        item?.tap()
     }
 
     private func type(_ text: String, into element: XCUIElement) {

@@ -20,7 +20,7 @@ Business planning is **not** deferred anymore. When an app decision depends on a
 - Keep replies concise and direct.
 - Prioritize correctness and robustness over new features, unless a feature is needed for the demo or the fundraising plan.
 - Keep business rules in one place in code: `CompetitiveRules.swift` (tunable numbers), `RankSystem.swift`/`MatchScoring.swift` (scoring), `AppConstants.swift` (roles, memberships), `GameStatBounds.swift` (stat sanity limits). Never duplicate them in views.
-- **`DebugTools/` is testing-only** (Debug builds, `#if DEBUG`): demo launch arguments, test-account CSV import, sample data. Never build real features on it, and never create real accounts outside sign-up. Real members choose their own password. Removal steps: `DebugTools/README.md`.
+- **`DebugTools/` is testing-only** (Debug builds, `#if DEBUG`): demo launch arguments and the "Load Sample League" button. Never build real features on it, and never create real accounts outside sign-up. Real members choose their own password. Removal steps: `DebugTools/README.md`.
 - Sources of truth if they disagree: Gailan's latest stated decision > `ROADMAP.md` decisions log > business plan docx > code.
 
 ## Repo / build state
