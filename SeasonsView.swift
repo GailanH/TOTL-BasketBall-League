@@ -37,6 +37,7 @@ struct SeasonsView: View {
                 Button(active == nil ? "Start Season 1" : "Start New Season", role: active == nil ? ButtonRole?.none : .destructive) {
                     confirmNewSeason = true
                 }
+                .accessibilityIdentifier("startSeasonButton")
             }
 
             Section(header: Text("How a new season works")) {
@@ -75,6 +76,7 @@ struct SeasonsView: View {
             titleVisibility: .visible
         ) {
             Button(active == nil ? "Start Season 1" : "Start New Season", role: .destructive) { startSeason() }
+                .accessibilityIdentifier("confirmStartSeason")
             Button("Cancel", role: .cancel) {}
         }
     }

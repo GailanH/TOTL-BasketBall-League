@@ -88,6 +88,15 @@ struct AddGameView: View {
         .scrollContentBackground(.hidden)
         .background(Color("AppBackground").ignoresSafeArea())
         .navigationTitle("Record Game")
+        .toolbar {
+            // Number pads have no Return key; this lets staff dismiss the keyboard.
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                }
+            }
+        }
         .alert(item: $resultAlert) { alert in
             Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("OK")))
         }
@@ -125,11 +134,13 @@ struct AddGameView: View {
                 Button(player.username ?? "Unknown") {
                     drafts.append(Draft(player: player, team: team))
                 }
+                .accessibilityIdentifier("pick-\(player.username ?? "")")
             }
         } label: {
             Label("Add Player", systemImage: "plus.circle")
         }
         .disabled(available.isEmpty)
+        .accessibilityIdentifier("addPlayer-\(team.rawValue)")
     }
 
     @ViewBuilder
@@ -391,6 +402,7 @@ private struct DraftRow: View {
             Text(label).font(.caption2).foregroundColor(.secondary)
             TextField("0", text: text)
                 .keyboardType(.numberPad)
+                .accessibilityIdentifier("stat-\(draft.player.username ?? "")-\(label)")
                 .multilineTextAlignment(.center)
                 .textFieldStyle(.roundedBorder)
         }

@@ -17,7 +17,11 @@ struct ContentView: View {
         .onAppear {
             guard !didAttemptRestore else { return }
             didAttemptRestore = true
-            loggedInPlayer = SessionStore.restore(in: viewContext)
+            if DemoData.isUITesting {
+                SessionStore.save(nil)
+            }
+            DemoData.seedIfRequested(in: viewContext)
+            loggedInPlayer = DemoData.loginPlayer(in: viewContext) ?? SessionStore.restore(in: viewContext)
         }
         .onChange(of: loggedInPlayer) { newValue in
             SessionStore.save(newValue)

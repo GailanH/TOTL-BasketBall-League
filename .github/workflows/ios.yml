@@ -50,7 +50,39 @@ jobs:
             -project Project_Comp_B.xcodeproj \
             -scheme Project_Comp_B \
             -destination "id=$SIM_ID" \
+            -resultBundlePath TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO 2>&1 | tee build.log
+
+      # Publish UI-test screenshots to the `ui-screenshots` branch (even when tests fail, which
+      # is when they're most useful), so they can be reviewed with plain git.
+      - name: Publish UI test screenshots
+        if: always() && github.event_name != 'pull_request'
+        run: |
+          [ -d TestResults.xcresult ] || { echo "No test results"; exit 0; }
+          SRC=$(git rev-parse --short HEAD)
+          OUT=$(mktemp -d)
+          xcrun xcresulttool export attachments --path TestResults.xcresult --output-path "$OUT/raw" || { echo "Attachment export failed"; exit 0; }
+          mkdir -p "$OUT/repo/screenshots"
+          # Rename exported files to their attachment names using the manifest.
+          python3 - "$OUT/raw" "$OUT/repo/screenshots" <<'PY'
+          import json, os, shutil, sys
+          raw, dest = sys.argv[1], sys.argv[2]
+          manifest = json.load(open(os.path.join(raw, "manifest.json")))
+          for test in manifest:
+              for a in test.get("attachments", []):
+                  name = a.get("suggestedHumanReadableName") or a["exportedFileName"]
+                  base = name.split("_0_")[0] if "_0_" in name else os.path.splitext(name)[0]
+                  ext = os.path.splitext(a["exportedFileName"])[1] or ".png"
+                  shutil.copy(os.path.join(raw, a["exportedFileName"]), os.path.join(dest, base + ext))
+          PY
+          grep -E "Test Case .* (passed|failed)|XCTAssert|error:" build.log | sort -u > "$OUT/repo/RESULTS.txt" || true
+          cd "$OUT/repo"
+          git init -q -b ui-screenshots
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "UI test screenshots from $SRC"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" ui-screenshots
 
       # Surface compiler errors and test failures as annotations, readable without the full log.
       - name: Report errors

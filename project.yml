@@ -50,6 +50,7 @@ targets:
           - "*.xcodeproj"
           - "Info.plist"
           - "Tests"
+          - "UITests"
           - "build"
           - "DerivedData"
     settings:
@@ -75,12 +76,28 @@ targets:
     dependencies:
       - target: Project_Comp_B
 
+  Project_Comp_BUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: UITests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: 5.0
+        TEST_TARGET_NAME: Project_Comp_B
+    dependencies:
+      - target: Project_Comp_B
+
 schemes:
   Project_Comp_B:
     build:
       targets:
         Project_Comp_B: all
         Project_Comp_BTests: [test]
+        Project_Comp_BUITests: [test]
     test:
       targets:
         - Project_Comp_BTests
+        - Project_Comp_BUITests
