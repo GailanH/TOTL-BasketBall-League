@@ -36,9 +36,10 @@ enum SampleLeague {
         }
         let games = GameCSVImporter.importCSV(gamesCSV, in: context)
         backdateSeasonStart(in: context)
+        let nights = addVenuesAndGameNights(in: context)
         return LoadResult(
             title: "Sample League Loaded",
-            message: "\(members.count) test players added.\n\(games.summary)\n\nTest accounts use the password \(password)."
+            message: "\(members.count) test players added.\n\(games.summary)\n\(nights)\n\nTest accounts use the password \(password)."
         )
     }
 
@@ -78,6 +79,38 @@ enum SampleLeague {
         season.startDate = firstGame
         season.endDate = SeasonManager.scheduledEnd(from: firstGame)
         try? context.save()
+    }
+
+    /// Two clearly-labelled sample venues and upcoming game nights (Tuesdays and Thursdays at
+    /// 7 PM league time for the next three weeks, one of them cancelled), through the real store.
+    private static func addVenuesAndGameNights(in context: NSManagedObjectContext) -> String {
+        let store = CoreDataGameNightStore(context: context)
+        let gym = VenueRecord(name: "Sample Rec Center (test data)", address: "100 Military Plaza, San Antonio, TX 78205",
+                              courtCount: 2, notes: "Test data. Park in the side lot and use the east entrance.")
+        let plex = VenueRecord(name: "Sample Sportsplex (test data)", address: "300 Alamo Plaza, San Antonio, TX 78205",
+                               courtCount: 4, notes: "Test data. Check in at the front desk.")
+        do {
+            try store.saveVenue(gym)
+            try store.saveVenue(plex)
+            let calendar = LeagueSettings.calendar
+            var created = 0
+            var day = calendar.startOfDay(for: Date())
+            while created < 6 {
+                day = calendar.date(byAdding: .day, value: 1, to: day)!
+                let weekday = calendar.component(.weekday, from: day)  // 3 = Tue, 5 = Thu
+                guard weekday == 3 || weekday == 5 else { continue }
+                var night = GameNightRecord.newNight(on: day, at: weekday == 3 ? gym : plex)
+                night.courtsInUse = weekday == 3 ? 2 : 3
+                night.capacity = weekday == 3 ? 24 : 36
+                if created == 0 { night.notes = "Season 1 kickoff. Bring a light and a dark shirt." }
+                try store.saveGameNight(night, createdBy: nil)
+                if created == 3 { try store.cancelGameNight(id: night.id) }
+                created += 1
+            }
+            return "2 sample venues and \(created) upcoming game nights added (1 cancelled)."
+        } catch {
+            return "Couldn't add sample game nights: \(error.localizedDescription)"
+        }
     }
 
     private static func addPlayer(_ username: String, membership: String, startingRP: Int64?,

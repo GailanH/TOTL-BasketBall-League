@@ -210,6 +210,59 @@ final class LeagueFlowUITests: XCTestCase {
         snap("journey/leaderboard-after-tapping-bar")
     }
 
+    // MARK: Game nights (MVP build step 1)
+
+    /// Staff add a venue and a game night from scratch; it shows up on the dashboard.
+    func testStaffCreatesVenueAndGameNight() {
+        launch(["-seedDemoData", "-loginAs", "coach_demo"])
+        XCTAssertTrue(app.staticTexts["Welcome, coach_demo!"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Upcoming Game Nights"].exists)
+        snap("nights/dashboard-empty")
+
+        tap(app.buttons["Game Nights"])
+        tap(app.buttons["Venues"])
+        tap(app.buttons["addVenue"])
+        type("Test Rec Center", into: app.textFields["venueName"])
+        // Multi-line text fields may surface as text views.
+        type("1523 Rigsby Ave, San Antonio, TX 78210", into: app.descendants(matching: .any)["venueAddress"].firstMatch)
+        snap("nights/venue-editor")
+        app.buttons["saveVenue"].tap()
+        XCTAssertTrue(app.staticTexts["Test Rec Center"].waitForExistence(timeout: 5))
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()  // back to Game Nights
+        tap(app.buttons["newGameNight"])
+        XCTAssertTrue(app.navigationBars["New Game Night"].waitForExistence(timeout: 5))
+        snap("nights/night-editor")
+        app.buttons["saveGameNight"].tap()
+        XCTAssertTrue(app.navigationBars["Game Nights"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'Test Rec Center'")).firstMatch.waitForExistence(timeout: 5))
+        snap("nights/manage-list")
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()  // Dashboard
+        XCTAssertTrue(app.descendants(matching: .any)["gameNightRow"].firstMatch.waitForExistence(timeout: 5),
+                      "New game night isn't on the dashboard")
+        snap("nights/dashboard-with-night")
+    }
+
+    /// A player sees the sample league's upcoming nights and opens one.
+    func testPlayerSeesUpcomingNightAndDetail() {
+        launch(["-loadSampleLeague", "-loginAs", "jaylen_w"])
+        XCTAssertTrue(app.staticTexts["Welcome, jaylen_w!"].waitForExistence(timeout: 10))
+        let row = app.descendants(matching: .any)["gameNightRow"].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        snap("nights/player-dashboard")
+        tap(row)
+        XCTAssertTrue(app.buttons["Open in Maps"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Add to Calendar"].exists)
+        XCTAssertTrue(app.staticTexts["San Antonio time"].exists)
+        snap("nights/player-detail")
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        tap(app.buttons["See all"])
+        XCTAssertTrue(app.navigationBars["Game Nights"].waitForExistence(timeout: 5))
+        snap("nights/player-all-upcoming")
+    }
+
     // MARK: Player view
 
     func testCompetitivePlayerDashboardAndOverview() {

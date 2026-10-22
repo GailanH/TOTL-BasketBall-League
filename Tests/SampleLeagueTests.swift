@@ -30,6 +30,14 @@ final class SampleLeagueTests: XCTestCase {
         XCTAssertEqual(rp("luis_g").0, 48)
         XCTAssertEqual(rp("bree_c").0, 327, "G41 underdog win (three Silvers over Gold+)")
 
+        let nightStore = CoreDataGameNightStore(context: context)
+        XCTAssertEqual(try nightStore.venues(includeInactive: true).count, 2)
+        let nights = try nightStore.allGameNights()
+        XCTAssertEqual(nights.count, 6)
+        XCTAssertEqual(nights.filter(\.isCancelled).count, 1)
+        XCTAssertTrue(nights.allSatisfy { $0.startDate > Date() })
+        XCTAssertTrue(nights.allSatisfy { GameNightFormat.time($0.startDate) == "7:00 PM" })
+
         XCTAssertEqual(SampleLeague.load(in: context).title, "Already Loaded")
     }
 }

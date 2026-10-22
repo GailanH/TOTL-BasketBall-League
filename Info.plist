@@ -29,6 +29,10 @@
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<true/>
 	</dict>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>TOTL adds game nights you choose to your calendar.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>TOTL adds game nights you choose to your calendar.</string>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>

@@ -31,7 +31,7 @@ Business planning is **not** deferred anymore. When an app decision depends on a
 - CI (`.github/workflows/ios.yml`) runs `xcodebuild test` on GitHub macOS runners with the default Xcode and an available iPhone simulator. On failure, compiler errors and failed tests appear as a job annotation (readable via `gh api .../check-runs/<job>/annotations`, since raw logs may be blocked).
 - `.claude/` and `build/` are gitignored.
 
-## Data model (`Project_Comp_B.xcdatamodeld`, versioned, current = v2)
+## Data model (`Project_Comp_B.xcdatamodeld`, versioned, current = v3)
 
 - **Player**: username, email, password (hash), passwordSalt, role, membership, rankPoints, lastRank, placementGamesRemaining, profileImage. Relationships: games, coachingSessions, rankChanges.
 - **Match**: one played game. id, date, winningTeam ("A"/"B"). Relationships: season, games (one per player, cascade).
@@ -39,6 +39,9 @@ Business planning is **not** deferred anymore. When an app decision depends on a
 - **Season**: number, name, startDate, endDate, isActive. Relationships: matches, rankChanges.
 - **RankChange**: id, newRank, date, reason ("game"/"seasonReset"). Relationships: player, season.
 - **CoachingSession**: title, coachName, date, isBooked. Relationship: player.
+- **Venue** (v3): id, name, address, latitude/longitude (optional), mapURL, courtCount, notes, isActive. Relationship: gameNights.
+- **GameNight** (v3): id, startDate, endDate (absolute/UTC), courtsInUse, capacity, status (scheduled/full/cancelled/completed), notes, updatedAt. Relationships: venue, season, createdBy (Player), matches. `Match.gameNight` is optional.
+- Venues and game nights are accessed only through `GameNightStore` (protocol) with plain records (`GameNightModels.swift`); `CoreDataGameNightStore` is today's implementation. League ops settings (time zone America/Chicago, defaults) live in `LeagueSettings.swift`.
 - Roles: `player`, `employee_pending`, `employee`, `administrator`. Memberships: `Casual`, `Competitive`, `Deactivated`. Only Competitive members are ranked.
 - **Schema changes:** add a new model version (never edit the current one in place) so existing data migrates.
 

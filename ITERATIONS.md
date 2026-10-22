@@ -14,6 +14,18 @@ Open: what's left / next step
 
 ---
 
+## Iteration 14: 2026-10-21: MVP build step 1: Venues and Game Nights
+Track: App
+Changed:
+- Underdog bonus now scales with the gap: +5 per metal, capped at +10. Favorites lose the normal amount (Gailan).
+- Data model v3 (migrates automatically): `Venue` (name, address, optional lat/long, map link, courts, notes, active) and `GameNight` (venue, start/end, courts in use, capacity, status, notes, season, created by). A `Match` can belong to a game night.
+- `GameNightStore` protocol with a Core Data implementation. Screens use plain records (`VenueRecord`, `GameNightRecord`) and never touch Core Data, so a backend (D5) can replace the store. Dates are stored as absolute (UTC) times and shown in San Antonio time. `LeagueSettings.swift` holds time zone, defaults and display windows.
+- Staff: Game Nights screen (upcoming and past), create/edit/cancel game nights (times entered in San Antonio time), venues list and editor. Saving reports time/venue/cancel changes for step 3's notifications.
+- Players: Upcoming Game Nights on the dashboard (empty state when none), a full list, and a detail screen with Open in Maps, Add to Calendar (system event sheet; no permission needed on iOS 17+) and Share (when and where, for social media and group chats).
+- Sample league adds 2 test venues and 6 upcoming nights (1 cancelled). Tests: model rules, formatting, store behaviour; UI tests for staff creating a venue and night and a player opening one.
+Decided: push as you go during the MVP build (Gailan).
+Open: step 2 (RSVP, waitlist, check-in, balanced teams). Spots left needs RSVPs, so the list shows capacity for now.
+
 ## Iteration 13: 2026-10-21: Underdog wins
 Track: App
 Changed:

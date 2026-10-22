@@ -40,6 +40,9 @@ struct DashboardView: View {
                                 .padding(.horizontal)
                         }
 
+                        UpcomingGameNightsSection()
+                            .padding(.top, 8)
+
                         Divider().padding(.vertical)
 
                         NavigationLink(value: DashboardRoute.playerOverview) {
@@ -72,6 +75,11 @@ struct DashboardView: View {
                                 Text("Record Game")
                             }
                             .buttonStyle(.borderedProminent)
+
+                            NavigationLink(value: DashboardRoute.manageGameNights) {
+                                Text("Game Nights")
+                            }
+                            .buttonStyle(.bordered)
 
                             NavigationLink(value: DashboardRoute.seasons) {
                                 Text("Seasons")
@@ -114,6 +122,14 @@ struct DashboardView: View {
                         LeaderboardView(viewer: player)
                     case .seasons:
                         SeasonsView()
+                    case .upcomingGameNights:
+                        UpcomingGameNightsView()
+                    case .gameNight(let id):
+                        GameNightDetailView(nightID: id)
+                    case .manageGameNights:
+                        ManageGameNightsView(staffUsername: player?.username)
+                    case .venues:
+                        VenuesView()
                     case .editAccounts:
                         if let player = player {
                             EditAccountsView(currentEmployee: player)
