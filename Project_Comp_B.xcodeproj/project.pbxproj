@@ -1,0 +1,736 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0977D7E59F155BE0386EFBCD /* SeasonManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_F5EC1DE0-F932-4E6C-9735-15E9591FAB06" /* SeasonManager.swift */; };
+		0C11EFC1EACBB8626DDF420F /* MatchRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_7BAB182A-BAEB-4C29-97D9-0D102745AC2A" /* MatchRecorder.swift */; };
+		0E204BFE1E51C4D354703E46 /* CompetitiveRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_6EE593B7-494E-4C92-A20B-7131B24C49F0" /* CompetitiveRules.swift */; };
+		0F6CA795623E3FF16BCBCD8F /* MatchScoringTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E06BA013C00714EB3AE778BD /* MatchScoringTests.swift */; };
+		1097D46517E52F640A56DD13 /* EditAccountsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_2D651971-9B6C-4BDA-9D48-DB7EAA8E129E" /* EditAccountsView.swift */; };
+		27CED7C006EB0857259E961A /* GameNightTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F51F5721F395C5EDF9B043 /* GameNightTests.swift */; };
+		2F0690F33208A82050020AFA /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_1421EC44-4634-41B6-91EC-4230616B78CF" /* AppConstants.swift */; };
+		34BF2B346996C0761D74482A /* PasswordField.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_22F05802-6750-4585-BBBD-B02E54C3405E" /* PasswordField.swift */; };
+		385D6C176C33D3BFFB37250F /* StaffGameNightViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_6CBC34E4-9635-4B34-B519-30DB3E5F3335" /* StaffGameNightViews.swift */; };
+		38F98B73AEF43E6E84EEB2E1 /* GameCSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_D64A57E0-7DFE-4040-98A1-12230E5842EC" /* GameCSVImporter.swift */; };
+		3F165312751088F642BAEB81 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = "TEMP_3198A7E8-8ED1-428A-B266-4C8A1D1B48FF" /* Assets.xcassets */; };
+		3F5B7810BD46A0A82ADB6B3C /* RankSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_478283E3-AEF5-4EDE-842A-1E46B5DBE065" /* RankSystem.swift */; };
+		439A68A95348B56DB7D5D3DB /* DashboardRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_62413868-FA0D-4D40-A688-4D74F7914980" /* DashboardRoute.swift */; };
+		4935E4F93B19BE3CCAFB595D /* DemoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89C5B4ECC52FD87906931263 /* DemoData.swift */; };
+		5561A5AACB8E7378526A68EB /* RankHistoryTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_BF8A6697-0700-475B-BCF1-AA2D63B2DEF6" /* RankHistoryTimelineView.swift */; };
+		58CA57E6D5AE9BEE88CA749F /* PasswordHasherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43D6619BC5ADFD5B0CABE392 /* PasswordHasherTests.swift */; };
+		629E54D24DBE5A66742EDCFF /* LeagueSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_A56B6B86-C79F-4008-A80D-42F540EA485D" /* LeagueSettings.swift */; };
+		6CA040D6220A22EFE5D5D7DF /* AddSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_AA88B600-D79F-4E2F-9C60-12C0E765470D" /* AddSessionView.swift */; };
+		729BB40804F24583AC6EBB17 /* AccountValidation.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_00A9BEAF-48EA-44CF-84D4-9B2ABA677ECE" /* AccountValidation.swift */; };
+		75268791E01376DEF777BD55 /* RankSystemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F83822CF80B0DE19C889FE3 /* RankSystemTests.swift */; };
+		77F29CAE2F490CED09032C5F /* LeaderboardCelebration.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_21417999-E7E1-4CB7-8A0E-D7B9C8E6F330" /* LeaderboardCelebration.swift */; };
+		7B7C77684F4D26DBE6BE3BEE /* MatchScoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_C5FD4F56-8277-463E-A446-FCF340515093" /* MatchScoring.swift */; };
+		7BABB0AEFEB3FBD3F9968ACF /* LeaderboardStandingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A318956526D7CE076D3ED08 /* LeaderboardStandingTests.swift */; };
+		7C7A95FA4A169F8998C2DCB3 /* Project_Comp_B.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_77E03864-E0C9-436B-8058-554FC529E7DD" /* Project_Comp_B.xcdatamodeld */; };
+		8048A73F349E3A9F5DA461CF /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_8F23AC5E-4081-435F-940F-033001F78C5E" /* LoginView.swift */; };
+		80B90F5475EDF9093AF45A27 /* MatchRecorderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8491BD85AF4B03B66CF63F7A /* MatchRecorderTests.swift */; };
+		85EB91806FA4992BE98F2E38 /* SampleLeague.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCBD8AA6F41F16686EE4153B /* SampleLeague.swift */; };
+		890A4E880BE0B91864389BA1 /* PasswordHasher.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_3688EEC5-9B06-458E-AE6D-BECFAAC13F7D" /* PasswordHasher.swift */; };
+		8A135091132C57BABB420B83 /* LeagueFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2D7EF749D9C97C1AE61E0C9 /* LeagueFlowUITests.swift */; };
+		8C7EA7B1F1F468EC06E8DF74 /* RankJourney.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_0D298071-21B6-4147-8E57-F493A2923ED1" /* RankJourney.swift */; };
+		90976652E0CF7A2776C47904 /* GameStatBounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_EC1F6876-3FA0-4359-882B-E43D8857085C" /* GameStatBounds.swift */; };
+		93B5E6298CF776980E1C8E26 /* CardStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_36CF452A-03A9-45E9-A83B-1A14575708EA" /* CardStyle.swift */; };
+		96424F374D5A9C6D8FCA9848 /* SampleLeagueButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BED4832727A44C40F7F98D7 /* SampleLeagueButton.swift */; };
+		9AFFF268FBB0559D88FBA2AE /* Project_Comp_BApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_CB3529FB-6B96-48A3-B65B-424AC7DB9637" /* Project_Comp_BApp.swift */; };
+		A7C8A7C6852F9949BD8D2749 /* CSVTableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F153AD3C06BE41091F369D2 /* CSVTableTests.swift */; };
+		AB76DD2C8179CB309FDD64D5 /* GameNightModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_A69AA51B-3EEA-4A02-A686-5BE4B251AC13" /* GameNightModels.swift */; };
+		B1AABC6E1552D6EC34BEB462 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_5EC1907F-E7DA-4D99-8772-A9DBA774FA76" /* Persistence.swift */; };
+		BA61F2D36C62881E7E97B4A6 /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_BF819BA9-5D4F-4D87-B0F2-50CCD41963C0" /* EditProfileView.swift */; };
+		BFB72D10B1CD5AC19BEF1551 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_702DD330-8875-418B-AA4E-F9D733B59C35" /* SessionStore.swift */; };
+		C1EA6390257829598FFA3F3B /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_5EE8E42B-6F70-43F5-A0EF-B99CBDA6C505" /* DashboardView.swift */; };
+		D35AA0EF9ABAE4D9DC123BA9 /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_1EB67C17-D50B-435F-8ED9-A4C968DAB501" /* ImagePicker.swift */; };
+		D5BB4EC5B985215A330309DA /* LeaderboardStanding.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_9C0AAE28-9384-4EA2-9AA0-1A64F025BDFD" /* LeaderboardStanding.swift */; };
+		D752EAE5CBD579C9868F7D08 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_4D838D2E-8694-4425-B294-4998B82E8683" /* ContentView.swift */; };
+		E3C0CFD9331AB12444E58EEA /* CoachingListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_C0359D0F-D4BB-4124-ADFE-777ECDCE544F" /* CoachingListView.swift */; };
+		E75CDA0F363AB90B5E127525 /* AddGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_EC36A9EB-2FAF-4FE5-B03F-BD8F2A3BEEE9" /* AddGameView.swift */; };
+		EA4E647B8AE940C159D4367A /* EditGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_4D2E1574-2E1E-4D8D-AD26-F5331B61291F" /* EditGameView.swift */; };
+		EF5F95DACFB9C073ABD71AC3 /* SampleLeagueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E381D740297A86E4746DECF1 /* SampleLeagueTests.swift */; };
+		EF8B459D9CD70EB26C13C2F2 /* GameNightViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_B9A2E643-DA59-4308-9841-B7BFD2E564C8" /* GameNightViews.swift */; };
+		F0043E795A2522AD4A80EAB9 /* GameNightStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_79A26263-2298-49E5-8B13-588D9CDB15FE" /* GameNightStore.swift */; };
+		F61E1C6E16B4B2B7106DE55C /* LeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_EE6BBFFC-A357-4989-96FE-AB5089F61B24" /* LeaderboardView.swift */; };
+		F84A8E7AC6832030DB417910 /* PlayerOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_757C190D-9806-4142-A58D-D5C93D37C52A" /* PlayerOverviewView.swift */; };
+		F9C27DB5A9B903C699B3E4E6 /* AppConstantsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAAD38FBB5DF95704B32E77C /* AppConstantsTests.swift */; };
+		FA8F84819939C42B1D7AB596 /* EditPlayerDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_5EC66E14-BB32-4701-81C6-102A922A73B2" /* EditPlayerDetailView.swift */; };
+		FD915B55D7FD92F860A809CD /* SeasonsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_D2A5A4BF-EC02-45E6-B6E7-E51272EE23B0" /* SeasonsView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8EF91286623F600F3989CACF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9AF0DBA6456386FE4EFDA293 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6663132FA94F31F1E28DAC50;
+			remoteInfo = Project_Comp_B;
+		};
+		F6C1A3B1640675C8420A3EF7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9AF0DBA6456386FE4EFDA293 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6663132FA94F31F1E28DAC50;
+			remoteInfo = Project_Comp_B;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		3A318956526D7CE076D3ED08 /* LeaderboardStandingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardStandingTests.swift; sourceTree = "<group>"; };
+		3BED4832727A44C40F7F98D7 /* SampleLeagueButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleLeagueButton.swift; sourceTree = "<group>"; };
+		3F153AD3C06BE41091F369D2 /* CSVTableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVTableTests.swift; sourceTree = "<group>"; };
+		43D6619BC5ADFD5B0CABE392 /* PasswordHasherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordHasherTests.swift; sourceTree = "<group>"; };
+		66F51F5721F395C5EDF9B043 /* GameNightTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameNightTests.swift; sourceTree = "<group>"; };
+		6F83822CF80B0DE19C889FE3 /* RankSystemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankSystemTests.swift; sourceTree = "<group>"; };
+		82846F26AEC92809647E35A0 /* Project_Comp_BTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = Project_Comp_BTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8491BD85AF4B03B66CF63F7A /* MatchRecorderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchRecorderTests.swift; sourceTree = "<group>"; };
+		89C5B4ECC52FD87906931263 /* DemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoData.swift; sourceTree = "<group>"; };
+		B2D7EF749D9C97C1AE61E0C9 /* LeagueFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeagueFlowUITests.swift; sourceTree = "<group>"; };
+		BC7215848F3085FCB0001D1A /* Project_Comp_BUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = Project_Comp_BUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BCBD8AA6F41F16686EE4153B /* SampleLeague.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleLeague.swift; sourceTree = "<group>"; };
+		E06BA013C00714EB3AE778BD /* MatchScoringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchScoringTests.swift; sourceTree = "<group>"; };
+		E381D740297A86E4746DECF1 /* SampleLeagueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleLeagueTests.swift; sourceTree = "<group>"; };
+		EAAD38FBB5DF95704B32E77C /* AppConstantsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstantsTests.swift; sourceTree = "<group>"; };
+		EDA4E91DAA5CEF338B89F641 /* Project_Comp_B.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Project_Comp_B.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		"TEMP_00A9BEAF-48EA-44CF-84D4-9B2ABA677ECE" /* AccountValidation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountValidation.swift; sourceTree = "<group>"; };
+		"TEMP_0D298071-21B6-4147-8E57-F493A2923ED1" /* RankJourney.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankJourney.swift; sourceTree = "<group>"; };
+		"TEMP_1421EC44-4634-41B6-91EC-4230616B78CF" /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
+		"TEMP_15E09992-9248-4D3E-909E-F4B6C112F088" /* Project_Comp_B.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Project_Comp_B.xcdatamodel; sourceTree = "<group>"; };
+		"TEMP_1EB67C17-D50B-435F-8ED9-A4C968DAB501" /* ImagePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePicker.swift; sourceTree = "<group>"; };
+		"TEMP_21417999-E7E1-4CB7-8A0E-D7B9C8E6F330" /* LeaderboardCelebration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardCelebration.swift; sourceTree = "<group>"; };
+		"TEMP_22F05802-6750-4585-BBBD-B02E54C3405E" /* PasswordField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordField.swift; sourceTree = "<group>"; };
+		"TEMP_2D651971-9B6C-4BDA-9D48-DB7EAA8E129E" /* EditAccountsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditAccountsView.swift; sourceTree = "<group>"; };
+		"TEMP_3198A7E8-8ED1-428A-B266-4C8A1D1B48FF" /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		"TEMP_3688EEC5-9B06-458E-AE6D-BECFAAC13F7D" /* PasswordHasher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordHasher.swift; sourceTree = "<group>"; };
+		"TEMP_36CF452A-03A9-45E9-A83B-1A14575708EA" /* CardStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardStyle.swift; sourceTree = "<group>"; };
+		"TEMP_478283E3-AEF5-4EDE-842A-1E46B5DBE065" /* RankSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankSystem.swift; sourceTree = "<group>"; };
+		"TEMP_4D2E1574-2E1E-4D8D-AD26-F5331B61291F" /* EditGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditGameView.swift; sourceTree = "<group>"; };
+		"TEMP_4D838D2E-8694-4425-B294-4998B82E8683" /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		"TEMP_5117176C-0286-45BD-86FA-CC02E1BF0E7C" /* Project_Comp_B 2.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Project_Comp_B 2.xcdatamodel"; sourceTree = "<group>"; };
+		"TEMP_5EC1907F-E7DA-4D99-8772-A9DBA774FA76" /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
+		"TEMP_5EC66E14-BB32-4701-81C6-102A922A73B2" /* EditPlayerDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditPlayerDetailView.swift; sourceTree = "<group>"; };
+		"TEMP_5EE8E42B-6F70-43F5-A0EF-B99CBDA6C505" /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		"TEMP_62413868-FA0D-4D40-A688-4D74F7914980" /* DashboardRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardRoute.swift; sourceTree = "<group>"; };
+		"TEMP_6CBC34E4-9635-4B34-B519-30DB3E5F3335" /* StaffGameNightViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffGameNightViews.swift; sourceTree = "<group>"; };
+		"TEMP_6EE593B7-494E-4C92-A20B-7131B24C49F0" /* CompetitiveRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompetitiveRules.swift; sourceTree = "<group>"; };
+		"TEMP_702DD330-8875-418B-AA4E-F9D733B59C35" /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		"TEMP_757C190D-9806-4142-A58D-D5C93D37C52A" /* PlayerOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerOverviewView.swift; sourceTree = "<group>"; };
+		"TEMP_79A26263-2298-49E5-8B13-588D9CDB15FE" /* GameNightStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameNightStore.swift; sourceTree = "<group>"; };
+		"TEMP_7BAB182A-BAEB-4C29-97D9-0D102745AC2A" /* MatchRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchRecorder.swift; sourceTree = "<group>"; };
+		"TEMP_8F23AC5E-4081-435F-940F-033001F78C5E" /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		"TEMP_9C0AAE28-9384-4EA2-9AA0-1A64F025BDFD" /* LeaderboardStanding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardStanding.swift; sourceTree = "<group>"; };
+		"TEMP_A56B6B86-C79F-4008-A80D-42F540EA485D" /* LeagueSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeagueSettings.swift; sourceTree = "<group>"; };
+		"TEMP_A69AA51B-3EEA-4A02-A686-5BE4B251AC13" /* GameNightModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameNightModels.swift; sourceTree = "<group>"; };
+		"TEMP_AA88B600-D79F-4E2F-9C60-12C0E765470D" /* AddSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddSessionView.swift; sourceTree = "<group>"; };
+		"TEMP_B9A2E643-DA59-4308-9841-B7BFD2E564C8" /* GameNightViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameNightViews.swift; sourceTree = "<group>"; };
+		"TEMP_BDD7184D-0625-4961-AD72-CD212E82B4DA" /* Project_Comp_B 3.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Project_Comp_B 3.xcdatamodel"; sourceTree = "<group>"; };
+		"TEMP_BF819BA9-5D4F-4D87-B0F2-50CCD41963C0" /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
+		"TEMP_BF8A6697-0700-475B-BCF1-AA2D63B2DEF6" /* RankHistoryTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankHistoryTimelineView.swift; sourceTree = "<group>"; };
+		"TEMP_C0359D0F-D4BB-4124-ADFE-777ECDCE544F" /* CoachingListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachingListView.swift; sourceTree = "<group>"; };
+		"TEMP_C5FD4F56-8277-463E-A446-FCF340515093" /* MatchScoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchScoring.swift; sourceTree = "<group>"; };
+		"TEMP_CB3529FB-6B96-48A3-B65B-424AC7DB9637" /* Project_Comp_BApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Project_Comp_BApp.swift; sourceTree = "<group>"; };
+		"TEMP_D2A5A4BF-EC02-45E6-B6E7-E51272EE23B0" /* SeasonsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeasonsView.swift; sourceTree = "<group>"; };
+		"TEMP_D64A57E0-7DFE-4040-98A1-12230E5842EC" /* GameCSVImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCSVImporter.swift; sourceTree = "<group>"; };
+		"TEMP_EC1F6876-3FA0-4359-882B-E43D8857085C" /* GameStatBounds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStatBounds.swift; sourceTree = "<group>"; };
+		"TEMP_EC36A9EB-2FAF-4FE5-B03F-BD8F2A3BEEE9" /* AddGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddGameView.swift; sourceTree = "<group>"; };
+		"TEMP_EE6BBFFC-A357-4989-96FE-AB5089F61B24" /* LeaderboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
+		"TEMP_F5EC1DE0-F932-4E6C-9735-15E9591FAB06" /* SeasonManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeasonManager.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		26E38A579F2E196387755218 = {
+			isa = PBXGroup;
+			children = (
+				CAC6271B8A547BDF579D9D72 /* DebugTools */,
+				938D5EBF7C82DC4FB92B50A0 /* Tests */,
+				7B2104CBAA9D78E6AA85CB16 /* UITests */,
+				611C80FB8F58DCBFB8776F9A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		611C80FB8F58DCBFB8776F9A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				EDA4E91DAA5CEF338B89F641 /* Project_Comp_B.app */,
+				82846F26AEC92809647E35A0 /* Project_Comp_BTests.xctest */,
+				BC7215848F3085FCB0001D1A /* Project_Comp_BUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7B2104CBAA9D78E6AA85CB16 /* UITests */ = {
+			isa = PBXGroup;
+			children = (
+				B2D7EF749D9C97C1AE61E0C9 /* LeagueFlowUITests.swift */,
+			);
+			path = UITests;
+			sourceTree = "<group>";
+		};
+		938D5EBF7C82DC4FB92B50A0 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				EAAD38FBB5DF95704B32E77C /* AppConstantsTests.swift */,
+				3F153AD3C06BE41091F369D2 /* CSVTableTests.swift */,
+				66F51F5721F395C5EDF9B043 /* GameNightTests.swift */,
+				3A318956526D7CE076D3ED08 /* LeaderboardStandingTests.swift */,
+				8491BD85AF4B03B66CF63F7A /* MatchRecorderTests.swift */,
+				E06BA013C00714EB3AE778BD /* MatchScoringTests.swift */,
+				43D6619BC5ADFD5B0CABE392 /* PasswordHasherTests.swift */,
+				6F83822CF80B0DE19C889FE3 /* RankSystemTests.swift */,
+				E381D740297A86E4746DECF1 /* SampleLeagueTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		CAC6271B8A547BDF579D9D72 /* DebugTools */ = {
+			isa = PBXGroup;
+			children = (
+				89C5B4ECC52FD87906931263 /* DemoData.swift */,
+				BCBD8AA6F41F16686EE4153B /* SampleLeague.swift */,
+				3BED4832727A44C40F7F98D7 /* SampleLeagueButton.swift */,
+			);
+			path = DebugTools;
+			sourceTree = "<group>";
+		};
+		"TEMP_7D073B26-F440-484B-80DC-1A3FD940AEAF" /* . */ = {
+			isa = PBXGroup;
+			children = (
+				"TEMP_EC1F6876-3FA0-4359-882B-E43D8857085C" /* GameStatBounds.swift */,
+				"TEMP_5EE8E42B-6F70-43F5-A0EF-B99CBDA6C505" /* DashboardView.swift */,
+				"TEMP_A69AA51B-3EEA-4A02-A686-5BE4B251AC13" /* GameNightModels.swift */,
+				"TEMP_22F05802-6750-4585-BBBD-B02E54C3405E" /* PasswordField.swift */,
+				"TEMP_A56B6B86-C79F-4008-A80D-42F540EA485D" /* LeagueSettings.swift */,
+				"TEMP_79A26263-2298-49E5-8B13-588D9CDB15FE" /* GameNightStore.swift */,
+				"TEMP_BF819BA9-5D4F-4D87-B0F2-50CCD41963C0" /* EditProfileView.swift */,
+				"TEMP_702DD330-8875-418B-AA4E-F9D733B59C35" /* SessionStore.swift */,
+				"TEMP_BF8A6697-0700-475B-BCF1-AA2D63B2DEF6" /* RankHistoryTimelineView.swift */,
+				"TEMP_478283E3-AEF5-4EDE-842A-1E46B5DBE065" /* RankSystem.swift */,
+				"TEMP_2D651971-9B6C-4BDA-9D48-DB7EAA8E129E" /* EditAccountsView.swift */,
+				"TEMP_C5FD4F56-8277-463E-A446-FCF340515093" /* MatchScoring.swift */,
+				"TEMP_5EC1907F-E7DA-4D99-8772-A9DBA774FA76" /* Persistence.swift */,
+				"TEMP_8F23AC5E-4081-435F-940F-033001F78C5E" /* LoginView.swift */,
+				"TEMP_C0359D0F-D4BB-4124-ADFE-777ECDCE544F" /* CoachingListView.swift */,
+				"TEMP_F5EC1DE0-F932-4E6C-9735-15E9591FAB06" /* SeasonManager.swift */,
+				"TEMP_EE6BBFFC-A357-4989-96FE-AB5089F61B24" /* LeaderboardView.swift */,
+				"TEMP_0D298071-21B6-4147-8E57-F493A2923ED1" /* RankJourney.swift */,
+				"TEMP_3198A7E8-8ED1-428A-B266-4C8A1D1B48FF" /* Assets.xcassets */,
+				"TEMP_B9A2E643-DA59-4308-9841-B7BFD2E564C8" /* GameNightViews.swift */,
+				"TEMP_4D2E1574-2E1E-4D8D-AD26-F5331B61291F" /* EditGameView.swift */,
+				"TEMP_D64A57E0-7DFE-4040-98A1-12230E5842EC" /* GameCSVImporter.swift */,
+				"TEMP_21417999-E7E1-4CB7-8A0E-D7B9C8E6F330" /* LeaderboardCelebration.swift */,
+				"TEMP_3688EEC5-9B06-458E-AE6D-BECFAAC13F7D" /* PasswordHasher.swift */,
+				"TEMP_1EB67C17-D50B-435F-8ED9-A4C968DAB501" /* ImagePicker.swift */,
+				"TEMP_9C0AAE28-9384-4EA2-9AA0-1A64F025BDFD" /* LeaderboardStanding.swift */,
+				"TEMP_77E03864-E0C9-436B-8058-554FC529E7DD" /* Project_Comp_B.xcdatamodeld */,
+				"TEMP_7BAB182A-BAEB-4C29-97D9-0D102745AC2A" /* MatchRecorder.swift */,
+				"TEMP_AA88B600-D79F-4E2F-9C60-12C0E765470D" /* AddSessionView.swift */,
+				"TEMP_62413868-FA0D-4D40-A688-4D74F7914980" /* DashboardRoute.swift */,
+				"TEMP_00A9BEAF-48EA-44CF-84D4-9B2ABA677ECE" /* AccountValidation.swift */,
+				"TEMP_EC36A9EB-2FAF-4FE5-B03F-BD8F2A3BEEE9" /* AddGameView.swift */,
+				"TEMP_757C190D-9806-4142-A58D-D5C93D37C52A" /* PlayerOverviewView.swift */,
+				"TEMP_6EE593B7-494E-4C92-A20B-7131B24C49F0" /* CompetitiveRules.swift */,
+				"TEMP_36CF452A-03A9-45E9-A83B-1A14575708EA" /* CardStyle.swift */,
+				"TEMP_1421EC44-4634-41B6-91EC-4230616B78CF" /* AppConstants.swift */,
+				"TEMP_6CBC34E4-9635-4B34-B519-30DB3E5F3335" /* StaffGameNightViews.swift */,
+				"TEMP_5EC66E14-BB32-4701-81C6-102A922A73B2" /* EditPlayerDetailView.swift */,
+				"TEMP_4D838D2E-8694-4425-B294-4998B82E8683" /* ContentView.swift */,
+				"TEMP_CB3529FB-6B96-48A3-B65B-424AC7DB9637" /* Project_Comp_BApp.swift */,
+				"TEMP_D2A5A4BF-EC02-45E6-B6E7-E51272EE23B0" /* SeasonsView.swift */,
+				CAC6271B8A547BDF579D9D72 /* DebugTools */,
+			);
+			name = .;
+			path = .;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1FB5F89DEC97CE02164F529F /* Project_Comp_BTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A777FF40C2953A4E62CA8D0 /* Build configuration list for PBXNativeTarget "Project_Comp_BTests" */;
+			buildPhases = (
+				29A8BFD7A6F3A8F2091C7A46 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				35E377615AC6F6C8E052A413 /* PBXTargetDependency */,
+			);
+			name = Project_Comp_BTests;
+			packageProductDependencies = (
+			);
+			productName = Project_Comp_BTests;
+			productReference = 82846F26AEC92809647E35A0 /* Project_Comp_BTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		6663132FA94F31F1E28DAC50 /* Project_Comp_B */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3177B1BB79FAC9B3FA4159FF /* Build configuration list for PBXNativeTarget "Project_Comp_B" */;
+			buildPhases = (
+				3DFF655056745BD73B7EFDE2 /* Sources */,
+				B11E1250BD0761A22E5E0783 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Project_Comp_B;
+			packageProductDependencies = (
+			);
+			productName = Project_Comp_B;
+			productReference = EDA4E91DAA5CEF338B89F641 /* Project_Comp_B.app */;
+			productType = "com.apple.product-type.application";
+		};
+		DDCCFADF208FF410A2ADBBB5 /* Project_Comp_BUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B4BBE8ECBF663EA9B8F382DD /* Build configuration list for PBXNativeTarget "Project_Comp_BUITests" */;
+			buildPhases = (
+				9EBD2D46F4C29637540D08A0 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8BD18CB4921A2360C79E2341 /* PBXTargetDependency */,
+			);
+			name = Project_Comp_BUITests;
+			packageProductDependencies = (
+			);
+			productName = Project_Comp_BUITests;
+			productReference = BC7215848F3085FCB0001D1A /* Project_Comp_BUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9AF0DBA6456386FE4EFDA293 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					DDCCFADF208FF410A2ADBBB5 = {
+						TestTargetID = 6663132FA94F31F1E28DAC50;
+					};
+				};
+			};
+			buildConfigurationList = 7A9CB2DD5D453DED9D501FF0 /* Build configuration list for PBXProject "Project_Comp_B" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 26E38A579F2E196387755218;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 611C80FB8F58DCBFB8776F9A /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6663132FA94F31F1E28DAC50 /* Project_Comp_B */,
+				1FB5F89DEC97CE02164F529F /* Project_Comp_BTests */,
+				DDCCFADF208FF410A2ADBBB5 /* Project_Comp_BUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B11E1250BD0761A22E5E0783 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3F165312751088F642BAEB81 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		29A8BFD7A6F3A8F2091C7A46 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F9C27DB5A9B903C699B3E4E6 /* AppConstantsTests.swift in Sources */,
+				A7C8A7C6852F9949BD8D2749 /* CSVTableTests.swift in Sources */,
+				27CED7C006EB0857259E961A /* GameNightTests.swift in Sources */,
+				7BABB0AEFEB3FBD3F9968ACF /* LeaderboardStandingTests.swift in Sources */,
+				80B90F5475EDF9093AF45A27 /* MatchRecorderTests.swift in Sources */,
+				0F6CA795623E3FF16BCBCD8F /* MatchScoringTests.swift in Sources */,
+				58CA57E6D5AE9BEE88CA749F /* PasswordHasherTests.swift in Sources */,
+				75268791E01376DEF777BD55 /* RankSystemTests.swift in Sources */,
+				EF5F95DACFB9C073ABD71AC3 /* SampleLeagueTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3DFF655056745BD73B7EFDE2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				729BB40804F24583AC6EBB17 /* AccountValidation.swift in Sources */,
+				E75CDA0F363AB90B5E127525 /* AddGameView.swift in Sources */,
+				6CA040D6220A22EFE5D5D7DF /* AddSessionView.swift in Sources */,
+				2F0690F33208A82050020AFA /* AppConstants.swift in Sources */,
+				93B5E6298CF776980E1C8E26 /* CardStyle.swift in Sources */,
+				E3C0CFD9331AB12444E58EEA /* CoachingListView.swift in Sources */,
+				0E204BFE1E51C4D354703E46 /* CompetitiveRules.swift in Sources */,
+				D752EAE5CBD579C9868F7D08 /* ContentView.swift in Sources */,
+				439A68A95348B56DB7D5D3DB /* DashboardRoute.swift in Sources */,
+				C1EA6390257829598FFA3F3B /* DashboardView.swift in Sources */,
+				4935E4F93B19BE3CCAFB595D /* DemoData.swift in Sources */,
+				1097D46517E52F640A56DD13 /* EditAccountsView.swift in Sources */,
+				EA4E647B8AE940C159D4367A /* EditGameView.swift in Sources */,
+				FA8F84819939C42B1D7AB596 /* EditPlayerDetailView.swift in Sources */,
+				BA61F2D36C62881E7E97B4A6 /* EditProfileView.swift in Sources */,
+				38F98B73AEF43E6E84EEB2E1 /* GameCSVImporter.swift in Sources */,
+				AB76DD2C8179CB309FDD64D5 /* GameNightModels.swift in Sources */,
+				F0043E795A2522AD4A80EAB9 /* GameNightStore.swift in Sources */,
+				EF8B459D9CD70EB26C13C2F2 /* GameNightViews.swift in Sources */,
+				90976652E0CF7A2776C47904 /* GameStatBounds.swift in Sources */,
+				D35AA0EF9ABAE4D9DC123BA9 /* ImagePicker.swift in Sources */,
+				77F29CAE2F490CED09032C5F /* LeaderboardCelebration.swift in Sources */,
+				D5BB4EC5B985215A330309DA /* LeaderboardStanding.swift in Sources */,
+				F61E1C6E16B4B2B7106DE55C /* LeaderboardView.swift in Sources */,
+				629E54D24DBE5A66742EDCFF /* LeagueSettings.swift in Sources */,
+				8048A73F349E3A9F5DA461CF /* LoginView.swift in Sources */,
+				0C11EFC1EACBB8626DDF420F /* MatchRecorder.swift in Sources */,
+				7B7C77684F4D26DBE6BE3BEE /* MatchScoring.swift in Sources */,
+				34BF2B346996C0761D74482A /* PasswordField.swift in Sources */,
+				890A4E880BE0B91864389BA1 /* PasswordHasher.swift in Sources */,
+				B1AABC6E1552D6EC34BEB462 /* Persistence.swift in Sources */,
+				F84A8E7AC6832030DB417910 /* PlayerOverviewView.swift in Sources */,
+				7C7A95FA4A169F8998C2DCB3 /* Project_Comp_B.xcdatamodeld in Sources */,
+				9AFFF268FBB0559D88FBA2AE /* Project_Comp_BApp.swift in Sources */,
+				5561A5AACB8E7378526A68EB /* RankHistoryTimelineView.swift in Sources */,
+				8C7EA7B1F1F468EC06E8DF74 /* RankJourney.swift in Sources */,
+				3F5B7810BD46A0A82ADB6B3C /* RankSystem.swift in Sources */,
+				85EB91806FA4992BE98F2E38 /* SampleLeague.swift in Sources */,
+				96424F374D5A9C6D8FCA9848 /* SampleLeagueButton.swift in Sources */,
+				0977D7E59F155BE0386EFBCD /* SeasonManager.swift in Sources */,
+				FD915B55D7FD92F860A809CD /* SeasonsView.swift in Sources */,
+				BFB72D10B1CD5AC19BEF1551 /* SessionStore.swift in Sources */,
+				385D6C176C33D3BFFB37250F /* StaffGameNightViews.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9EBD2D46F4C29637540D08A0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8A135091132C57BABB420B83 /* LeagueFlowUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		35E377615AC6F6C8E052A413 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6663132FA94F31F1E28DAC50 /* Project_Comp_B */;
+			targetProxy = F6C1A3B1640675C8420A3EF7 /* PBXContainerItemProxy */;
+		};
+		8BD18CB4921A2360C79E2341 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6663132FA94F31F1E28DAC50 /* Project_Comp_B */;
+			targetProxy = 8EF91286623F600F3989CACF /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0899E5AC8EACCA5B06CE1702 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		0D141DEB7921B434FA901C18 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.totl.Project-Comp-BTests";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Project_Comp_B.app/Project_Comp_B";
+			};
+			name = Release;
+		};
+		5CFFDE2201A9A15D1BF68577 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.totl.ProjectCompB;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		69DF48875C670C42BCCA74B5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.totl.Project-Comp-BUITests";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Project_Comp_B;
+			};
+			name = Release;
+		};
+		74A20885022AC74AF9C17D3A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.totl.Project-Comp-BUITests";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Project_Comp_B;
+			};
+			name = Debug;
+		};
+		9275D21BC6FC4EB2CB16A978 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.totl.Project-Comp-BTests";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Project_Comp_B.app/Project_Comp_B";
+			};
+			name = Debug;
+		};
+		CCA9BB3B2CF0615A7F178A60 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		DC06A5247034A13888D88647 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.totl.ProjectCompB;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3177B1BB79FAC9B3FA4159FF /* Build configuration list for PBXNativeTarget "Project_Comp_B" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5CFFDE2201A9A15D1BF68577 /* Debug */,
+				DC06A5247034A13888D88647 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7A777FF40C2953A4E62CA8D0 /* Build configuration list for PBXNativeTarget "Project_Comp_BTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9275D21BC6FC4EB2CB16A978 /* Debug */,
+				0D141DEB7921B434FA901C18 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7A9CB2DD5D453DED9D501FF0 /* Build configuration list for PBXProject "Project_Comp_B" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0899E5AC8EACCA5B06CE1702 /* Debug */,
+				CCA9BB3B2CF0615A7F178A60 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B4BBE8ECBF663EA9B8F382DD /* Build configuration list for PBXNativeTarget "Project_Comp_BUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				74A20885022AC74AF9C17D3A /* Debug */,
+				69DF48875C670C42BCCA74B5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		"TEMP_77E03864-E0C9-436B-8058-554FC529E7DD" /* Project_Comp_B.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				"TEMP_5117176C-0286-45BD-86FA-CC02E1BF0E7C" /* Project_Comp_B 2.xcdatamodel */,
+				"TEMP_BDD7184D-0625-4961-AD72-CD212E82B4DA" /* Project_Comp_B 3.xcdatamodel */,
+				"TEMP_15E09992-9248-4D3E-909E-F4B6C112F088" /* Project_Comp_B.xcdatamodel */,
+			);
+			currentVersion = "TEMP_BDD7184D-0625-4961-AD72-CD212E82B4DA" /* Project_Comp_B 3.xcdatamodel */;
+			path = Project_Comp_B.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
+	};
+	rootObject = 9AF0DBA6456386FE4EFDA293 /* Project object */;
+}
