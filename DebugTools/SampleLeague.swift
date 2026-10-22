@@ -1,3 +1,62 @@
+#if DEBUG
+import Foundation
+import CoreData
+
+/// TEST TOOL, Debug builds only. A ready-made league for trying the leaderboard and rank
+/// timeline: 16 Competitive players (Rookie to Elite, two still in placement), 2 Casual
+/// members, and 18 three-on-three games from Sep 7 to Oct 18 that produce promotions and
+/// finish both placements. Every test account's password is `totl-demo-123`.
+///
+/// Loaded with "Load Sample League" on Edit Player Accounts. It goes through the same importers
+/// as the CSV buttons (TestMemberImporter, then the real GameCSVImporter).
+enum SampleLeague {
+
+    struct LoadResult {
+        let title: String
+        let message: String
+    }
+
+    static func load(in context: NSManagedObjectContext) -> LoadResult {
+        let request: NSFetchRequest<Player> = Player.fetchRequest()
+        request.predicate = NSPredicate(format: "username ==[c] %@", "marcus_j")
+        if ((try? context.count(for: request)) ?? 0) > 0 {
+            return LoadResult(title: "Already Loaded", message: "The sample league is already in this app. Delete the app from the Simulator to start fresh.")
+        }
+
+        let members = TestMemberImporter.importCSV(membersCSV, in: context)
+        guard !members.imported.isEmpty else {
+            return LoadResult(title: "Nothing Loaded", message: members.summary)
+        }
+        let games = GameCSVImporter.importCSV(gamesCSV, in: context)
+        return LoadResult(
+            title: "Sample League Loaded",
+            message: "\(members.summary)\n\(games.summary)\n\nTest accounts use the password totl-demo-123."
+        )
+    }
+
+    static let membersCSV = """
+username,email,membership,password,rank_points,joined
+marcus_j,marcus_j@example.com,Competitive,totl-demo-123,720,2026-09-01
+tasha_b,tasha_b@example.com,Competitive,totl-demo-123,640,2026-09-01
+dev_o,dev_o@example.com,Competitive,totl-demo-123,585,2026-09-01
+kev_m,kev_m@example.com,Competitive,totl-demo-123,530,2026-09-01
+rico_s,rico_s@example.com,Competitive,totl-demo-123,470,2026-09-01
+jaylen_w,jaylen_w@example.com,Competitive,totl-demo-123,430,2026-09-01
+bree_c,bree_c@example.com,Competitive,totl-demo-123,380,2026-09-01
+omar_h,omar_h@example.com,Competitive,totl-demo-123,330,2026-09-01
+nina_p,nina_p@example.com,Competitive,totl-demo-123,290,2026-09-01
+tyler_r,tyler_r@example.com,Competitive,totl-demo-123,240,2026-09-01
+zoe_k,zoe_k@example.com,Competitive,totl-demo-123,190,2026-09-01
+andre_l,andre_l@example.com,Competitive,totl-demo-123,140,2026-09-01
+mia_f,mia_f@example.com,Competitive,totl-demo-123,90,2026-09-01
+luis_g,luis_g@example.com,Competitive,totl-demo-123,40,2026-09-01
+rookie_ray,rookie_ray@example.com,Competitive,totl-demo-123,,2026-09-01
+rookie_jen,rookie_jen@example.com,Competitive,totl-demo-123,,2026-09-01
+casual_cam,casual_cam@example.com,Casual,totl-demo-123,,2026-09-01
+casual_dana,casual_dana@example.com,Casual,totl-demo-123,,2026-09-01
+"""
+
+    static let gamesCSV = """
 game,date,username,team,result,points,rebounds,assists,blocks,steals
 G01,2026-09-07 19:00,jaylen_w,A,W,11,5,3,1,1
 G01,2026-09-07 19:00,nina_p,A,W,8,5,2,0,1
@@ -107,3 +166,6 @@ G18,2026-10-15 19:00,bree_c,A,L,15,6,5,1,3
 G18,2026-10-15 19:00,omar_h,B,W,13,6,3,3,2
 G18,2026-10-15 19:00,nina_p,B,W,9,4,4,2,2
 G18,2026-10-15 19:00,jaylen_w,B,W,19,8,5,3,4
+"""
+}
+#endif

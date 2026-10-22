@@ -2,7 +2,8 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// TEST TOOL, Debug builds only: "Import Test Accounts (CSV)" on Edit Player Accounts.
+/// TEST TOOL, Debug builds only: "Load Sample League" and "Import Test Accounts (CSV)" on
+/// Edit Player Accounts.
 /// See TestMemberImporter and DebugTools/README.md.
 struct TestAccountImportButton: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -11,6 +12,15 @@ struct TestAccountImportButton: View {
 
     var body: some View {
         VStack(spacing: 4) {
+            Button {
+                let result = SampleLeague.load(in: viewContext)
+                alert = CSVImportAlert(title: result.title, message: result.message)
+            } label: {
+                Label("Load Sample League", systemImage: "hammer.fill")
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.orange)
+
             Button {
                 showImporter = true
             } label: {

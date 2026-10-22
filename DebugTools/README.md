@@ -6,8 +6,8 @@ Everything here exists only to try the app with realistic data. It's compiled in
 |---|---|
 | `DemoData.swift` | Launch arguments for UI tests and demos: `-uiTesting` (fresh in-memory database), `-seedDemoData` (sample league), `-loginAs <username>`. |
 | `TestMemberImporter.swift` | Creates test accounts from a CSV (username, email, membership, password, optional rank_points and joined). |
-| `TestAccountImportButton.swift` | The orange "Import Test Accounts (CSV)" button on Edit Player Accounts. |
-| `SampleData/` | `test_members.csv` and `test_games.csv`: a 16-player league and 18 games. |
+| `SampleLeague.swift` | A built-in 16-player league plus 18 games (all test passwords: `totl-demo-123`). |
+| `TestAccountImportButton.swift` | The orange "Load Sample League" and "Import Test Accounts (CSV)" buttons on Edit Player Accounts. |
 
 ## How to remove it
 

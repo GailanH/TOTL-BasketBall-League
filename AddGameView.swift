@@ -42,7 +42,6 @@ struct AddGameView: View {
     @State private var showFileImporter = false
     @State private var csvSummary = ""
 
-    private static let requiredCSVColumns = ["game", "username", "team", "result", "points", "rebounds", "assists", "blocks", "steals"]
 
     private var season: Season? { SeasonManager.activeSeason(in: viewContext) }
 
@@ -146,7 +145,7 @@ struct AddGameView: View {
     @ViewBuilder
     private var csvSection: some View {
         Section(header: Text("Batch Upload (CSV)")) {
-            Text("Columns: \(Self.requiredCSVColumns.joined(separator: ", ")), and optionally date (YYYY-MM-DD). One row per player. Rows with the same \"game\" value are one game. team is A or B, result is W or L. Games are recorded oldest first.")
+            Text("Columns: \(GameCSVImporter.requiredColumns.joined(separator: ", ")), and optionally date (YYYY-MM-DD). One row per player. Rows with the same \"game\" value are one game. team is A or B, result is W or L. Games are recorded oldest first.")
                 .font(.caption)
                 .foregroundColor(.gray)
 
@@ -231,155 +230,15 @@ struct AddGameView: View {
         resultAlert = CSVImportAlert(title: title, message: message)
     }
 
-    private struct CSVRow {
-        let line: Int
-        let username: String
-        let team: Team
-        let won: Bool
-        let stats: StatLine
-        let date: Date?
-    }
-
-
     private func importCSV(from url: URL) {
         let didStartAccessing = url.startAccessingSecurityScopedResource()
         defer { if didStartAccessing { url.stopAccessingSecurityScopedResource() } }
-
         guard let contents = try? String(contentsOf: url, encoding: .utf8) else {
             finishCSVImport(title: "Import Failed", message: "Couldn't read that file as text.")
             return
         }
-
-        let lines = contents.split(whereSeparator: \.isNewline).map(String.init)
-        guard let headerLine = lines.first else {
-            finishCSVImport(title: "Import Failed", message: "File is empty.")
-            return
-        }
-
-        let headers = headerLine.split(separator: ",", omittingEmptySubsequences: false)
-            .map { Self.cleanField(String($0)).lowercased() }
-        let missing = Self.requiredCSVColumns.filter { !headers.contains($0) }
-        guard missing.isEmpty else {
-            finishCSVImport(title: "Import Failed", message: "CSV is missing required column(s): \(missing.joined(separator: ", ")).")
-            return
-        }
-        var column: [String: Int] = [:]
-        for (index, header) in headers.enumerated() { column[header] = index }
-
-        var errors: [String] = []
-        var gameOrder: [String] = []
-        var rowsByGame: [String: [CSVRow]] = [:]
-        var badGames = Set<String>()
-
-        for (offset, rawLine) in lines.dropFirst().enumerated() {
-            let lineNumber = offset + 2
-            let line = rawLine.trimmingCharacters(in: .whitespaces)
-            guard !line.isEmpty else { continue }
-            let fields = line.split(separator: ",", omittingEmptySubsequences: false).map { Self.cleanField(String($0)) }
-            func field(_ name: String) -> String? {
-                guard let index = column[name], index < fields.count else { return nil }
-                return fields[index]
-            }
-
-            guard let gameKey = field("game"), !gameKey.isEmpty else {
-                errors.append("Row \(lineNumber): missing game.")
-                continue
-            }
-            if rowsByGame[gameKey] == nil { gameOrder.append(gameKey); rowsByGame[gameKey] = [] }
-
-            guard let username = field("username"), !username.isEmpty,
-                  let team = field("team").flatMap({ Team(rawValue: $0.uppercased()) }),
-                  let result = field("result")?.uppercased(), result == "W" || result == "L",
-                  let p = field("points").flatMap({ Int64($0) }),
-                  let r = field("rebounds").flatMap({ Int64($0) }),
-                  let a = field("assists").flatMap({ Int64($0) }),
-                  let b = field("blocks").flatMap({ Int64($0) }),
-                  let s = field("steals").flatMap({ Int64($0) })
-            else {
-                errors.append("Row \(lineNumber): needs a username, team A/B, result W/L, and whole-number stats.")
-                badGames.insert(gameKey)
-                continue
-            }
-            var date: Date? = nil
-            if let dateText = field("date"), !dateText.isEmpty {
-                guard let parsed = CSVTable.parseDate(dateText) else {
-                    errors.append("Row \(lineNumber): date must look like 2026-10-21 or 2026-10-21 18:30.")
-                    badGames.insert(gameKey)
-                    continue
-                }
-                date = parsed
-            }
-            rowsByGame[gameKey]?.append(CSVRow(line: lineNumber, username: username, team: team, won: result == "W",
-                                               stats: StatLine(points: p, rebounds: r, assists: a, blocks: b, steals: s), date: date))
-        }
-
-        // Record oldest first so RP builds up in the order games were played. Games without a
-        // date keep their file order, one second apart, after now.
-        let now = Date()
-        let gameDates: [String: Date] = Dictionary(uniqueKeysWithValues: gameOrder.enumerated().map { index, key in
-            (key, rowsByGame[key]?.compactMap(\.date).first ?? now.addingTimeInterval(TimeInterval(index)))
-        })
-        let orderedGames = gameOrder.enumerated()
-            .sorted { (gameDates[$0.element]!, $0.offset) < (gameDates[$1.element]!, $1.offset) }
-            .map(\.element)
-
-        var recorded = 0
-        for gameKey in orderedGames {
-            guard !badGames.contains(gameKey) else {
-                errors.append("Game \(gameKey): skipped because of the row error(s) above.")
-                continue
-            }
-            let rows = rowsByGame[gameKey] ?? []
-            let winners = Set(rows.filter(\.won).map(\.team))
-            let losers = Set(rows.filter { !$0.won }.map(\.team))
-            guard winners.count == 1, let winner = winners.first, !losers.contains(winner) else {
-                errors.append("Game \(gameKey): exactly one team must be W and the other L.")
-                continue
-            }
-
-            var entries: [MatchEntry] = []
-            var missingPlayer: String?
-            for row in rows {
-                let request: NSFetchRequest<Player> = Player.fetchRequest()
-                request.predicate = NSPredicate(format: "username ==[c] %@", row.username)
-                request.fetchLimit = 1
-                guard let player = try? viewContext.fetch(request).first else { missingPlayer = row.username; break }
-                entries.append(MatchEntry(player: player, team: row.team, stats: row.stats))
-            }
-            if let missingPlayer {
-                errors.append("Game \(gameKey): no player found with username '\(missingPlayer)'.")
-                continue
-            }
-
-            do {
-                try MatchRecorder.record(entries, winner: winner, date: gameDates[gameKey] ?? now, in: viewContext)
-                recorded += 1
-            } catch {
-                errors.append("Game \(gameKey): \(error.localizedDescription)")
-            }
-        }
-
-        if recorded > 0 {
-            do {
-                try viewContext.save()
-            } catch {
-                viewContext.rollback()
-                errors.append("Save failed: \(error.localizedDescription)")
-                recorded = 0
-            }
-        }
-
-        var summary = "\(recorded) game(s) recorded from CSV."
-        if !errors.isEmpty {
-            let shown = errors.prefix(10)
-            summary += " \(errors.count) problem(s):\n" + shown.joined(separator: "\n")
-            if errors.count > shown.count { summary += "\n…and \(errors.count - shown.count) more." }
-        }
-        finishCSVImport(title: recorded > 0 ? "Import Complete" : "Nothing Imported", message: summary)
-    }
-
-    private static func cleanField(_ field: String) -> String {
-        field.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+        let result = GameCSVImporter.importCSV(contents, in: viewContext)
+        finishCSVImport(title: result.recorded > 0 ? "Import Complete" : "Nothing Imported", message: result.summary)
     }
 }
 
