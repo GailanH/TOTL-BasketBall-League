@@ -28,7 +28,8 @@ Changed:
 - Added the MVP section to `ROADMAP.md` (app, courts, website, social, legal/ops, fundraising prep, cost, order of work) and updated `CLAUDE.md` next steps.
 - Researched San Antonio venues: City of SA community-center gyms (Ramirez $30/hr; Garza, Hamilton, Woodlawn Lake $50–90/hr), Alamo City All-Stars Sportsplex (Universal City, $90–100 per full court/hr, multiple courts), Factory of Champions (call), Order On The Court ($36/hr, 1 basketball court). Northside ISD is out (youth non-profits only).
 Decided: MVP first. Start by renting courts for a proof of concept. The app is the main selling point, with fundraising and marketing alongside. Coaching, merch and the full 6-court facility are the end goal. Game times and places go on social media and in the app (D10).
-Open: choose the backend (D5); set success gates (D11); call venues; TrueLoyal agreement check; name clearance and LLC.
+Also: wrote `APP_MVP_BRIEF.md` (standalone brief for the app session) with a new notifications section for game locations and times; ROADMAP M1 now points to it.
+Open: Gailan exploring Supabase before choosing the backend (D5); set success gates (D11); call venues; TrueLoyal agreement check; name clearance and LLC.
 
 ## Iteration 11: 2026-10-21: Anti-inflation rebalance, Your Standing card
 Track: App

@@ -15,7 +15,7 @@ Unified plan for the business, the app, and the fundraising. These tracks move t
 | D2 | RP per level | **Decided:** 50 for now. |
 | D3 | Season structure | **Decided:** 3-month seasons, soft reset, placement games. Implemented with these defaults: drop 3 tiers at reset, 5 placement games at 2× RP, staff start each new season. |
 | D4 | RP formula | **Decided:** winners all gain; only the losing team's best player (SVP) can gain, and only a little; MVP for winners, SVP for losers; if everyone plays badly and loses, everyone loses RP including the SVP. Implemented and rebalanced 2026-10-21 (see D8): win +10, loss −15, SVP −7 (great game up to +5), MVP +5, underdog win +5, stats ±2 per unit at half weight. All tunable in `CompetitiveRules.swift`. |
-| D5 | Backend / sync | **Now needed for the MVP** (players use the app on their own phones; website shows the same schedule and leaderboard). Recommended: Supabase. Gailan to choose. |
+| D5 | Backend / sync | **Now needed for the MVP** (players use the app on their own phones; website shows the same schedule and leaderboard). Gailan exploring Supabase before deciding (2026-10-21). |
 | D6 | Funding mix | **Deferred.** Focus is the app for now. |
 | D7 | Launch format | **Decided:** start small, likely a rented 2-court gym, not a 6-court build. |
 | D8 | Tune the starting numbers in D3/D4 | **Rebalanced 2026-10-21** against RP inflation (larger loss penalty, smaller for the SVP, symmetric stat scoring; drift +5.6 → +0.3 RP per player-game in simulation). Final tuning with pilot-league data. |
@@ -35,16 +35,13 @@ Unified plan for the business, the app, and the fundraising. These tracks move t
 **Success gates.** Decide these numbers before season 1 so the pilot answers a clear question. Suggested: 2 seasons in a row with 60+ paid players, 60%+ of players returning, 500+ on the email/social audience.
 
 ### M1. App (the main selling point)
-The app works today, but only on one device with local data. To run a real league, every player needs it on their own phone. So the backend (D5) is no longer deferred.
-- [ ] **Backend + accounts (D5).** Move players, seasons, matches and games to a hosted database with real sign-in, so each player sees their own rank, stats and history. Recommended: Supabase (Postgres, Swift and JavaScript SDKs, free tier), since the website reads the same data. Firebase is the alternative. Keep `RankSystem`/`MatchScoring` as the single scoring source.
-- [ ] **Game Nights.** New `Venue` (name, address, map link, notes like parking or entrance) and `GameNight` (date, start and end time, venue, courts, capacity, status: scheduled, full, cancelled). Players see upcoming nights with where and when, open the address in Maps, and add the night to their calendar. Matches belong to a game night.
-- [ ] **RSVP / check-in.** Players RSVP for a night (with a capacity cap and a waitlist). Staff check players in and build balanced teams from the RSVP list by tier.
-- [ ] **Notifications.** Reminder the day before and when a night changes or is cancelled. Results and rank-ups after stats are confirmed.
-- [ ] **Waiver at sign-up.** Players accept the liability waiver in the app before they can RSVP (store version and timestamp).
-- [ ] **Robustness.** Password reset, registration validation, decide on the owner auto-admin path, staff MVP/SVP override, season history.
-- [ ] **Distribution.** TestFlight for the pilot (external testers need a beta review), then the App Store. Apple Developer account under the LLC.
-- [ ] **Android players.** The app is iPhone-only, so the website must show the schedule, the leaderboard and each player's rank, so nobody is shut out.
-- Payments stay outside the app for the MVP: league fees go through a Square or Stripe payment link on the website. League fees are a real-world service, so Apple's in-app purchase rules don't apply to them.
+Full brief for the app build: **`APP_MVP_BRIEF.md`**. Summary:
+- [ ] Venues and Game Nights: where and when, Open in Maps, Add to Calendar, Share.
+- [ ] RSVP with capacity and waitlist; staff check-in and balanced-team suggestion.
+- [ ] Notifications for game locations and times: reminders 24h and 2h before (local), changes/cancellations, spot opened, new nights, results (push, after the backend).
+- [ ] Waiver at sign-up, password reset, robustness items, TestFlight.
+- [ ] Backend (D5): Gailan is exploring Supabase. Until then, new features sit behind a store protocol so the backend can be swapped in.
+- Android players use the website for schedule and ranks. Payments stay outside the app (Square/Stripe link on the website).
 
 ### M2. Courts
 Book a 12-week block at one venue, one night a week. Prefer a venue with 2 courts in the same building.

@@ -52,8 +52,8 @@ Business planning is **not** deferred anymore. When an app decision depends on a
 
 ## Next steps
 
-Current focus is the **MVP** (decided 2026-10-21): a proof-of-concept ranked league on rented courts in San Antonio, with the app as the main selling point, plus a website and social media. Coaching, merch and the 6-court facility are the end goal, not the MVP. Full plan: the MVP section of `ROADMAP.md`.
-1. Backend + real accounts (D5, recommended Supabase) so every player uses the app on their own phone.
+Current focus is the **MVP** (decided 2026-10-21): a proof-of-concept ranked league on rented courts in San Antonio, with the app as the main selling point, plus a website and social media. Coaching, merch and the 6-court facility are the end goal, not the MVP. Full plan: the MVP section of `ROADMAP.md`. **App work follows `APP_MVP_BRIEF.md`.**
+1. Backend + real accounts (D5): Gailan is exploring Supabase; don't integrate a backend until he decides. Build new features behind a store protocol.
 2. Game Nights: venues, dates and times, RSVP with capacity, check-in, reminders. Waiver acceptance at sign-up.
 3. Robustness: password reset, registration validation, owner auto-admin decision, staff MVP/SVP override, season history.
 4. Website reading the same backend: schedule, leaderboard, sign-up, waitlist.
