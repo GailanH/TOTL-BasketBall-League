@@ -47,6 +47,10 @@ struct EditAccountsView: View {
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
 
+            #if DEBUG // DebugTools: test-account import. Not in release builds.
+            if !filterPendingOnly { TestAccountImportButton() }
+            #endif
+
             List(filteredPlayers, id: \.self) { player in
                 Button {
                     selectedPlayer = player

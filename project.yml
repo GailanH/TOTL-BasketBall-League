@@ -42,6 +42,8 @@ targets:
           - "README.md"
           - "ROADMAP.md"
           - "*.md"
+          - "**/*.md"
+          - "**/*.csv"
           - ".gitignore"
           - ".git"
           - ".github"

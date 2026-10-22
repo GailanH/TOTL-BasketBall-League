@@ -61,6 +61,19 @@ final class LeagueFlowUITests: XCTestCase {
         return scroll.exists ? scroll : app
     }
 
+    /// Opens a team's "Add Player" menu and chooses a player. Menu items are matched by their
+    /// label (the username); identifiers on menu items aren't reliably exposed.
+    private func pick(_ username: String, forTeam team: String) {
+        let menu = app.buttons["addPlayer-\(team)"]
+        tap(menu)
+        let item = app.buttons[username].firstMatch
+        if !item.waitForExistence(timeout: 3) {
+            menu.tap()  // the first tap sometimes only focuses the row
+        }
+        XCTAssertTrue(item.waitForExistence(timeout: 5), "Menu item \(username) didn't appear")
+        item.tap()
+    }
+
     private func type(_ text: String, into element: XCUIElement) {
         tap(element)
         element.typeText(text)
@@ -91,8 +104,7 @@ final class LeagueFlowUITests: XCTestCase {
             ("B", "dre_w", ["4", "2", "1", "0", "0"])
         ]
         for entry in lineups {
-            tap(app.buttons["addPlayer-\(entry.team)"])
-            tap(app.buttons["pick-\(entry.player)"])
+            pick(entry.player, forTeam: entry.team)
         }
         snap("game/record-game-lineups")
 

@@ -8,8 +8,12 @@
 import CoreData
 
 struct PersistenceController {
-    /// UI tests (`-uiTesting`) get a fresh in-memory store so every run starts clean.
-    static let shared = PersistenceController(inMemory: DemoData.isUITesting)
+    static let shared: PersistenceController = {
+        #if DEBUG // DebugTools: UI tests get a fresh in-memory store. Not in release builds.
+        if DemoData.isUITesting { return PersistenceController(inMemory: true) }
+        #endif
+        return PersistenceController()
+    }()
 
     /// Loaded once and shared. Creating a second copy of the same model (e.g. in unit tests)
     /// makes Core Data unsure which entity a `Player(context:)` refers to.

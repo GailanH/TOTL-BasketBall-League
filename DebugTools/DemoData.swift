@@ -1,8 +1,10 @@
 import Foundation
 import CoreData
 
-/// Launch-argument switches for UI tests and demos. Debug builds only, so a shipped app can
-/// never be started pre-logged-in or with fake data.
+#if DEBUG
+/// TEST TOOL. Launch-argument switches for UI tests and demos. Debug builds only, so a shipped
+/// app can never be started pre-logged-in or with fake data. Removable with the rest of
+/// DebugTools (see DebugTools/README.md).
 ///
 /// - `-uiTesting`: use a fresh in-memory database and forget any saved login.
 /// - `-seedDemoData`: fill the database with a staff account, Competitive players across
@@ -24,7 +26,6 @@ enum DemoData {
     ]
     static let casualUsername = "casual_cass"
 
-    #if DEBUG
     static var arguments: [String] { ProcessInfo.processInfo.arguments }
     static var isUITesting: Bool { arguments.contains("-uiTesting") }
     static var shouldSeed: Bool { arguments.contains("-seedDemoData") }
@@ -32,11 +33,14 @@ enum DemoData {
         guard let index = arguments.firstIndex(of: "-loginAs"), index + 1 < arguments.count else { return nil }
         return arguments[index + 1]
     }
-    #else
-    static let isUITesting = false
-    static let shouldSeed = false
-    static let loginUsername: String? = nil
-    #endif
+
+    /// Applies the launch arguments: forgets the saved login under `-uiTesting`, seeds demo data,
+    /// and returns the player to start logged in as, if any.
+    static func prepareLaunch(in context: NSManagedObjectContext) -> Player? {
+        if isUITesting { SessionStore.save(nil) }
+        seedIfRequested(in: context)
+        return loginPlayer(in: context)
+    }
 
     /// Seeds the demo league if requested and the database is empty. Saves.
     static func seedIfRequested(in context: NSManagedObjectContext) {
@@ -82,3 +86,4 @@ enum DemoData {
         return player
     }
 }
+#endif

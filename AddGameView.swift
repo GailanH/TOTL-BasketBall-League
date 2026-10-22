@@ -146,7 +146,7 @@ struct AddGameView: View {
     @ViewBuilder
     private var csvSection: some View {
         Section(header: Text("Batch Upload (CSV)")) {
-            Text("Columns: \(Self.requiredCSVColumns.joined(separator: ", ")). One row per player. Rows with the same \"game\" value are one game. team is A or B, result is W or L.")
+            Text("Columns: \(Self.requiredCSVColumns.joined(separator: ", ")), and optionally date (YYYY-MM-DD). One row per player. Rows with the same \"game\" value are one game. team is A or B, result is W or L. Games are recorded oldest first.")
                 .font(.caption)
                 .foregroundColor(.gray)
 
@@ -237,7 +237,9 @@ struct AddGameView: View {
         let team: Team
         let won: Bool
         let stats: StatLine
+        let date: Date?
     }
+
 
     private func importCSV(from url: URL) {
         let didStartAccessing = url.startAccessingSecurityScopedResource()
@@ -298,12 +300,31 @@ struct AddGameView: View {
                 badGames.insert(gameKey)
                 continue
             }
+            var date: Date? = nil
+            if let dateText = field("date"), !dateText.isEmpty {
+                guard let parsed = CSVTable.parseDate(dateText) else {
+                    errors.append("Row \(lineNumber): date must look like 2026-10-21 or 2026-10-21 18:30.")
+                    badGames.insert(gameKey)
+                    continue
+                }
+                date = parsed
+            }
             rowsByGame[gameKey]?.append(CSVRow(line: lineNumber, username: username, team: team, won: result == "W",
-                                               stats: StatLine(points: p, rebounds: r, assists: a, blocks: b, steals: s)))
+                                               stats: StatLine(points: p, rebounds: r, assists: a, blocks: b, steals: s), date: date))
         }
 
+        // Record oldest first so RP builds up in the order games were played. Games without a
+        // date keep their file order, one second apart, after now.
+        let now = Date()
+        let gameDates: [String: Date] = Dictionary(uniqueKeysWithValues: gameOrder.enumerated().map { index, key in
+            (key, rowsByGame[key]?.compactMap(\.date).first ?? now.addingTimeInterval(TimeInterval(index)))
+        })
+        let orderedGames = gameOrder.enumerated()
+            .sorted { (gameDates[$0.element]!, $0.offset) < (gameDates[$1.element]!, $1.offset) }
+            .map(\.element)
+
         var recorded = 0
-        for gameKey in gameOrder {
+        for gameKey in orderedGames {
             guard !badGames.contains(gameKey) else {
                 errors.append("Game \(gameKey): skipped because of the row error(s) above.")
                 continue
@@ -331,7 +352,7 @@ struct AddGameView: View {
             }
 
             do {
-                try MatchRecorder.record(entries, winner: winner, in: viewContext)
+                try MatchRecorder.record(entries, winner: winner, date: gameDates[gameKey] ?? now, in: viewContext)
                 recorded += 1
             } catch {
                 errors.append("Game \(gameKey): \(error.localizedDescription)")

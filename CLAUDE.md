@@ -20,12 +20,14 @@ Business planning is **not** deferred anymore. When an app decision depends on a
 - Keep replies concise and direct.
 - Prioritize correctness and robustness over new features, unless a feature is needed for the demo or the fundraising plan.
 - Keep business rules in one place in code: `CompetitiveRules.swift` (tunable numbers), `RankSystem.swift`/`MatchScoring.swift` (scoring), `AppConstants.swift` (roles, memberships), `GameStatBounds.swift` (stat sanity limits). Never duplicate them in views.
+- **`DebugTools/` is testing-only** (Debug builds, `#if DEBUG`): demo launch arguments, test-account CSV import, sample data. Never build real features on it, and never create real accounts outside sign-up. Real members choose their own password. Removal steps: `DebugTools/README.md`.
 - Sources of truth if they disagree: Gailan's latest stated decision > `ROADMAP.md` decisions log > business plan docx > code.
 
 ## Repo / build state
 
 - GitHub: `GailanH/TOTL-BasketBall-League`, branch `main`. Pushing works from Claude sessions with GitHub connected. The Mac's own shell has no GitHub credentials.
 - `project.yml` (XcodeGen) generates `Project_Comp_B.xcodeproj` (gitignored). Run `xcodegen generate` after adding or removing files.
+- UI tests (`UITests/`) walk the real screens using DebugTools launch arguments. CI publishes their screenshots to the `ui-screenshots` branch and the generated Xcode project to `generated-xcodeproj` (fetch with git; artifact downloads are blocked from Claude sessions).
 - CI (`.github/workflows/ios.yml`) runs `xcodebuild test` on GitHub macOS runners with the default Xcode and an available iPhone simulator. On failure, compiler errors and failed tests appear as a job annotation (readable via `gh api .../check-runs/<job>/annotations`, since raw logs may be blocked).
 - `.claude/` and `build/` are gitignored.
 

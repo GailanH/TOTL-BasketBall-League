@@ -17,11 +17,13 @@ struct ContentView: View {
         .onAppear {
             guard !didAttemptRestore else { return }
             didAttemptRestore = true
-            if DemoData.isUITesting {
-                SessionStore.save(nil)
+            #if DEBUG // DebugTools: UI-test / demo launch arguments. Not in release builds.
+            if let testPlayer = DemoData.prepareLaunch(in: viewContext) {
+                loggedInPlayer = testPlayer
+                return
             }
-            DemoData.seedIfRequested(in: viewContext)
-            loggedInPlayer = DemoData.loginPlayer(in: viewContext) ?? SessionStore.restore(in: viewContext)
+            #endif
+            loggedInPlayer = SessionStore.restore(in: viewContext)
         }
         .onChange(of: loggedInPlayer) { newValue in
             SessionStore.save(newValue)

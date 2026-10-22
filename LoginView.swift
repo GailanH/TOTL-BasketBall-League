@@ -193,18 +193,18 @@ struct LoginView: View {
             return
         }
 
-        guard Self.isValidUsername(trimmedUsername) else {
-            registrationError = "Username must be 3-20 characters: letters, numbers, and underscores only."
+        guard AccountValidation.isValidUsername(trimmedUsername) else {
+            registrationError = AccountValidation.usernameRule
             return
         }
 
-        guard Self.isValidEmail(trimmedEmail) else {
+        guard AccountValidation.isValidEmail(trimmedEmail) else {
             registrationError = "Enter a valid email address."
             return
         }
 
-        guard registrationPassword.count >= 8 else {
-            registrationError = "Password must be at least 8 characters."
+        guard AccountValidation.isValidPassword(registrationPassword) else {
+            registrationError = AccountValidation.passwordRule
             return
         }
 
@@ -265,16 +265,6 @@ struct LoginView: View {
 
         let alreadyHasApprovedEmployee = ((try? viewContext.count(for: employeeCheck)) ?? 0) > 0
         return alreadyHasApprovedEmployee ? AppConstants.employeePendingRole : AppConstants.employeeRole
-    }
-
-    private static func isValidEmail(_ email: String) -> Bool {
-        let pattern = #"^[^\s@]+@[^\s@]+\.[^\s@]+$"#
-        return email.range(of: pattern, options: .regularExpression) != nil
-    }
-
-    private static func isValidUsername(_ username: String) -> Bool {
-        let pattern = #"^[A-Za-z0-9_]{3,20}$"#
-        return username.range(of: pattern, options: .regularExpression) != nil
     }
 
     private func clearLoginFields() {
