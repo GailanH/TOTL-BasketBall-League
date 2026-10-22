@@ -152,7 +152,7 @@ final class MatchScoringTests: XCTestCase {
         XCTAssertEqual(MatchScoring.underdogGap(lineup, winner: .a), 2)
         let outcomes = MatchScoring.score(lineup, winner: .a)
         XCTAssertEqual(outcomes.map(\.underdogBonus), [10, 10, 0, 0])
-        XCTAssertEqual(outcomes.map(\.rpChange), [25, 20, -7, -15])
+        XCTAssertEqual(outcomes.map(\.rpChange), [25, 20, -15, -7])  // Gold I outscored Gold III, so is SVP
     }
 
     func testBonusIsCappedAtTenForAnyGap() {
