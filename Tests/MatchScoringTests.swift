@@ -124,7 +124,7 @@ final class MatchScoringTests: XCTestCase {
         XCTAssertTrue(MatchScoring.isUnderdogWin(lineup, winner: .a))
         let outcomes = MatchScoring.score(lineup, winner: .a)
         XCTAssertEqual(outcomes.map(\.rpChange), [20, 15, 15, -7, -15, -15])
-        XCTAssertEqual(outcomes.map(\.underdogBonus), [true, true, true, false, false, false])
+        XCTAssertEqual(outcomes.map(\.underdogBonus), [5, 5, 5, 0, 0, 0])
     }
 
     func testOneGoldOnTheWinningTeamMeansNoUnderdogBonus() {
@@ -143,5 +143,30 @@ final class MatchScoringTests: XCTestCase {
         let lineup = [atAverage(.a, "Silver III"), atAverage(.a, "Silver I"), atAverage(.a, "Silver II"),
                       atAverage(.b, "Gold III"), atAverage(.b, "Gold I"), atAverage(.b, "Diamond III")]
         XCTAssertTrue(MatchScoring.isUnderdogWin(lineup, winner: .a))
+    }
+
+    func testTwoMetalGapPaysTen() {
+        // Bronzes beat Golds: two metals apart.
+        let lineup = [atAverage(.a, "Bronze I"), atAverage(.a, "Bronze II"),
+                      atAverage(.b, "Gold III"), atAverage(.b, "Gold I")]
+        XCTAssertEqual(MatchScoring.underdogGap(lineup, winner: .a), 2)
+        let outcomes = MatchScoring.score(lineup, winner: .a)
+        XCTAssertEqual(outcomes.map(\.underdogBonus), [10, 10, 0, 0])
+        XCTAssertEqual(outcomes.map(\.rpChange), [25, 20, -7, -15])
+    }
+
+    func testBonusIsCappedAtTenForAnyGap() {
+        // Rookies beat Diamonds: four metals apart, still +10.
+        let lineup = [atAverage(.a, "Rookie"), atAverage(.b, "Diamond II")]
+        XCTAssertEqual(MatchScoring.underdogGap(lineup, winner: .a), 4)
+        XCTAssertEqual(MatchScoring.score(lineup, winner: .a).map(\.underdogBonus), [10, 0])
+    }
+
+    func testFavoritesLoseOnlyTheNormalAmount() {
+        let underdog = MatchScoring.score([atAverage(.a, "Bronze I"), atAverage(.a, "Bronze I"),
+                                           atAverage(.b, "Gold I"), atAverage(.b, "Gold I")], winner: .a)
+        let even = MatchScoring.score([atAverage(.a, "Gold I"), atAverage(.a, "Gold I"),
+                                       atAverage(.b, "Gold I"), atAverage(.b, "Gold I")], winner: .a)
+        XCTAssertEqual(underdog[2...].map(\.rpChange), even[2...].map(\.rpChange))
     }
 }

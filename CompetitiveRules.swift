@@ -56,10 +56,14 @@ enum CompetitiveRules {
 
     // MARK: Underdog win (decided 2026-10-21)
 
-    /// Extra RP for each winner when the whole winning team is at least one full metal below
-    /// the whole losing team: every winner's metal (Bronze, Silver, Gold...) is lower than every
-    /// loser's. 3 Silvers beating 3 Golds qualifies; 2 Silvers + 1 Gold beating 3 Golds doesn't.
-    static let underdogWinBonus: Int64 = 5
+    /// An underdog win: every winner's metal (Rookie, Bronze, Silver, Gold, Diamond, Elite) is
+    /// lower than every loser's. The gap is how many metals separate the winning team's highest
+    /// player from the losing team's lowest. 3 Silvers beating 3 Golds is a 1-metal gap;
+    /// 2 Silvers + 1 Gold beating 3 Golds isn't an underdog win.
+    /// Each winner gets `underdogBonusPerMetal` per metal of gap, at most `underdogBonusCap`.
+    /// The favorites lose the normal amount (losing already costs enough).
+    static let underdogBonusPerMetal: Int64 = 5
+    static let underdogBonusCap: Int64 = 10
 
     // MARK: Seasons and placement (D3)
 

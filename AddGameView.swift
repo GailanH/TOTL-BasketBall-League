@@ -206,9 +206,8 @@ struct AddGameView: View {
     }
 
     static func summary(of results: [MatchRecorder.PlayerResult]) -> String {
-        let underdogNote = results.contains(where: \.underdogBonus)
-            ? "Underdog win! Each winner got +\(CompetitiveRules.underdogWinBonus) RP extra.\n\n"
-            : ""
+        let bonus = results.map(\.underdogBonus).max() ?? 0
+        let underdogNote = bonus > 0 ? "Underdog win! Each winner got +\(bonus) RP extra.\n\n" : ""
         return underdogNote + results
             .sorted { ($0.won ? 0 : 1, -$0.rpDelta) < ($1.won ? 0 : 1, -$1.rpDelta) }
             .map { result in

@@ -17,10 +17,11 @@ Open: what's left / next step
 ## Iteration 13: 2026-10-21: Underdog wins
 Track: App
 Changed:
-- Underdog bonus: if every winner is in a lower metal (Rookie, Bronze, Silver, Gold, Diamond, Elite) than every loser, each winner gets +5 extra (`CompetitiveRules.underdogWinBonus`). The results popup says "Underdog win!".
+- Underdog bonus: if every winner is in a lower metal (Rookie, Bronze, Silver, Gold, Diamond, Elite) than every loser, each winner gets +5 per metal of gap, capped at +10 (`underdogBonusPerMetal`, `underdogBonusCap`). Favorites lose only the normal amount. The results popup says "Underdog win!".
 - Sample league gained G41 (Oct 18): three Silvers beat rico_s, jaylen_w and dev_o.
 Decided: underdog bonus only with a full metal gap between the teams (Gailan): 3 Silvers vs 3 Golds qualifies; 2 Silvers + 1 Gold vs 3 Golds doesn't.
-Open: whether the losing favorites should also lose extra; whether a two-metal gap should pay more.
+Decided (follow-up): favorites don't lose extra (losing is already tough); a 2+ metal gap pays +10, never more.
+Open: none.
 
 ## Iteration 12: 2026-10-21: MVP scope: proof-of-concept league on rented courts
 Track: Both

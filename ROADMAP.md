@@ -14,7 +14,7 @@ Unified plan for the business, the app, and the fundraising. These tracks move t
 | D1 | Which stats earn RP | **Decided:** all 5 (points, rebounds, assists, blocks, steals). |
 | D2 | RP per level | **Decided:** 50 for now. |
 | D3 | Season structure | **Decided:** 3-month seasons, soft reset, placement games. Implemented with these defaults: drop 3 tiers at reset, 5 placement games at 2× RP, staff start each new season. |
-| D4 | RP formula | **Decided:** winners all gain; only the losing team's best player (SVP) can gain, and only a little; MVP for winners, SVP for losers; if everyone plays badly and loses, everyone loses RP including the SVP. Implemented and rebalanced 2026-10-21 (see D8): win +10, loss −15, SVP −7 (great game up to +5), MVP +5, underdog win +5, stats ±2 per unit at half weight. All tunable in `CompetitiveRules.swift`. |
+| D4 | RP formula | **Decided:** winners all gain; only the losing team's best player (SVP) can gain, and only a little; MVP for winners, SVP for losers; if everyone plays badly and loses, everyone loses RP including the SVP. Implemented and rebalanced 2026-10-21 (see D8): win +10, loss −15, SVP −7 (great game up to +5), MVP +5, underdog win +5 per metal (max +10), stats ±2 per unit at half weight. All tunable in `CompetitiveRules.swift`. |
 | D5 | Backend / sync | **Now needed for the MVP** (players use the app on their own phones; website shows the same schedule and leaderboard). Recommended: Supabase. Gailan to choose. |
 | D6 | Funding mix | **Deferred.** Focus is the app for now. |
 | D7 | Launch format | **Decided:** start small, likely a rented 2-court gym, not a 6-court build. |
@@ -182,7 +182,7 @@ CI runs `xcodebuild test` on every push/PR.
 ## Decisions log
 | Date | Decision |
 |---|---|
-| 2026-10-21 | Underdog win: +5 per winner when every winner is a full metal below every loser. |
+| 2026-10-21 | Underdog win: +5 per metal of gap per winner, capped at +10, when every winner is a full metal below every loser. Favorites lose the normal amount. |
 | 2026-10-21 | D10: MVP is a proof-of-concept league on rented courts; the app is the main selling point. Backend (D5) moves into the MVP. Cost model v1 built. |
 | 2026-10-21 | D8 rebalanced against RP inflation: win +10, loss -15, SVP -7, MVP +5, stats ±2 both ways at half weight. |
 | 2026-10-18 | D1: all 5 stats. D2: 50 RP per level. D3: 3-month seasons, soft reset, placement. D4: win/loss scoring with MVP/SVP. D5/D6 deferred. D7: start with a rented 2-court gym. Focus on the app for now. |

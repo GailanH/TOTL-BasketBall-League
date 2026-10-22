@@ -47,8 +47,8 @@ enum MatchRecorder {
         let rpDelta: Int64
         let newRank: String
         let rankChanged: Bool
-        /// True for winners of an underdog win (see `CompetitiveRules.underdogWinBonus`).
-        let underdogBonus: Bool
+        /// Underdog bonus RP included in `rpDelta` (0 unless they won an underdog win).
+        let underdogBonus: Int64
     }
 
     // MARK: Record
@@ -239,7 +239,7 @@ enum MatchRecorder {
         // Whether this was an underdog win, judged on ranks going into the game.
         let lines = games(in: match)
         let winner = Team(rawValue: match.winningTeam ?? "") ?? .a
-        let underdog = MatchScoring.isUnderdogWin(lines.map { game in
+        let underdogGap = MatchScoring.underdogGap(lines.map { game in
             MatchScoring.Participant(
                 team: Team(rawValue: game.team ?? "") ?? .a,
                 stats: stats(of: game),
@@ -261,7 +261,7 @@ enum MatchRecorder {
                 rpDelta: game.rpDelta,
                 newRank: RankSystem.rankName(for: player.rankPoints),
                 rankChanged: changed,
-                underdogBonus: underdog && game.won
+                underdogBonus: game.won ? MatchScoring.underdogBonus(forGap: underdogGap) : 0
             )
         }
     }

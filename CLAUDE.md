@@ -46,7 +46,7 @@ Business planning is **not** deferred anymore. When an app decision depends on a
 
 - 14 tiers, 50 RP each: Rookie (0–100) through Elite (701+, uncapped). Tier averages rise with rank.
 - All 5 stats count. Each stat vs. the player's tier average: ±2 per unit, capped ±15 per stat; the game's stat score is clamped to +50/−20 and counts at half weight.
-- Result-led scoring (rebalanced 2026-10-21 against RP inflation): win +10 (never below +3), MVP +5 more, loss −15 (never a gain), SVP −7 (a great game can still earn up to +5). Underdog win (every winner a full metal below every loser): +5 per winner. Typical: win +10, MVP +20, loss −17, SVP −4.
+- Result-led scoring (rebalanced 2026-10-21 against RP inflation): win +10 (never below +3), MVP +5 more, loss −15 (never a gain), SVP −7 (a great game can still earn up to +5). Underdog win (every winner a full metal below every loser): +5 per metal of gap per winner, capped at +10; favorites lose the normal amount. Typical: win +10, MVP +20, loss −17, SVP −4.
 - 3-month seasons. Staff start each new season: everyone drops 3 tiers to the bottom of that tier, then plays 5 placement games at 2× RP. Players in placement are hidden from the leaderboard.
 - Numbers live in `CompetitiveRules.swift`. Logic lives in `RankSystem.swift` and `MatchScoring.swift` (pure, unit-tested). All RP changes go through `MatchRecorder.swift`, and seasons through `SeasonManager.swift`.
 
