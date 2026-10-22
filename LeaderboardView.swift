@@ -130,12 +130,16 @@ struct LeaderboardView: View {
         }
         .coordinateSpace(name: "leaderboard")
         .onPreferenceChange(StandingCardBottomKey.self) { bottom in
-            let visible = bottom > 0
+            // Hysteresis: collapse once the card is fully off screen, expand again only when
+            // a good part of it is back, so the bar can't flicker at the boundary.
+            let visible = standingCardVisible ? bottom > 0 : bottom > 80
             if visible != standingCardVisible {
                 withAnimation(.easeInOut(duration: 0.2)) { standingCardVisible = visible }
             }
         }
-        .safeAreaInset(edge: .top, spacing: 0) {
+        // An overlay, not a safe-area inset: the bar floats over the list without moving it,
+        // so showing the bar can't push the card back into view.
+        .overlay(alignment: .top) {
             if !standingCardVisible, let standing, let viewer {
                 CompactStandingBar(standing: standing) {
                     withAnimation { proxy.scrollTo(viewer.objectID, anchor: .center) }
