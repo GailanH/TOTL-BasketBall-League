@@ -141,7 +141,7 @@ struct MyRSVPBadge: View {
             text = checkedIn ? "Checked in" : "You're in"; color = .green
         case .waitlisted(let position):
             text = "Waitlist #\(position)"; color = .orange
-        case .none, nil:
+        case .some(MyRSVPState.none), nil:
             return nil
         }
     }
