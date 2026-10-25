@@ -37,12 +37,13 @@ struct LeaderboardView: View {
 
                 standingHeader
                     .padding(.horizontal)
-                    .background(
-                        GeometryReader { geo in
-                            Color.clear.preference(key: StandingCardBottomKey.self,
-                                                   value: geo.frame(in: .named("leaderboard")).maxY)
-                        }
-                    )
+                    // Track the card's bottom edge in the scroll view's space while scrolling.
+                    // (onGeometryChange updates during scrolls; a preference key didn't, reliably.)
+                    .onGeometryChange(for: CGFloat.self) { proxy in
+                        proxy.frame(in: .named("leaderboard")).maxY
+                    } action: { bottom in
+                        updateCardVisibility(bottom: bottom)
+                    }
 
                 if !inPlacement.isEmpty {
                     Text("\(inPlacement.count) player\(inPlacement.count == 1 ? "" : "s") still in placement games")
@@ -129,14 +130,6 @@ struct LeaderboardView: View {
             }
         }
         .coordinateSpace(name: "leaderboard")
-        .onPreferenceChange(StandingCardBottomKey.self) { bottom in
-            // Hysteresis: collapse once the card is fully off screen, expand again only when
-            // a good part of it is back, so the bar can't flicker at the boundary.
-            let visible = standingCardVisible ? bottom > 0 : bottom > 80
-            if visible != standingCardVisible {
-                withAnimation(.easeInOut(duration: 0.2)) { standingCardVisible = visible }
-            }
-        }
         // An overlay, not a safe-area inset: the bar floats over the list without moving it,
         // so showing the bar can't push the card back into view.
         .overlay(alignment: .top) {
@@ -178,6 +171,16 @@ struct LeaderboardView: View {
         }
     }
 
+    /// Hysteresis: collapse once the card is fully off screen (its bottom edge above the top of
+    /// the scroll view), expand again only when a good part of it is back, so the bar can't
+    /// flicker at the boundary.
+    private func updateCardVisibility(bottom: CGFloat) {
+        let visible = standingCardVisible ? bottom > 0 : bottom > 80
+        if visible != standingCardVisible {
+            withAnimation(.easeInOut(duration: 0.2)) { standingCardVisible = visible }
+        }
+    }
+
     /// The viewer's standing, if they're on the leaderboard.
     private var standing: LeaderboardStanding? {
         guard let viewer, let index = players.firstIndex(where: { $0.objectID == viewer.objectID }) else { return nil }
@@ -192,11 +195,4 @@ struct LeaderboardView: View {
         default: return nil
         }
     }
-}
-
-/// The bottom edge of the standing card in the leaderboard's scroll space. When it goes above
-/// 0, the card has scrolled off and the compact bar takes over.
-private struct StandingCardBottomKey: PreferenceKey {
-    static var defaultValue: CGFloat = .infinity
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
 }

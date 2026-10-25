@@ -202,6 +202,7 @@ final class LeagueFlowUITests: XCTestCase {
 
         // Scroll down: the card collapses into the pinned bar; tapping it jumps back to your row.
         for _ in 0..<6 { drag(by: 1) }
+        snap("journey/leaderboard-scrolled")
         let bar = app.buttons["compactStandingBar"]
         XCTAssertTrue(bar.waitForExistence(timeout: 3), "Standing card didn't collapse into the pinned bar")
         snap("journey/leaderboard-collapsed-bar")
