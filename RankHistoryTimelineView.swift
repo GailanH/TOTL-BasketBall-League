@@ -2,16 +2,23 @@ import SwiftUI
 import CoreData
 import Charts
 
-/// A player's journey through the ranks this season: RP after every ranked game, with the tier
-/// boundaries drawn in, plus their rank changes. A player who never changes tier still sees
-/// their whole season.
+/// A player's journey through the ranks in one season (the current one unless `season` is
+/// given): RP after every ranked game with the tier boundaries drawn in, their stats and
+/// averages, and that season's rank changes. Past seasons are reached from Season History.
 struct RankHistoryTimelineView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @ObservedObject var player: Player
+    /// nil = the active season.
+    var season: Season? = nil
 
     @State private var journey: RankJourney?
     @State private var seasonName = ""
     @State private var rankChanges: [RankChangeRow] = []
+    @State private var stats: SeasonStats = .empty
+    @State private var nightsAttended = 0
+    @State private var finish: SeasonResult?
+    @State private var isPastSeason = false
+    @State private var hasHistory = false
 
     struct RankChangeRow: Identifiable {
         let id: UUID
@@ -33,7 +40,18 @@ struct RankHistoryTimelineView: View {
                 } else {
                     seasonSection
                     Divider().padding(.vertical, 4)
+                    SeasonStatsCard(stats: stats, nightsAttended: nightsAttended)
+                    Divider().padding(.vertical, 4)
                     rankChangesSection
+                    if season == nil && hasHistory {
+                        NavigationLink(value: DashboardRoute.seasonHistory(player: player)) {
+                            Label("Past Seasons", systemImage: "clock.arrow.circlepath")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        .padding(.top, 8)
+                        .accessibilityIdentifier("seasonHistoryLink")
+                    }
                 }
 
                 Spacer()
@@ -41,7 +59,7 @@ struct RankHistoryTimelineView: View {
             .padding()
         }
         .background(Color("AppBackground").ignoresSafeArea())
-        .navigationTitle("Rank Timeline")
+        .navigationTitle(isPastSeason ? seasonName : "Rank Timeline")
         .onAppear(perform: load)
     }
 
@@ -49,8 +67,12 @@ struct RankHistoryTimelineView: View {
 
     @ViewBuilder
     private var seasonSection: some View {
-        Text(seasonName.isEmpty ? "This Season" : seasonName)
+        Text(seasonName.isEmpty ? "This Season" : (isPastSeason ? "\(seasonName) (finished)" : seasonName))
             .font(.headline)
+
+        if let finish {
+            FinishBadge(result: finish)
+        }
 
         if let journey, journey.points.count >= 2 {
             summary(journey)
@@ -61,7 +83,7 @@ struct RankHistoryTimelineView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
         } else {
-            Text("No ranked games yet this season. Your journey fills in after your first game.")
+            Text(isPastSeason ? "No ranked games that season." : "No ranked games yet this season. Your journey fills in after your first game.")
                 .foregroundColor(.gray)
         }
     }
@@ -119,28 +141,127 @@ struct RankHistoryTimelineView: View {
     // MARK: Data
 
     private func load() {
-        let season = SeasonManager.activeSeason(in: viewContext)
-        seasonName = season?.name ?? ""
+        let active = SeasonManager.activeSeason(in: viewContext)
+        let target = season ?? active
+        isPastSeason = target.map { !$0.isActive } ?? false
+        seasonName = target?.name ?? ""
+        hasHistory = SeasonManager.allSeasons(in: viewContext).contains { !$0.isActive }
 
-        let allGames = (player.games as? Set<Game>) ?? []
-        let seasonGames = allGames.filter { game in
-            guard let gameSeason = game.match?.season else { return false }
-            return season != nil && gameSeason == season
+        guard let target else {
+            journey = nil; stats = .empty; nightsAttended = 0; finish = nil
+            rankChanges = rankChangeRows { $0.season == nil }
+            return
         }
-        let steps = seasonGames.compactMap { game -> RankJourney.GameStep? in
-            guard let date = game.date else { return nil }
-            return RankJourney.GameStep(date: date, rpDelta: game.rpDelta, won: game.won,
-                                        award: game.award, isPlacement: game.isPlacement)
-        }
-        journey = RankJourney(games: steps, currentRP: player.rankPoints, seasonStart: season?.startDate)
 
-        rankChanges = ((player.rankChanges as? Set<RankChange>) ?? [])
+        let seasonGames = SeasonHistory.games(of: player, in: target)
+        stats = SeasonStats(seasonGames.map(SeasonHistory.line))
+        nightsAttended = SeasonHistory.nightsAttended(by: player, in: target)
+        finish = isPastSeason ? SeasonHistory.result(of: player, in: target) : nil
+
+        // The journey runs back from the season's final RP: today's RP for the current season,
+        // the saved final RP for a finished one.
+        let endRP: Int64? = isPastSeason ? finish?.finalRankPoints : player.rankPoints
+        if let endRP {
+            let steps = seasonGames.compactMap { game -> RankJourney.GameStep? in
+                guard let date = game.date else { return nil }
+                return RankJourney.GameStep(date: date, rpDelta: game.rpDelta, won: game.won,
+                                            award: game.award, isPlacement: game.isPlacement)
+            }
+            journey = RankJourney(games: steps, currentRP: endRP, seasonStart: target.startDate)
+        } else {
+            journey = nil
+        }
+
+        // Only this season's rank changes. Changes from before seasons existed count toward the
+        // first season.
+        let isFirstSeason = target.number == (SeasonManager.allSeasons(in: viewContext).last?.number ?? target.number)
+        rankChanges = rankChangeRows { $0.season == target || (isFirstSeason && $0.season == nil) }
+    }
+
+    private func rankChangeRows(_ include: (RankChange) -> Bool) -> [RankChangeRow] {
+        ((player.rankChanges as? Set<RankChange>) ?? [])
+            .filter(include)
             .compactMap { change in
                 guard let id = change.id, let rank = change.newRank, let date = change.date else { return nil }
                 return RankChangeRow(id: id, rank: rank, date: date,
                                      isSeasonReset: change.reason == RankChangeReason.seasonReset.rawValue)
             }
             .sorted { $0.date > $1.date }
+    }
+}
+
+/// "Finished #3 of 14 · Gold II, 612 RP"
+struct FinishBadge: View {
+    let result: SeasonResult
+
+    var body: some View {
+        let rank = result.finalRank ?? RankSystem.rankName(for: result.finalRankPoints)
+        let place = result.position > 0
+            ? "Finished #\(result.position) of \(result.rankedPlayerCount)"
+            : (result.wasInPlacement ? "Finished in placement" : "Not ranked")
+        HStack(spacing: 10) {
+            Image(systemName: result.position > 0 && result.position <= 3 ? "trophy.fill" : "flag.checkered")
+                .foregroundColor(result.position > 0 && result.position <= 3 ? .yellow : .secondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(place).font(.subheadline).bold()
+                Text("\(rank) · \(result.finalRankPoints) RP").font(.caption).foregroundColor(.secondary)
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardStyle()
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("seasonFinish")
+    }
+}
+
+/// Record, awards, attendance and per-game averages for one season.
+struct SeasonStatsCard: View {
+    let stats: SeasonStats
+    var nightsAttended: Int = 0
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Season Stats").font(.headline)
+            if stats.games == 0 {
+                Text("No ranked games yet.").foregroundColor(.gray)
+            } else {
+                HStack {
+                    block("Record", "\(stats.wins)–\(stats.losses)")
+                    Spacer()
+                    block("Win %", "\(Int((stats.winRate * 100).rounded()))%")
+                    Spacer()
+                    block("MVP", "\(stats.mvps)")
+                    Spacer()
+                    block("SVP", "\(stats.svps)")
+                    Spacer()
+                    block("Net RP", "\(stats.netRP >= 0 ? "+" : "")\(stats.netRP)")
+                }
+                Text("Per game").font(.caption).foregroundColor(.secondary)
+                HStack {
+                    ForEach(stats.averages.labelled, id: \.0) { item in
+                        block(item.0, SeasonStats.format(item.1))
+                        if item.0 != "STL" { Spacer() }
+                    }
+                }
+                .accessibilityIdentifier("seasonAverages")
+                Text("Totals: \(stats.totals.points) PTS · \(stats.totals.rebounds) REB · \(stats.totals.assists) AST · \(stats.totals.blocks) BLK · \(stats.totals.steals) STL")
+                    .font(.caption).foregroundColor(.secondary)
+            }
+            if nightsAttended > 0 {
+                Text("Game nights attended: \(nightsAttended)").font(.caption).foregroundColor(.secondary)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardStyle()
+    }
+
+    private func block(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label).font(.caption2).foregroundColor(.secondary)
+            Text(value).font(.subheadline).bold()
+        }
     }
 }
 

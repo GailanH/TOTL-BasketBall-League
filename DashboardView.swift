@@ -156,6 +156,14 @@ struct DashboardView: View {
                         EditProfileView(playerID: playerID)
                     case .rankTimeline(let player):
                         RankHistoryTimelineView(player: player)
+                    case .seasonTimeline(let player, let season):
+                        RankHistoryTimelineView(player: player, season: season)
+                    case .seasonHistory(let player):
+                        SeasonHistoryView(player: player)
+                    case .pastSeasons:
+                        PastSeasonsView()
+                    case .seasonStandings(let season):
+                        SeasonStandingsView(season: season)
                     }
                 }
                 .alert(item: $rankAlert) { alert in

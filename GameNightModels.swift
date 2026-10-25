@@ -79,6 +79,8 @@ struct GameNightRecord: Identifiable, Equatable, Hashable {
     /// Read-only counts filled in by the store (not saved from here).
     var confirmedCount: Int = 0
     var waitlistCount: Int = 0
+    /// Filled in once the night is closed (status completed).
+    var attendance: AttendanceSummary? = nil
 
     var spotsLeft: Int { RSVPPolicy.spotsLeft(capacity: capacity, confirmedCount: confirmedCount) }
     var availabilityText: String {

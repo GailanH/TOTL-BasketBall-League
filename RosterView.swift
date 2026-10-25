@@ -23,6 +23,7 @@ struct RosterView: View {
     @State private var errorMessage: String?
     @State private var showWalkIns = false
     @State private var editing = false
+    @State private var confirmClose = false
 
     /// Teams as usernames so staff can move players between them.
     struct TeamSplit: Equatable {
@@ -34,9 +35,11 @@ struct RosterView: View {
         List {
             if let night {
                 headerSection(night)
+                closeSection(night)
                 checkInSection(night)
+                if !roster.noShows.isEmpty { noShowSection }
                 if !roster.waitlist.isEmpty { waitlistSection }
-                nextGameSection
+                if !isClosed { nextGameSection }
             } else {
                 Text("This game night no longer exists.").foregroundColor(.secondary)
             }
@@ -60,6 +63,16 @@ struct RosterView: View {
         }
         .sheet(isPresented: $showWalkIns, onDismiss: load) {
             WalkInPickerSheet(nightID: nightID)
+        }
+        .confirmationDialog("Close this night?", isPresented: $confirmClose, titleVisibility: .visible) {
+            Button("Close Night", role: .destructive, action: closeNight)
+                .accessibilityIdentifier("confirmCloseNight")
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            let missing = roster.confirmed.count - roster.checkedIn.count
+            Text(missing == 0
+                 ? "Everyone who RSVP'd checked in. You can reopen the night later if something's wrong."
+                 : "\(missing) player\(missing == 1 ? "" : "s") who RSVP'd didn't check in and will be marked no-show. You can reopen the night later if something's wrong.")
         }
         .alert("Roster", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
             Button("OK", role: .cancel) {}
@@ -86,6 +99,47 @@ struct RosterView: View {
         }
     }
 
+    private var isClosed: Bool { night?.status == .completed }
+
+    @ViewBuilder
+    private func closeSection(_ night: GameNightRecord) -> some View {
+        if let attendance = night.attendance {
+            Section(header: Text("Night Closed")) {
+                Text(attendance.text).font(.subheadline)
+                    .accessibilityIdentifier("attendanceSummary")
+                if attendance.attended - attendance.walkIns + attendance.noShows > 0 {
+                    Text("\(Int((attendance.showRate * 100).rounded()))% of RSVPs showed up · capacity \(attendance.capacity)")
+                        .font(.caption).foregroundColor(.secondary)
+                }
+                Button("Reopen Night", action: reopenNight)
+                    .accessibilityIdentifier("reopenNight")
+            }
+        } else if RSVPPolicy.refusalToClose(night: night, now: Date()) == nil {
+            Section {
+                Button {
+                    confirmClose = true
+                } label: {
+                    Label("Close Night", systemImage: "flag.checkered")
+                }
+                .accessibilityIdentifier("closeNight")
+            } footer: {
+                Text("Close the night when play is done. Anyone who RSVP'd and didn't check in is marked a no-show, and the turnout is saved.")
+            }
+        }
+    }
+
+    private var noShowSection: some View {
+        Section(header: Text("No-shows (\(roster.noShows.count))")) {
+            ForEach(roster.noShows) { rsvp in
+                HStack {
+                    Text(rsvp.username)
+                    Spacer()
+                    Text(rsvp.rank).font(.caption).foregroundColor(.secondary)
+                }
+            }
+        }
+    }
+
     private func checkInSection(_ night: GameNightRecord) -> some View {
         Section(header: Text("Players (\(roster.checkedIn.count) of \(roster.confirmed.count) checked in)")) {
             if roster.confirmed.isEmpty {
@@ -99,9 +153,9 @@ struct RosterView: View {
             } label: {
                 Label("Add Walk-in", systemImage: "person.badge.plus")
             }
-            .disabled(night.isCancelled || night.spotsLeft == 0)
+            .disabled(night.isCancelled || isClosed || night.spotsLeft == 0)
             .accessibilityIdentifier("addWalkIn")
-            if night.spotsLeft == 0 && !night.isCancelled {
+            if night.spotsLeft == 0 && !night.isCancelled && !isClosed {
                 Text("The night is full. Raise the capacity (Edit) to add walk-ins.")
                     .font(.caption).foregroundColor(.secondary)
             }
@@ -118,6 +172,7 @@ struct RosterView: View {
                     .foregroundColor(rsvp.isCheckedIn ? .green : .secondary)
             }
             .buttonStyle(.borderless)
+            .disabled(isClosed)
             .accessibilityLabel(rsvp.isCheckedIn ? "Checked in \(rsvp.username)" : "Check in \(rsvp.username)")
             .accessibilityIdentifier("checkIn-\(rsvp.username)")
 
@@ -134,7 +189,7 @@ struct RosterView: View {
                 Text(caption(rsvp)).font(.caption).foregroundColor(.secondary)
             }
             Spacer()
-            if rsvp.isCheckedIn {
+            if rsvp.isCheckedIn && !isClosed {
                 Button {
                     toggleSelection(rsvp.username)
                 } label: {
@@ -249,6 +304,25 @@ struct RosterView: View {
         }
     }
 
+    private func closeNight() {
+        do {
+            try store.closeGameNight(id: nightID, now: Date())
+            selected = []; split = nil
+            load()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func reopenNight() {
+        do {
+            try store.reopenGameNight(id: nightID)
+            load()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     private func toggleSelection(_ username: String) {
         if selected.contains(username) { selected.remove(username) } else { selected.insert(username) }
         split = nil
@@ -286,6 +360,7 @@ struct RosterView: View {
     private func caption(_ rsvp: RSVPRecord) -> String {
         var parts = [rsvp.placementGamesRemaining > 0 ? "Placement" : "\(rsvp.rank) · \(rsvp.rankPoints) RP"]
         if let games = played[rsvp.username], games > 0 { parts.append("played \(games)") }
+        if rsvp.pastNoShows > 0 { parts.append("\(rsvp.pastNoShows) past no-show\(rsvp.pastNoShows == 1 ? "" : "s")") }
         return parts.joined(separator: " · ")
     }
 
@@ -297,6 +372,7 @@ struct RosterView: View {
 
     private func checkInNote(_ night: GameNightRecord) -> String {
         if night.isCancelled { return "This night is cancelled." }
+        if night.status == .completed { return "This night is closed." }
         if RSVPPolicy.checkInIsOpen(night: night, now: Date()) { return "Check-in is open." }
         let opens = night.startDate.addingTimeInterval(-LeagueSettings.checkInOpensBefore)
         if Date() < opens { return "Check-in opens at \(GameNightFormat.time(opens)). You can still check players in early." }

@@ -77,7 +77,7 @@ struct ManageGameNightsView: View {
                     Spacer()
                     if night.displayStatus() != .scheduled { StatusBadge(status: night.displayStatus()) }
                 }
-                Text("\(night.venue.name) · \(night.isCancelled ? "\(night.capacity) spots" : night.availabilityText)")
+                Text("\(night.venue.name) · \(rowDetail(night))")
                     .font(.caption).foregroundColor(.secondary)
             }
         }
@@ -85,6 +85,13 @@ struct ManageGameNightsView: View {
             Button("Edit") { editing = EditorTarget(night: night, isNew: false) }.tint(.blue)
         }
         .accessibilityIdentifier("manageNightRow")
+    }
+
+    private func rowDetail(_ night: GameNightRecord) -> String {
+        if let attendance = night.attendance { return attendance.text }
+        if night.isCancelled { return "\(night.capacity) spots" }
+        if night.endDate < Date() { return "Not closed yet" }
+        return night.availabilityText
     }
 
     private func load() {

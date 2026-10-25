@@ -42,6 +42,11 @@ protocol GameNightStore {
     func addWalkIn(nightID: UUID, username: String, now: Date) throws
     /// Members staff could add as walk-ins: eligible, not already on the confirmed list.
     func walkInCandidates(nightID: UUID) throws -> [MemberSummary]
+    /// Closes a night that has started: confirmed players who never checked in become no-shows
+    /// and the night is marked completed. Returns the turnout.
+    @discardableResult func closeGameNight(id: UUID, now: Date) throws -> AttendanceSummary
+    /// Undoes closing (no-shows go back to confirmed), so staff can fix check-ins.
+    func reopenGameNight(id: UUID) throws
     /// How many recorded games each player has played at this night, by username (for rotation).
     func gamesPlayed(nightID: UUID) throws -> [String: Int]
 }
@@ -186,6 +191,8 @@ final class CoreDataGameNightStore: GameNightStore {
             confirmed: all.filter { $0.status == RSVPStatus.confirmed.rawValue }
                 .sorted(by: Self.rosterOrder).compactMap(Self.record),
             waitlist: all.filter { $0.status == RSVPStatus.waitlisted.rawValue }
+                .sorted(by: Self.rosterOrder).compactMap(Self.record),
+            noShows: all.filter { $0.status == RSVPStatus.noShow.rawValue }
                 .sorted(by: Self.rosterOrder).compactMap(Self.record)
         )
     }
@@ -197,6 +204,9 @@ final class CoreDataGameNightStore: GameNightStore {
         }
         if let index = roster.waitlist.firstIndex(where: { $0.username.caseInsensitiveCompare(username) == .orderedSame }) {
             return .waitlisted(position: index + 1)
+        }
+        if roster.noShows.contains(where: { $0.username.caseInsensitiveCompare(username) == .orderedSame }) {
+            return .noShow
         }
         return .none
     }
@@ -232,6 +242,7 @@ final class CoreDataGameNightStore: GameNightStore {
     @discardableResult
     func cancelRSVP(nightID: UUID, username: String, now: Date) throws -> [String] {
         guard let night = try fetchNight(id: nightID) else { throw GameNightStoreError.notFound }
+        if night.status == GameNightStatus.completed.rawValue { throw GameNightStoreError.refused(.nightClosed) }
         guard let player = try fetchPlayer(username: username),
               let rsvp = activeRSVPs(of: night).first(where: { $0.player == player }) else {
             return []
@@ -246,6 +257,7 @@ final class CoreDataGameNightStore: GameNightStore {
 
     func setCheckedIn(_ checkedIn: Bool, nightID: UUID, username: String, now: Date) throws {
         guard let night = try fetchNight(id: nightID) else { throw GameNightStoreError.notFound }
+        if night.status == GameNightStatus.completed.rawValue { throw GameNightStoreError.refused(.nightClosed) }
         guard let rsvp = activeRSVPs(of: night).first(where: {
             $0.status == RSVPStatus.confirmed.rawValue
                 && ($0.player?.username ?? "").caseInsensitiveCompare(username) == .orderedSame
@@ -259,6 +271,7 @@ final class CoreDataGameNightStore: GameNightStore {
         guard let night = try fetchNight(id: nightID), let record = Self.record(night) else { throw GameNightStoreError.notFound }
         guard let player = try fetchPlayer(username: username) else { throw GameNightStoreError.unknownPlayer(username) }
         if record.status == .cancelled { throw GameNightStoreError.refused(.cancelledNight) }
+        if record.status == .completed { throw GameNightStoreError.refused(.nightClosed) }
         if LeagueSettings.rsvpRequiresCompetitive && !AppConstants.isRanked(player.membership) {
             throw GameNightStoreError.refused(.notCompetitive)
         }
@@ -300,6 +313,46 @@ final class CoreDataGameNightStore: GameNightStore {
             .map { MemberSummary(username: $0.username ?? "", rankPoints: $0.rankPoints) }
     }
 
+    @discardableResult
+    func closeGameNight(id: UUID, now: Date) throws -> AttendanceSummary {
+        guard let night = try fetchNight(id: id), let record = Self.record(night) else { throw GameNightStoreError.notFound }
+        if let refusal = RSVPPolicy.refusalToClose(night: record, now: now) { throw GameNightStoreError.refused(refusal) }
+        for rsvp in activeRSVPs(of: night) where rsvp.status == RSVPStatus.confirmed.rawValue && rsvp.checkedInAt == nil {
+            rsvp.status = RSVPStatus.noShow.rawValue
+            rsvp.updatedAt = now
+        }
+        night.status = GameNightStatus.completed.rawValue
+        night.updatedAt = now
+        try save()
+        return Self.attendance(of: night)
+    }
+
+    func reopenGameNight(id: UUID) throws {
+        guard let night = try fetchNight(id: id) else { throw GameNightStoreError.notFound }
+        guard night.status == GameNightStatus.completed.rawValue else { return }
+        for rsvp in allRSVPs(of: night) where rsvp.status == RSVPStatus.noShow.rawValue {
+            rsvp.status = RSVPStatus.confirmed.rawValue
+            rsvp.updatedAt = Date()
+        }
+        night.status = GameNightStatus.scheduled.rawValue
+        updateStatus(night)
+        night.updatedAt = Date()
+        try save()
+    }
+
+    static func attendance(of night: GameNight) -> AttendanceSummary {
+        let rsvps = (night.rsvps as? Set<RSVP>) ?? []
+        let attended = rsvps.filter { $0.status == RSVPStatus.confirmed.rawValue && $0.checkedInAt != nil }
+        return AttendanceSummary(
+            attended: attended.count,
+            walkIns: attended.filter(\.isWalkIn).count,
+            noShows: rsvps.filter { $0.status == RSVPStatus.noShow.rawValue }.count,
+            stillWaitlisted: rsvps.filter { $0.status == RSVPStatus.waitlisted.rawValue }.count,
+            gamesRecorded: (night.matches as? Set<Match>)?.count ?? 0,
+            capacity: night.capacity
+        )
+    }
+
     func gamesPlayed(nightID: UUID) throws -> [String: Int] {
         guard let night = try fetchNight(id: nightID) else { throw GameNightStoreError.notFound }
         var counts: [String: Int] = [:]
@@ -330,7 +383,8 @@ final class CoreDataGameNightStore: GameNightStore {
     /// Fills open spots from the front of the waitlist and updates the night's status. Doesn't
     /// save. Returns the usernames moved up.
     private func promoteFromWaitlist(_ night: GameNight, now: Date) -> [String] {
-        guard night.status != GameNightStatus.cancelled.rawValue else { return [] }
+        guard night.status != GameNightStatus.cancelled.rawValue,
+              night.status != GameNightStatus.completed.rawValue else { return [] }
         let active = activeRSVPs(of: night)
         let confirmed = active.filter { $0.status == RSVPStatus.confirmed.rawValue }.count
         let waitlist = active.filter { $0.status == RSVPStatus.waitlisted.rawValue }.sorted(by: Self.rosterOrder)
@@ -357,7 +411,9 @@ final class CoreDataGameNightStore: GameNightStore {
         return RSVPRecord(id: id, username: username, membership: player.membership,
                           rankPoints: player.rankPoints, placementGamesRemaining: player.placementGamesRemaining,
                           status: status, createdAt: rsvp.createdAt ?? .distantPast,
-                          checkedInAt: rsvp.checkedInAt, isWalkIn: rsvp.isWalkIn)
+                          checkedInAt: rsvp.checkedInAt, isWalkIn: rsvp.isWalkIn,
+                          pastNoShows: ((player.rsvps as? Set<RSVP>) ?? [])
+                              .filter { $0 != rsvp && $0.status == RSVPStatus.noShow.rawValue }.count)
     }
 
     // MARK: Helpers
@@ -422,7 +478,8 @@ final class CoreDataGameNightStore: GameNightStore {
             seasonName: night.season?.name,
             createdByUsername: night.createdBy?.username,
             confirmedCount: ((night.rsvps as? Set<RSVP>) ?? []).filter { $0.status == RSVPStatus.confirmed.rawValue }.count,
-            waitlistCount: ((night.rsvps as? Set<RSVP>) ?? []).filter { $0.status == RSVPStatus.waitlisted.rawValue }.count
+            waitlistCount: ((night.rsvps as? Set<RSVP>) ?? []).filter { $0.status == RSVPStatus.waitlisted.rawValue }.count,
+            attendance: night.status == GameNightStatus.completed.rawValue ? attendance(of: night) : nil
         )
     }
 }

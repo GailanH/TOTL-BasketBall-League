@@ -141,6 +141,8 @@ struct MyRSVPBadge: View {
             text = checkedIn ? "Checked in" : "You're in"; color = .green
         case .waitlisted(let position):
             text = "Waitlist #\(position)"; color = .orange
+        case .noShow:
+            text = "No-show"; color = .red
         case .some(MyRSVPState.none), nil:
             return nil
         }
@@ -371,6 +373,12 @@ struct GameNightDetailView: View {
                 Text("If a spot opens up you move in automatically.")
                     .font(.caption).foregroundColor(.secondary)
                 cancelButton
+            case .noShow:
+                Label("You RSVP'd but didn't check in.", systemImage: "person.fill.xmark")
+                    .font(.headline).foregroundColor(.red)
+                    .accessibilityIdentifier("rsvpState")
+                Text("If you can't make a night, cancel ahead so someone on the waitlist gets your spot.")
+                    .font(.caption).foregroundColor(.secondary)
             case .none:
                 if let refusal, refusal != .alreadyIn {
                     Label(refusal.localizedDescription, systemImage: "info.circle")

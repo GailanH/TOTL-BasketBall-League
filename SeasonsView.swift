@@ -41,7 +41,7 @@ struct SeasonsView: View {
             }
 
             Section(header: Text("How a new season works")) {
-                Text("Every player drops \(CompetitiveRules.softResetTierDrop) tiers, to the bottom of that tier (e.g. Gold II → Silver II). Everyone then plays \(CompetitiveRules.placementGames) placement games worth \(CompetitiveRules.placementMultiplier)× RP and appears on the leaderboard once placed.")
+                Text("Every player drops \(CompetitiveRules.softResetTierDrop) tiers, to the bottom of that tier (e.g. Gold II → Silver II). Final standings and everyone's RP are saved first, so the old season stays viewable. Everyone then plays \(CompetitiveRules.placementGames) placement games worth \(CompetitiveRules.placementMultiplier)× RP and appears on the leaderboard once placed.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -55,11 +55,13 @@ struct SeasonsView: View {
             if !past.isEmpty {
                 Section(header: Text("Past Seasons")) {
                     ForEach(past, id: \.objectID) { season in
-                        VStack(alignment: .leading) {
-                            Text(season.name ?? "Season")
-                            Text("\(Self.format(season.startDate)) – \(Self.format(season.endDate))")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                        NavigationLink(value: DashboardRoute.seasonStandings(season: season)) {
+                            VStack(alignment: .leading) {
+                                Text(season.name ?? "Season")
+                                Text("\(Self.format(season.startDate)) – \(Self.format(season.endDate))")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     }
                 }

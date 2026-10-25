@@ -45,6 +45,8 @@ enum SeasonManager {
         let previous = activeSeason(in: context)
         previous?.isActive = false
         previous?.endDate = now
+        // Keep everyone's final RP and finishing position before the soft reset wipes it.
+        if let previous { SeasonHistory.snapshot(previous, now: now, in: context) }
 
         let nextNumber = (allSeasons(in: context).first?.number ?? 0) + 1
         let season = makeSeason(number: nextNumber, start: now, in: context)

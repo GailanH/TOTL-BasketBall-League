@@ -163,6 +163,15 @@ final class LeagueFlowUITests: XCTestCase {
         tap(app.buttons["Leaderboard"])
         XCTAssertTrue(app.staticTexts["Season 2"].waitForExistence(timeout: 5))
         snap("game/leaderboard-after-reset")
+
+        // Season 1 is kept: its final standings are a tap away.
+        tap(app.buttons["pastSeasonsLink"])
+        XCTAssertTrue(app.navigationBars["Past Seasons"].waitForExistence(timeout: 5))
+        tap(app.staticTexts["Season 1"])
+        XCTAssertTrue(app.navigationBars["Season 1 Final"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["standing-jordan_g"].firstMatch.waitForExistence(timeout: 5),
+                      "jordan_g missing from Season 1's final standings")
+        snap("game/season-1-final-standings")
     }
 
     // MARK: Sample league: podium celebration and rank journey

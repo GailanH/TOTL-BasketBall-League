@@ -25,14 +25,25 @@ struct LeaderboardView: View {
         predicate: NSPredicate(format: "isActive == YES")
     ) private var activeSeasons: FetchedResults<Season>
 
+    @FetchRequest(sortDescriptors: [], predicate: NSPredicate(format: "isActive == NO"))
+    private var finishedSeasons: FetchedResults<Season>
+
     var body: some View {
         ScrollViewReader { proxy in
         ScrollView {
             VStack(spacing: 16) {
-                if let season = activeSeasons.first {
-                    Text(season.name ?? "Current Season")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                HStack(spacing: 12) {
+                    if let season = activeSeasons.first {
+                        Text(season.name ?? "Current Season")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    if !finishedSeasons.isEmpty {
+                        NavigationLink(value: DashboardRoute.pastSeasons) {
+                            Label("Past Seasons", systemImage: "clock.arrow.circlepath").font(.subheadline)
+                        }
+                        .accessibilityIdentifier("pastSeasonsLink")
+                    }
                 }
 
                 standingHeader

@@ -7,6 +7,8 @@ enum RSVPStatus: String {
     case confirmed
     case waitlisted
     case cancelled
+    /// Confirmed but never checked in; set when staff close the night.
+    case noShow
 }
 
 struct RSVPRecord: Identifiable, Equatable {
@@ -20,6 +22,8 @@ struct RSVPRecord: Identifiable, Equatable {
     var createdAt: Date
     var checkedInAt: Date?
     var isWalkIn: Bool
+    /// Earlier nights this player RSVP'd to and didn't show up for (filled in by the store).
+    var pastNoShows: Int = 0
 
     var isCheckedIn: Bool { checkedInAt != nil }
     var rank: String { RankSystem.rankName(for: rankPoints) }
@@ -31,6 +35,8 @@ struct Roster: Equatable {
     var confirmed: [RSVPRecord]
     /// Waitlisted players, first in line first.
     var waitlist: [RSVPRecord]
+    /// Players marked no-show when the night was closed.
+    var noShows: [RSVPRecord] = []
 
     var checkedIn: [RSVPRecord] { confirmed.filter(\.isCheckedIn) }
 
@@ -42,6 +48,31 @@ enum MyRSVPState: Equatable {
     case none
     case confirmed(checkedIn: Bool)
     case waitlisted(position: Int)
+    case noShow
+}
+
+/// A closed night's turnout, for staff and (later) investor-facing numbers.
+struct AttendanceSummary: Hashable {
+    var attended = 0
+    var walkIns = 0
+    var noShows = 0
+    var stillWaitlisted = 0
+    var gamesRecorded = 0
+    var capacity: Int16 = 0
+
+    /// Of the players who had a confirmed spot (RSVP'd, not walk-ins), how many showed up.
+    var showRate: Double {
+        let rsvpd = attended - walkIns + noShows
+        return rsvpd == 0 ? 0 : Double(attended - walkIns) / Double(rsvpd)
+    }
+
+    var text: String {
+        var parts = ["\(attended) attended"]
+        if walkIns > 0 { parts.append("\(walkIns) walk-in\(walkIns == 1 ? "" : "s")") }
+        parts.append("\(noShows) no-show\(noShows == 1 ? "" : "s")")
+        parts.append("\(gamesRecorded) game\(gamesRecorded == 1 ? "" : "s")")
+        return parts.joined(separator: " · ")
+    }
 }
 
 enum RSVPPolicy {
@@ -53,6 +84,8 @@ enum RSVPPolicy {
         case notCompetitive
         case alreadyIn
         case nightFull
+        case nightClosed
+        case notStarted
 
         var errorDescription: String? {
             switch self {
@@ -64,6 +97,8 @@ enum RSVPPolicy {
             case .notCompetitive: return "Game nights are ranked play, for Competitive members."
             case .alreadyIn: return "You're already on the list for this night."
             case .nightFull: return "The night is full."
+            case .nightClosed: return "This night is closed. Reopen it to make changes."
+            case .notStarted: return "A night can be closed once it has started."
             }
         }
     }
@@ -76,7 +111,7 @@ enum RSVPPolicy {
     /// Why a player can't RSVP right now, or nil if they can.
     static func refusalToRSVP(night: GameNightRecord, membership: String?, alreadyActive: Bool, now: Date) -> Refusal? {
         if night.status == .cancelled { return .cancelledNight }
-        if night.endDate < now { return .nightOver }
+        if night.status == .completed || night.endDate < now { return .nightOver }
         if now >= rsvpDeadline(for: night) { return .closed }
         if LeagueSettings.rsvpRequiresCompetitive && !AppConstants.isRanked(membership) { return .notCompetitive }
         if alreadyActive { return .alreadyIn }
@@ -110,6 +145,14 @@ enum RSVPPolicy {
         night.status != .cancelled
             && now >= night.startDate.addingTimeInterval(-LeagueSettings.checkInOpensBefore)
             && now <= night.endDate
+    }
+
+    /// Why staff can't close a night yet, or nil if they can.
+    static func refusalToClose(night: GameNightRecord, now: Date) -> Refusal? {
+        if night.status == .cancelled { return .cancelledNight }
+        if night.status == .completed { return .nightClosed }
+        if now < night.startDate { return .notStarted }
+        return nil
     }
 
     /// "12 of 24 spots left", "Full · 3 waiting", and so on.

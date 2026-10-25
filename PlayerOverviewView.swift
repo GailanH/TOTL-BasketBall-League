@@ -16,6 +16,16 @@ struct PlayerOverviewView: View {
                 Text("Membership: \(player.membership ?? "None")")
                 PlayerRankSummary(player: player)
 
+                if let season = SeasonManager.activeSeason(in: viewContext) {
+                    SeasonStatsCard(stats: SeasonHistory.stats(of: player, in: season),
+                                    nightsAttended: SeasonHistory.nightsAttended(by: player, in: season))
+                }
+                NavigationLink(value: DashboardRoute.seasonHistory(player: player)) {
+                    Label("Season History", systemImage: "clock.arrow.circlepath")
+                }
+                .buttonStyle(.bordered)
+                .accessibilityIdentifier("overviewSeasonHistory")
+
                 Divider()
 
                 let gameList = (player.games as? Set<Game>)?.sorted(by: {
@@ -30,7 +40,7 @@ struct PlayerOverviewView: View {
                     if !ranked.isEmpty {
                         let wins = ranked.filter(\.won).count
                         let mvps = ranked.filter { $0.award == Award.mvp.rawValue }.count
-                        Text("Record: \(wins)–\(ranked.count - wins) · MVP ×\(mvps)")
+                        Text("All-time: \(wins)–\(ranked.count - wins) · MVP ×\(mvps)")
                             .font(.subheadline)
                     }
 
