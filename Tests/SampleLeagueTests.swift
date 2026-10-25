@@ -38,6 +38,14 @@ final class SampleLeagueTests: XCTestCase {
         XCTAssertTrue(nights.allSatisfy { $0.startDate > Date() })
         XCTAssertTrue(nights.allSatisfy { GameNightFormat.time($0.startDate) == "7:00 PM" })
 
+        // The kickoff night is full with a waitlist; the second has a few RSVPs.
+        let upcoming = nights.sorted { $0.startDate < $1.startDate }
+        let kickoff = try nightStore.roster(nightID: upcoming[0].id)
+        XCTAssertEqual(kickoff.confirmed.count, 12)
+        XCTAssertEqual(kickoff.waitlist.map(\.username), ["mia_f", "rookie_ray"])
+        XCTAssertEqual(upcoming[0].status, .full)
+        XCTAssertEqual(try nightStore.roster(nightID: upcoming[1].id).confirmed.count, 6)
+
         XCTAssertEqual(SampleLeague.load(in: context).title, "Already Loaded")
     }
 }

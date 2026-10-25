@@ -264,6 +264,82 @@ final class LeagueFlowUITests: XCTestCase {
         snap("nights/player-all-upcoming")
     }
 
+    // MARK: RSVPs, waitlist, check-in and team suggestions (MVP step 2)
+
+    /// luis_g hasn't RSVP'd to the sample kickoff night, which is full: he joins the waitlist
+    /// behind two players, then cancels.
+    func testPlayerJoinsWaitlistAndCancels() {
+        launch(["-loadSampleLeague", "-loginAs", "luis_g"])
+        XCTAssertTrue(app.staticTexts["Welcome, luis_g!"].waitForExistence(timeout: 10))
+        let row = app.descendants(matching: .any)["gameNightRow"].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        snap("rsvp/dashboard")
+        tap(row)
+
+        let join = app.buttons["rsvpButton"]
+        XCTAssertTrue(join.waitForExistence(timeout: 5))
+        XCTAssertEqual(join.label, "Join Waitlist")
+        snap("rsvp/full-night")
+        tap(join)
+        let alert = app.alerts["RSVP"]
+        XCTAssertTrue(alert.waitForExistence(timeout: 5))
+        alert.buttons["OK"].tap()
+        let state = app.descendants(matching: .any)["rsvpState"].firstMatch
+        XCTAssertTrue(state.waitForExistence(timeout: 5))
+        XCTAssertTrue(state.label.contains("#3"), "Expected waitlist #3, got: \(state.label)")
+        snap("rsvp/on-waitlist")
+
+        tap(app.buttons["cancelRSVP"])
+        tap(app.buttons.matching(identifier: "confirmCancelRSVP").firstMatch)
+        XCTAssertTrue(app.buttons["rsvpButton"].waitForExistence(timeout: 5), "RSVP button didn't come back after cancelling")
+        snap("rsvp/cancelled")
+    }
+
+    /// Staff open the kickoff night's roster, check players in, get suggested teams for a 2-on-2,
+    /// and record it from the roster; the game links to the night.
+    func testStaffChecksInAndRecordsFromRoster() {
+        launch(["-seedDemoData", "-loadSampleLeague", "-loginAs", "coach_demo"])
+        XCTAssertTrue(app.staticTexts["Welcome, coach_demo!"].waitForExistence(timeout: 10))
+        tap(app.buttons["Game Nights"])
+        let nightRow = app.descendants(matching: .any)["manageNightRow"].firstMatch
+        XCTAssertTrue(nightRow.waitForExistence(timeout: 5))
+        tap(nightRow)
+        XCTAssertTrue(app.navigationBars["Roster"].waitForExistence(timeout: 5))
+        snap("roster/before-check-in")
+
+        let players = ["marcus_j", "tasha_b", "dev_o", "kev_m"]
+        for name in players { tap(app.buttons["checkIn-\(name)"]) }
+        snap("roster/checked-in")
+
+        tap(app.buttons["selectAllCheckedIn"])
+        tap(app.buttons["suggestTeams"])
+        XCTAssertTrue(app.descendants(matching: .any)["teamBalance"].firstMatch.waitForExistence(timeout: 5))
+        snap("roster/suggested-teams")
+
+        tap(app.buttons["recordThisGame"])
+        XCTAssertTrue(app.navigationBars["Record Game"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["linkedGameNight"].firstMatch.exists, "Game isn't linked to the night")
+        snap("roster/record-prefilled")
+
+        let lines = ["12", "5", "4", "1", "2"]
+        let labels = ["PTS", "REB", "AST", "BLK", "STL"]
+        for name in players {
+            for (label, value) in zip(labels, lines) {
+                type(value, into: app.textFields["stat-\(name)-\(label)"])
+            }
+        }
+        dismissKeyboard()
+        tap(app.buttons["Submit Game"])
+        let result = app.alerts["Team A Wins"]
+        XCTAssertTrue(result.waitForExistence(timeout: 5), "No result alert")
+        result.buttons["OK"].tap()
+
+        XCTAssertTrue(app.navigationBars["Roster"].waitForExistence(timeout: 5), "Didn't return to the roster")
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'played 1'")).firstMatch.waitForExistence(timeout: 5),
+                      "Roster doesn't show games played tonight")
+        snap("roster/after-game")
+    }
+
     // MARK: Player view
 
     func testCompetitivePlayerDashboardAndOverview() {

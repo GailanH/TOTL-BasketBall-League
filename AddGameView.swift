@@ -14,6 +14,14 @@ struct AddGameView: View {
     @Environment(\.managedObjectContext) private var viewContext
 
     var employee: Player
+    /// Set when staff come from a game night's roster: teams are filled in and the game is
+    /// linked to that night.
+    var prefill: GamePrefill? = nil
+
+    @Environment(\.gameNightStore) private var nightStore
+    @Environment(\.dismiss) private var dismiss
+    @State private var didPrefill = false
+    @State private var linkedNight: GameNightRecord?
 
     /// Ranked games are Competitive-only, so Casual members aren't offered.
     @FetchRequest(
@@ -48,6 +56,13 @@ struct AddGameView: View {
 
     var body: some View {
         Form {
+            if let linkedNight {
+                Section(header: Text("Game Night")) {
+                    Label("\(GameNightFormat.dayAndTimes(linkedNight)) · \(linkedNight.venue.name)", systemImage: "calendar")
+                        .font(.subheadline)
+                        .accessibilityIdentifier("linkedGameNight")
+                }
+            }
             seasonSection
 
             ForEach(Team.allCases) { team in
@@ -98,8 +113,12 @@ struct AddGameView: View {
             }
         }
         .alert(item: $resultAlert) { alert in
-            Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("OK")))
+            Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("OK")) {
+                // From a roster: back to the roster for the next game.
+                if prefill != nil && !messageIsError && drafts.isEmpty { dismiss() }
+            })
         }
+        .onAppear(perform: applyPrefill)
         .sheet(item: $pickingTeam) { team in
             PlayerPickerSheet(team: team, players: availablePlayers) { player in
                 drafts.append(Draft(player: player, team: team))
@@ -173,6 +192,18 @@ struct AddGameView: View {
         )
     }
 
+    // MARK: Prefill from a game night
+
+    private func applyPrefill() {
+        guard let prefill, !didPrefill else { return }
+        didPrefill = true
+        linkedNight = try? nightStore.gameNight(id: prefill.nightID)
+        let byName = Dictionary(players.compactMap { p in p.username.map { ($0.lowercased(), p) } },
+                                uniquingKeysWith: { first, _ in first })
+        drafts = prefill.teamA.compactMap { byName[$0.lowercased()].map { Draft(player: $0, team: .a) } }
+            + prefill.teamB.compactMap { byName[$0.lowercased()].map { Draft(player: $0, team: .b) } }
+    }
+
     // MARK: Manual entry
 
     private func submitGame() {
@@ -188,7 +219,8 @@ struct AddGameView: View {
         }
 
         do {
-            let results = try MatchRecorder.record(entries, winner: winner, in: viewContext)
+            let results = try MatchRecorder.record(entries, winner: winner, gameNightID: linkedNight?.id,
+                                                   in: viewContext)
             try viewContext.save()
             messageIsError = false
             message = "Game recorded."

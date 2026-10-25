@@ -57,7 +57,8 @@ enum MatchRecorder {
     /// can save once). Throws without changing anything if the line-up or stats are invalid.
     @discardableResult
     static func record(
-        _ entries: [MatchEntry], winner: Team, date: Date = Date(), in context: NSManagedObjectContext
+        _ entries: [MatchEntry], winner: Team, date: Date = Date(), gameNightID: UUID? = nil,
+        in context: NSManagedObjectContext
     ) throws -> [PlayerResult] {
         try validate(entries)
 
@@ -67,6 +68,12 @@ enum MatchRecorder {
         match.date = date
         match.winningTeam = winner.rawValue
         match.season = season
+        if let gameNightID {
+            let request: NSFetchRequest<GameNight> = GameNight.fetchRequest()
+            request.predicate = NSPredicate(format: "id == %@", gameNightID as CVarArg)
+            request.fetchLimit = 1
+            match.gameNight = try context.fetch(request).first
+        }
 
         for entry in entries {
             let game = Game(context: context)

@@ -102,14 +102,32 @@ enum SampleLeague {
                 var night = GameNightRecord.newNight(on: day, at: weekday == 3 ? gym : plex)
                 night.courtsInUse = weekday == 3 ? 2 : 3
                 night.capacity = weekday == 3 ? 24 : 36
-                if created == 0 { night.notes = "Season 1 kickoff. Bring a light and a dark shirt." }
+                if created == 0 {
+                    night.notes = "Season 1 kickoff. Bring a light and a dark shirt."
+                    night.capacity = 12  // small, so the sample shows a full night with a waitlist
+                }
                 try store.saveGameNight(night, createdBy: nil)
+                if created == 0 { try addRSVPs(rsvpsForKickoff, to: night.id, store: store) }
+                if created == 1 { try addRSVPs(rsvpsForSecondNight, to: night.id, store: store) }
                 if created == 3 { try store.cancelGameNight(id: night.id) }
                 created += 1
             }
-            return "2 sample venues and \(created) upcoming game nights added (1 cancelled)."
+            return "2 sample venues and \(created) upcoming game nights added (1 cancelled). The first night is full with a waitlist."
         } catch {
             return "Couldn't add sample game nights: \(error.localizedDescription)"
+        }
+    }
+
+    /// RSVPs for the first night (capacity 12): 12 confirmed, then mia_f and rookie_ray on the
+    /// waitlist. luis_g and rookie_jen haven't RSVP'd, so they can try RSVP or be walk-ins.
+    static let rsvpsForKickoff = ["marcus_j", "tasha_b", "dev_o", "kev_m", "rico_s", "jaylen_w", "bree_c",
+                                  "omar_h", "nina_p", "tyler_r", "zoe_k", "andre_l", "mia_f", "rookie_ray"]
+    static let rsvpsForSecondNight = ["tasha_b", "kev_m", "bree_c", "zoe_k", "luis_g", "rookie_jen"]
+
+    private static func addRSVPs(_ usernames: [String], to nightID: UUID, store: GameNightStore) throws {
+        let start = Date()
+        for (index, username) in usernames.enumerated() {
+            try store.rsvp(nightID: nightID, username: username, now: start.addingTimeInterval(Double(index)))
         }
     }
 

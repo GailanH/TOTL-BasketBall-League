@@ -4,10 +4,29 @@ import EventKitUI
 
 // Player-facing game night screens. All data comes through `GameNightStore`.
 
+/// Who is looking at a game night: decides the RSVP card and the staff Roster link.
+struct NightViewer: Hashable {
+    let username: String
+    let membership: String?
+    let isStaff: Bool
+
+    init(username: String, membership: String?, isStaff: Bool) {
+        self.username = username; self.membership = membership; self.isStaff = isStaff
+    }
+
+    init?(_ player: Player?) {
+        guard let player, let username = player.username else { return nil }
+        self.init(username: username, membership: player.membership, isStaff: AppConstants.isStaff(player.role))
+    }
+}
+
 /// "Upcoming Game Nights" preview on the dashboard: the next few nights and a link to all.
 struct UpcomingGameNightsSection: View {
+    var viewer: NightViewer? = nil
+
     @Environment(\.gameNightStore) private var store
     @State private var nights: [GameNightRecord] = []
+    @State private var myStates: [UUID: MyRSVPState] = [:]
     @State private var loadError: String?
 
     var body: some View {
@@ -33,7 +52,7 @@ struct UpcomingGameNightsSection: View {
             } else {
                 ForEach(nights.prefix(LeagueSettings.dashboardUpcomingCount)) { night in
                     NavigationLink(value: DashboardRoute.gameNight(id: night.id)) {
-                        GameNightRow(night: night)
+                        GameNightRow(night: night, myState: myStates[night.id])
                     }
                     .buttonStyle(.plain)
                 }
@@ -45,16 +64,27 @@ struct UpcomingGameNightsSection: View {
     private func load() {
         do {
             nights = try store.upcomingGameNights(now: Date())
+            myStates = Self.myStates(for: nights, viewer: viewer, store: store)
             loadError = nil
         } catch {
             loadError = "Couldn't load game nights: \(error.localizedDescription)"
         }
+    }
+
+    static func myStates(for nights: [GameNightRecord], viewer: NightViewer?, store: GameNightStore) -> [UUID: MyRSVPState] {
+        guard let viewer else { return [:] }
+        var states: [UUID: MyRSVPState] = [:]
+        for night in nights {
+            if let state = try? store.myRSVP(nightID: night.id, username: viewer.username) { states[night.id] = state }
+        }
+        return states
     }
 }
 
 /// One game night as a card: when, where, capacity, status.
 struct GameNightRow: View {
     let night: GameNightRecord
+    var myState: MyRSVPState? = nil
 
     var body: some View {
         let status = night.displayStatus()
@@ -75,7 +105,10 @@ struct GameNightRow: View {
                     if status != .scheduled {
                         StatusBadge(status: status)
                     }
-                    Text("\(night.capacity) spots").font(.caption).foregroundColor(.secondary)
+                    if let badge = MyRSVPBadge(state: myState) { badge }
+                    if status == .scheduled || status == .full {
+                        Text(night.availabilityText).font(.caption).foregroundColor(.secondary)
+                    }
                 }
             }
             Spacer()
@@ -94,6 +127,33 @@ struct GameNightRow: View {
     }
     private var dayNumber: String {
         String(LeagueSettings.calendar.component(.day, from: night.startDate))
+    }
+}
+
+/// "You're in" / "Waitlist #2" next to a night.
+struct MyRSVPBadge: View {
+    let text: String
+    let color: Color
+
+    init?(state: MyRSVPState?) {
+        switch state {
+        case .confirmed(let checkedIn):
+            text = checkedIn ? "Checked in" : "You're in"; color = .green
+        case .waitlisted(let position):
+            text = "Waitlist #\(position)"; color = .orange
+        case .none, nil:
+            return nil
+        }
+    }
+
+    var body: some View {
+        Text(text)
+            .font(.caption).bold()
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(color.opacity(0.15))
+            .foregroundColor(color)
+            .clipShape(Capsule())
     }
 }
 
@@ -122,8 +182,11 @@ struct StatusBadge: View {
 
 /// All upcoming game nights.
 struct UpcomingGameNightsView: View {
+    var viewer: NightViewer? = nil
+
     @Environment(\.gameNightStore) private var store
     @State private var nights: [GameNightRecord] = []
+    @State private var myStates: [UUID: MyRSVPState] = [:]
 
     var body: some View {
         ScrollView {
@@ -135,7 +198,7 @@ struct UpcomingGameNightsView: View {
                 }
                 ForEach(nights) { night in
                     NavigationLink(value: DashboardRoute.gameNight(id: night.id)) {
-                        GameNightRow(night: night)
+                        GameNightRow(night: night, myState: myStates[night.id])
                     }
                     .buttonStyle(.plain)
                 }
@@ -144,17 +207,24 @@ struct UpcomingGameNightsView: View {
         }
         .background(Color("AppBackground").ignoresSafeArea())
         .navigationTitle("Game Nights")
-        .onAppear { nights = (try? store.upcomingGameNights(now: Date())) ?? [] }
+        .onAppear {
+            nights = (try? store.upcomingGameNights(now: Date())) ?? []
+            myStates = UpcomingGameNightsSection.myStates(for: nights, viewer: viewer, store: store)
+        }
     }
 }
 
 /// One game night: when, where, venue notes, and Open in Maps / Add to Calendar / Share.
 struct GameNightDetailView: View {
     let nightID: UUID
+    var viewer: NightViewer? = nil
 
     @Environment(\.gameNightStore) private var store
     @Environment(\.openURL) private var openURL
     @State private var night: GameNightRecord?
+    @State private var myState: MyRSVPState = .none
+    @State private var rsvpMessage: String?
+    @State private var confirmCancelRSVP = false
     @State private var showCalendar = false
     @State private var calendarMessage: String?
 
@@ -172,7 +242,19 @@ struct GameNightDetailView: View {
         .background(Color("AppBackground").ignoresSafeArea())
         .navigationTitle("Game Night")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { night = try? store.gameNight(id: nightID) }
+        .onAppear(perform: load)
+        .alert("RSVP", isPresented: Binding(get: { rsvpMessage != nil }, set: { if !$0 { rsvpMessage = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(rsvpMessage ?? "")
+        }
+        .confirmationDialog("Cancel your RSVP?", isPresented: $confirmCancelRSVP, titleVisibility: .visible) {
+            Button("Cancel RSVP", role: .destructive, action: cancelRSVP)
+                .accessibilityIdentifier("confirmCancelRSVP")
+            Button("Keep My Spot", role: .cancel) {}
+        } message: {
+            Text("If you change your mind later you'll go to the back of the line.")
+        }
         .sheet(isPresented: $showCalendar) {
             if let night {
                 CalendarEventEditor(night: night) { message in
@@ -214,6 +296,8 @@ struct GameNightDetailView: View {
                 if status != .scheduled { StatusBadge(status: status) }
             }
 
+            if let viewer { rsvpCard(night, viewer: viewer) }
+
             VStack(alignment: .leading, spacing: 6) {
                 Label(night.venue.name, systemImage: "mappin.and.ellipse").font(.headline)
                 Text(night.venue.address).foregroundColor(.secondary)
@@ -225,7 +309,7 @@ struct GameNightDetailView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Label("\(night.capacity) spots · \(night.courtsInUse) court\(night.courtsInUse == 1 ? "" : "s")", systemImage: "person.3")
+                Label("\(night.availabilityText) · \(night.courtsInUse) court\(night.courtsInUse == 1 ? "" : "s")", systemImage: "person.3")
                 if let season = night.seasonName {
                     Label(season, systemImage: "trophy")
                 }
@@ -260,6 +344,98 @@ struct GameNightDetailView: View {
                 .buttonStyle(.bordered)
             }
             .padding(.top, 6)
+        }
+    }
+
+    // MARK: RSVP
+
+    @ViewBuilder
+    private func rsvpCard(_ night: GameNightRecord, viewer: NightViewer) -> some View {
+        let refusal = RSVPPolicy.refusalToRSVP(night: night, membership: viewer.membership,
+                                               alreadyActive: myState != .none, now: Date())
+        VStack(alignment: .leading, spacing: 10) {
+            switch myState {
+            case .confirmed(let checkedIn):
+                Label(checkedIn ? "You're checked in. Have a good run!" : "You're in.", systemImage: "checkmark.seal.fill")
+                    .font(.headline).foregroundColor(.green)
+                    .accessibilityIdentifier("rsvpState")
+                if !checkedIn && night.displayStatus() != .completed {
+                    Text("Check in with staff when you get there. Can't make it? Cancel so someone on the waitlist gets your spot.")
+                        .font(.caption).foregroundColor(.secondary)
+                    cancelButton
+                }
+            case .waitlisted(let position):
+                Label("You're #\(position) on the waitlist.", systemImage: "hourglass")
+                    .font(.headline).foregroundColor(.orange)
+                    .accessibilityIdentifier("rsvpState")
+                Text("If a spot opens up you move in automatically.")
+                    .font(.caption).foregroundColor(.secondary)
+                cancelButton
+            case .none:
+                if let refusal, refusal != .alreadyIn {
+                    Label(refusal.localizedDescription, systemImage: "info.circle")
+                        .font(.subheadline).foregroundColor(.secondary)
+                        .accessibilityIdentifier("rsvpState")
+                } else {
+                    Button(action: rsvp) {
+                        Label(night.spotsLeft > 0 ? "RSVP" : "Join Waitlist", systemImage: "hand.raised.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(night.spotsLeft > 0 ? .green : .orange)
+                    .accessibilityIdentifier("rsvpButton")
+                    Text("RSVPs close \(GameNightFormat.day(RSVPPolicy.rsvpDeadline(for: night))) at \(GameNightFormat.time(RSVPPolicy.rsvpDeadline(for: night))).")
+                        .font(.caption).foregroundColor(.secondary)
+                }
+            }
+            if viewer.isStaff {
+                NavigationLink(value: DashboardRoute.roster(nightID: night.id)) {
+                    Label("Roster & Check-in", systemImage: "list.bullet.clipboard").frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .accessibilityIdentifier("openRoster")
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardStyle()
+    }
+
+    private var cancelButton: some View {
+        Button(role: .destructive) {
+            confirmCancelRSVP = true
+        } label: {
+            Text("Cancel RSVP").frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .accessibilityIdentifier("cancelRSVP")
+    }
+
+    private func load() {
+        night = try? store.gameNight(id: nightID)
+        if let viewer { myState = (try? store.myRSVP(nightID: nightID, username: viewer.username)) ?? .none }
+    }
+
+    private func rsvp() {
+        guard let viewer else { return }
+        do {
+            let status = try store.rsvp(nightID: nightID, username: viewer.username, now: Date())
+            load()
+            if status == .waitlisted, case .waitlisted(let position) = myState {
+                rsvpMessage = "The night is full, so you're #\(position) on the waitlist. You'll move in automatically if a spot opens."
+            }
+        } catch {
+            rsvpMessage = error.localizedDescription
+        }
+    }
+
+    private func cancelRSVP() {
+        guard let viewer else { return }
+        do {
+            try store.cancelRSVP(nightID: nightID, username: viewer.username, now: Date())
+            load()
+        } catch {
+            rsvpMessage = error.localizedDescription
         }
     }
 }

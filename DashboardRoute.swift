@@ -13,6 +13,8 @@ enum DashboardRoute: Hashable {
     case upcomingGameNights
     case gameNight(id: UUID)
     case manageGameNights
+    case roster(nightID: UUID)
+    case recordGame(GamePrefill)
     case venues
     case editProfile(playerID: NSManagedObjectID)
     case rankTimeline(player: Player)

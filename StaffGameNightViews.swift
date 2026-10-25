@@ -69,9 +69,7 @@ struct ManageGameNightsView: View {
     }
 
     private func row(_ night: GameNightRecord) -> some View {
-        Button {
-            editing = EditorTarget(night: night, isNew: false)
-        } label: {
+        NavigationLink(value: DashboardRoute.roster(nightID: night.id)) {
             VStack(alignment: .leading, spacing: 3) {
                 HStack {
                     Text(GameNightFormat.dayAndTimes(night)).font(.subheadline).bold()
@@ -79,10 +77,14 @@ struct ManageGameNightsView: View {
                     Spacer()
                     if night.displayStatus() != .scheduled { StatusBadge(status: night.displayStatus()) }
                 }
-                Text("\(night.venue.name) · \(night.capacity) spots").font(.caption).foregroundColor(.secondary)
+                Text("\(night.venue.name) · \(night.isCancelled ? "\(night.capacity) spots" : night.availabilityText)")
+                    .font(.caption).foregroundColor(.secondary)
             }
-            .foregroundColor(.primary)
         }
+        .swipeActions(edge: .trailing) {
+            Button("Edit") { editing = EditorTarget(night: night, isNew: false) }.tint(.blue)
+        }
+        .accessibilityIdentifier("manageNightRow")
     }
 
     private func load() {

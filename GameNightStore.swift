@@ -42,6 +42,8 @@ protocol GameNightStore {
     func addWalkIn(nightID: UUID, username: String, now: Date) throws
     /// Members staff could add as walk-ins: eligible, not already on the confirmed list.
     func walkInCandidates(nightID: UUID) throws -> [MemberSummary]
+    /// How many recorded games each player has played at this night, by username (for rotation).
+    func gamesPlayed(nightID: UUID) throws -> [String: Int]
 }
 
 struct GameNightSaveResult: Equatable {
@@ -296,6 +298,17 @@ final class CoreDataGameNightStore: GameNightStore {
         return try context.fetch(request)
             .filter { !confirmedPlayers.contains($0.objectID) }
             .map { MemberSummary(username: $0.username ?? "", rankPoints: $0.rankPoints) }
+    }
+
+    func gamesPlayed(nightID: UUID) throws -> [String: Int] {
+        guard let night = try fetchNight(id: nightID) else { throw GameNightStoreError.notFound }
+        var counts: [String: Int] = [:]
+        for match in (night.matches as? Set<Match>) ?? [] {
+            for game in (match.games as? Set<Game>) ?? [] {
+                if let name = game.player?.username { counts[name, default: 0] += 1 }
+            }
+        }
+        return counts
     }
 
     // MARK: RSVP helpers

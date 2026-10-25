@@ -40,7 +40,7 @@ struct DashboardView: View {
                                 .padding(.horizontal)
                         }
 
-                        UpcomingGameNightsSection()
+                        UpcomingGameNightsSection(viewer: NightViewer(player))
                             .padding(.top, 8)
 
                         Divider().padding(.vertical)
@@ -123,9 +123,15 @@ struct DashboardView: View {
                     case .seasons:
                         SeasonsView()
                     case .upcomingGameNights:
-                        UpcomingGameNightsView()
+                        UpcomingGameNightsView(viewer: NightViewer(player))
                     case .gameNight(let id):
-                        GameNightDetailView(nightID: id)
+                        GameNightDetailView(nightID: id, viewer: NightViewer(player))
+                    case .roster(let nightID):
+                        RosterView(nightID: nightID, staffUsername: player?.username)
+                    case .recordGame(let prefill):
+                        if let player = player {
+                            AddGameView(employee: player, prefill: prefill)
+                        }
                     case .manageGameNights:
                         ManageGameNightsView(staffUsername: player?.username)
                     case .venues:
