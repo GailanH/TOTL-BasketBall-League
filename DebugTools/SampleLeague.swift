@@ -125,7 +125,9 @@ enum SampleLeague {
     static let rsvpsForSecondNight = ["tasha_b", "kev_m", "bree_c", "zoe_k", "luis_g", "rookie_jen"]
 
     private static func addRSVPs(_ usernames: [String], to nightID: UUID, store: GameNightStore) throws {
-        let start = Date()
+        // Spaced a second apart, an hour ago, so the order is fixed and anyone who RSVPs now
+        // lands behind them.
+        let start = Date().addingTimeInterval(-3600)
         for (index, username) in usernames.enumerated() {
             try store.rsvp(nightID: nightID, username: username, now: start.addingTimeInterval(Double(index)))
         }

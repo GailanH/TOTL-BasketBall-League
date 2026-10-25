@@ -14,6 +14,18 @@ Open: what's left / next step
 
 ---
 
+## Iteration 15: 2026-10-25: RSVPs and check-in, closing nights, season history
+Track: App
+Changed:
+- MVP step 2. Data model v4 adds `RSVP`. Players RSVP from a night's screen, or join the waitlist when it's full; cancelling moves the first waitlisted player in, and so does a capacity increase. Dashboard rows show spots left and "You're in" / "Waitlist #N". RSVPs close 2 hours before the start; only Competitive members can RSVP (`LeagueSettings.rsvpRequiresCompetitive`).
+- Staff Roster per night: check-in, walk-ins while there's room, waitlist, games played tonight, pick the next game, Suggest Teams (`TeamBalancer`, closest RP totals), move players between teams, Record This Game (opens Record Game filled in and linked to the night).
+- Closing a night: once it has started, staff close it; RSVPs that never checked in become no-shows and the turnout (attended, walk-ins, no-shows, games) is saved and shown on the Game Nights list. Reopen to fix mistakes. The roster shows each player's past no-shows.
+- Season history (data model v5, `SeasonResult`): starting a new season first saves every ranked player's final RP, rank and finishing position. Rank Timeline now shows only the current season, with that season's record, awards, per-game averages and totals; Season History lists every season and opens its timeline. Player Overview shows current-season stats. Leaderboard links to past seasons' final standings.
+- Leaderboard collapse bar fixed (onGeometryChange); CI green on it.
+- Sample league: the first night has a capacity of 12, so it's full with mia_f and rookie_ray waitlisted; luis_g and rookie_jen haven't RSVP'd.
+Decided: Gailan: a completed-night step; season history with per-season stats and averages; the timeline shows the current season only, past seasons stay viewable.
+Open: step 3 (reminders) and step 4 (waiver, password reset, validation). Repo visibility (public). Backend (D5).
+
 ## Iteration 14: 2026-10-21: MVP build step 1: Venues and Game Nights
 Track: App
 Changed:

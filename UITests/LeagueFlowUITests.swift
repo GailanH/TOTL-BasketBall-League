@@ -35,20 +35,27 @@ final class LeagueFlowUITests: XCTestCase {
     /// Finds the element (scrolling down, then back up, through long forms whose off-screen
     /// rows don't exist yet), makes sure it's clear of the keyboard, and taps it.
     private func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
-        if !element.waitForExistence(timeout: 3) {
-            for direction in [1.0, -1.0] {
-                for _ in 0..<6 where !element.exists {
-                    drag(by: direction)
-                }
-            }
-        }
-        XCTAssertTrue(element.exists, "Missing: \(element)", file: file, line: line)
+        XCTAssertTrue(find(element), "Missing: \(element)", file: file, line: line)
         var swipes = 0
         while (!element.isHittable || isUnderKeyboard(element)) && swipes < 8 {
             drag(by: 1)
             swipes += 1
         }
         element.tap()
+    }
+
+    /// Waits for the element, scrolling down and then back up through long lists whose
+    /// off-screen rows don't exist yet. Returns whether it was found.
+    @discardableResult
+    private func find(_ element: XCUIElement) -> Bool {
+        if !element.waitForExistence(timeout: 3) {
+            for direction in [1.0, -1.0] {
+                for _ in 0..<8 where !element.exists {
+                    drag(by: direction)
+                }
+            }
+        }
+        return element.exists
     }
 
     /// Drags the content within the upper part of the screen (so it never starts on the
@@ -322,7 +329,7 @@ final class LeagueFlowUITests: XCTestCase {
 
         tap(app.buttons["selectAllCheckedIn"])
         tap(app.buttons["suggestTeams"])
-        XCTAssertTrue(app.descendants(matching: .any)["teamBalance"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(find(app.descendants(matching: .any)["teamBalance"].firstMatch), "No suggested teams")
         snap("roster/suggested-teams")
 
         tap(app.buttons["recordThisGame"])
@@ -344,7 +351,7 @@ final class LeagueFlowUITests: XCTestCase {
         result.buttons["OK"].tap()
 
         XCTAssertTrue(app.navigationBars["Roster"].waitForExistence(timeout: 5), "Didn't return to the roster")
-        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'played 1'")).firstMatch.waitForExistence(timeout: 5),
+        XCTAssertTrue(find(app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'played 1'")).firstMatch),
                       "Roster doesn't show games played tonight")
         snap("roster/after-game")
     }

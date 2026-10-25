@@ -37,7 +37,9 @@ Unified plan for the business, the app, and the fundraising. These tracks move t
 ### M1. App (the main selling point)
 Full brief for the app build: **`APP_MVP_BRIEF.md`**. Summary:
 - [ ] Venues and Game Nights: where and when, Open in Maps, Add to Calendar, Share.
-- [ ] RSVP with capacity and waitlist; staff check-in and balanced-team suggestion.
+- [x] RSVP with capacity and waitlist; staff check-in and balanced-team suggestion (2026-10-25).
+- [x] Close a night: attendance and no-shows saved (2026-10-25).
+- [x] Season history: final standings saved at rollover, per-season stats and averages, timeline scoped to the current season (2026-10-25).
 - [ ] Notifications for game locations and times: reminders 24h and 2h before (local), changes/cancellations, spot opened, new nights, results (push, after the backend).
 - [ ] Waiver at sign-up, password reset, robustness items, TestFlight.
 - [ ] Backend (D5): Gailan is exploring Supabase. Until then, new features sit behind a store protocol so the backend can be swapped in.
