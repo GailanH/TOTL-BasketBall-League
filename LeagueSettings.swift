@@ -25,6 +25,16 @@ enum LeagueSettings {
     /// cancelled night; after that they drop off the Upcoming list.
     static let showCancelledWithin: TimeInterval = 7 * 24 * 60 * 60
 
+    // MARK: RSVPs and check-in (MVP build step 2)
+
+    /// RSVPs close this long before a night starts. Cancelling stays open until the start.
+    static let rsvpCutoff: TimeInterval = 2 * 60 * 60
+    /// Game nights are ranked play, so only Competitive members can RSVP. Set to false to let
+    /// any member with an account RSVP (only Competitive members are ever ranked either way).
+    static let rsvpRequiresCompetitive = true
+    /// Staff can check players in from this long before the start until the night ends.
+    static let checkInOpensBefore: TimeInterval = 2 * 60 * 60
+
     /// A Calendar for building and formatting dates in league time.
     static var calendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)

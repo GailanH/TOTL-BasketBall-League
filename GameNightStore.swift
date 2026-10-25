@@ -16,22 +16,62 @@ protocol GameNightStore {
     func allGameNights() throws -> [GameNightRecord]
     func gameNight(id: UUID) throws -> GameNightRecord?
 
-    /// Creates or updates (by id). Returns what changed that players need to hear about
-    /// (empty for a new night), for the change notifications in build step 3.
+    /// Creates or updates (by id). Reports what changed that players need to hear about (empty
+    /// for a new night) and anyone moved up from the waitlist by a capacity increase, for the
+    /// notifications in build step 3.
     @discardableResult
-    func saveGameNight(_ night: GameNightRecord, createdBy username: String?) throws -> GameNightRecord.MaterialChanges
+    func saveGameNight(_ night: GameNightRecord, createdBy username: String?) throws -> GameNightSaveResult
     @discardableResult
-    func cancelGameNight(id: UUID) throws -> GameNightRecord.MaterialChanges
+    func cancelGameNight(id: UUID) throws -> GameNightSaveResult
+
+    // MARK: RSVPs, waitlist, check-in (build step 2)
+
+    /// Confirmed players (RSVP order, walk-ins last) and the waitlist (first in line first).
+    func roster(nightID: UUID) throws -> Roster
+    func myRSVP(nightID: UUID, username: String) throws -> MyRSVPState
+    /// RSVPs the player: confirmed while there's room, otherwise waitlisted.
+    @discardableResult
+    func rsvp(nightID: UUID, username: String, now: Date) throws -> RSVPStatus
+    /// Cancels the player's RSVP and moves the next waitlisted player up if a spot opened.
+    /// Returns the usernames moved up.
+    @discardableResult
+    func cancelRSVP(nightID: UUID, username: String, now: Date) throws -> [String]
+    /// Staff check-in (or undo) for a confirmed player.
+    func setCheckedIn(_ checkedIn: Bool, nightID: UUID, username: String, now: Date) throws
+    /// Staff add a Competitive member who didn't RSVP, if there's room. Checked in right away.
+    func addWalkIn(nightID: UUID, username: String, now: Date) throws
+    /// Members staff could add as walk-ins: eligible, not already on the confirmed list.
+    func walkInCandidates(nightID: UUID) throws -> [MemberSummary]
+}
+
+struct GameNightSaveResult: Equatable {
+    var changes: GameNightRecord.MaterialChanges = []
+    /// Waitlisted players confirmed because the capacity went up.
+    var promoted: [String] = []
+}
+
+/// A member, as shown in pickers.
+struct MemberSummary: Identifiable, Equatable {
+    var username: String
+    var rankPoints: Int64
+    var id: String { username }
+    var rank: String { RankSystem.rankName(for: rankPoints) }
 }
 
 enum GameNightStoreError: LocalizedError {
     case invalid(String)
     case notFound
+    case unknownPlayer(String)
+    case notOnList(String)
+    case refused(RSVPPolicy.Refusal)
 
     var errorDescription: String? {
         switch self {
         case .invalid(let message): return message
         case .notFound: return "That game night no longer exists."
+        case .unknownPlayer(let name): return "No member named \(name)."
+        case .notOnList(let name): return "\(name) isn't confirmed for this night."
+        case .refused(let refusal): return refusal.localizedDescription
         }
     }
 }
@@ -94,7 +134,7 @@ final class CoreDataGameNightStore: GameNightStore {
     }
 
     @discardableResult
-    func saveGameNight(_ record: GameNightRecord, createdBy username: String?) throws -> GameNightRecord.MaterialChanges {
+    func saveGameNight(_ record: GameNightRecord, createdBy username: String?) throws -> GameNightSaveResult {
         let existing = try fetchNight(id: record.id)
         let old = existing.flatMap(Self.record)
         if let problem = record.validationError(isNew: existing == nil) {
@@ -118,19 +158,193 @@ final class CoreDataGameNightStore: GameNightStore {
             night.season = SeasonManager.activeSeason(in: context)
             if let username { night.createdBy = try fetchPlayer(username: username) }
         }
+        // A capacity increase can open spots for the waitlist; the status follows the count.
+        let promoted = promoteFromWaitlist(night, now: Date())
         try save()
-        return old.map { record.materialChanges(from: $0) } ?? []
+        return GameNightSaveResult(changes: old.map { record.materialChanges(from: $0) } ?? [], promoted: promoted)
     }
 
     @discardableResult
-    func cancelGameNight(id: UUID) throws -> GameNightRecord.MaterialChanges {
+    func cancelGameNight(id: UUID) throws -> GameNightSaveResult {
         guard let night = try fetchNight(id: id), let old = Self.record(night) else { throw GameNightStoreError.notFound }
         night.status = GameNightStatus.cancelled.rawValue
         night.updatedAt = Date()
         try save()
         var updated = old
         updated.status = .cancelled
-        return updated.materialChanges(from: old)
+        return GameNightSaveResult(changes: updated.materialChanges(from: old))
+    }
+
+    // MARK: RSVPs
+
+    func roster(nightID: UUID) throws -> Roster {
+        guard let night = try fetchNight(id: nightID) else { throw GameNightStoreError.notFound }
+        let all = activeRSVPs(of: night)
+        return Roster(
+            confirmed: all.filter { $0.status == RSVPStatus.confirmed.rawValue }
+                .sorted(by: Self.rosterOrder).compactMap(Self.record),
+            waitlist: all.filter { $0.status == RSVPStatus.waitlisted.rawValue }
+                .sorted(by: Self.rosterOrder).compactMap(Self.record)
+        )
+    }
+
+    func myRSVP(nightID: UUID, username: String) throws -> MyRSVPState {
+        let roster = try roster(nightID: nightID)
+        if let mine = roster.confirmed.first(where: { $0.username.caseInsensitiveCompare(username) == .orderedSame }) {
+            return .confirmed(checkedIn: mine.isCheckedIn)
+        }
+        if let index = roster.waitlist.firstIndex(where: { $0.username.caseInsensitiveCompare(username) == .orderedSame }) {
+            return .waitlisted(position: index + 1)
+        }
+        return .none
+    }
+
+    @discardableResult
+    func rsvp(nightID: UUID, username: String, now: Date) throws -> RSVPStatus {
+        guard let night = try fetchNight(id: nightID), let record = Self.record(night) else { throw GameNightStoreError.notFound }
+        guard let player = try fetchPlayer(username: username) else { throw GameNightStoreError.unknownPlayer(username) }
+        let active = activeRSVPs(of: night)
+        let alreadyActive = active.contains { $0.player == player }
+        if let refusal = RSVPPolicy.refusalToRSVP(night: record, membership: player.membership,
+                                                  alreadyActive: alreadyActive, now: now) {
+            throw GameNightStoreError.refused(refusal)
+        }
+        let confirmed = active.filter { $0.status == RSVPStatus.confirmed.rawValue }.count
+        let status = RSVPPolicy.statusForNewRSVP(confirmedCount: confirmed, capacity: Int(night.capacity))
+
+        // Reuse a cancelled RSVP row if they cancelled earlier; they go to the back of the line.
+        let rsvp = allRSVPs(of: night).first { $0.player == player } ?? RSVP(context: context)
+        rsvp.id = rsvp.id ?? UUID()
+        rsvp.player = player
+        rsvp.gameNight = night
+        rsvp.status = status.rawValue
+        rsvp.createdAt = now
+        rsvp.updatedAt = now
+        rsvp.checkedInAt = nil
+        rsvp.isWalkIn = false
+        updateStatus(night)
+        try save()
+        return status
+    }
+
+    @discardableResult
+    func cancelRSVP(nightID: UUID, username: String, now: Date) throws -> [String] {
+        guard let night = try fetchNight(id: nightID) else { throw GameNightStoreError.notFound }
+        guard let player = try fetchPlayer(username: username),
+              let rsvp = activeRSVPs(of: night).first(where: { $0.player == player }) else {
+            return []
+        }
+        rsvp.status = RSVPStatus.cancelled.rawValue
+        rsvp.checkedInAt = nil
+        rsvp.updatedAt = now
+        let promoted = promoteFromWaitlist(night, now: now)
+        try save()
+        return promoted
+    }
+
+    func setCheckedIn(_ checkedIn: Bool, nightID: UUID, username: String, now: Date) throws {
+        guard let night = try fetchNight(id: nightID) else { throw GameNightStoreError.notFound }
+        guard let rsvp = activeRSVPs(of: night).first(where: {
+            $0.status == RSVPStatus.confirmed.rawValue
+                && ($0.player?.username ?? "").caseInsensitiveCompare(username) == .orderedSame
+        }) else { throw GameNightStoreError.notOnList(username) }
+        rsvp.checkedInAt = checkedIn ? now : nil
+        rsvp.updatedAt = now
+        try save()
+    }
+
+    func addWalkIn(nightID: UUID, username: String, now: Date) throws {
+        guard let night = try fetchNight(id: nightID), let record = Self.record(night) else { throw GameNightStoreError.notFound }
+        guard let player = try fetchPlayer(username: username) else { throw GameNightStoreError.unknownPlayer(username) }
+        if record.status == .cancelled { throw GameNightStoreError.refused(.cancelledNight) }
+        if LeagueSettings.rsvpRequiresCompetitive && !AppConstants.isRanked(player.membership) {
+            throw GameNightStoreError.refused(.notCompetitive)
+        }
+        let active = activeRSVPs(of: night)
+        if let existing = active.first(where: { $0.player == player }) {
+            if existing.status == RSVPStatus.confirmed.rawValue { throw GameNightStoreError.refused(.alreadyIn) }
+        }
+        let confirmed = active.filter { $0.status == RSVPStatus.confirmed.rawValue }.count
+        guard confirmed < Int(night.capacity) else { throw GameNightStoreError.refused(.nightFull) }
+
+        // A waitlisted player who shows up takes the open spot directly (not a walk-in: they
+        // RSVP'd). Anyone else is a walk-in, including someone who RSVP'd and then cancelled.
+        let wasWaitlisted = active.contains { $0.player == player && $0.status == RSVPStatus.waitlisted.rawValue }
+        let rsvp = allRSVPs(of: night).first { $0.player == player } ?? RSVP(context: context)
+        rsvp.id = rsvp.id ?? UUID()
+        rsvp.player = player
+        rsvp.gameNight = night
+        rsvp.status = RSVPStatus.confirmed.rawValue
+        rsvp.isWalkIn = !wasWaitlisted
+        rsvp.createdAt = wasWaitlisted ? (rsvp.createdAt ?? now) : now
+        rsvp.checkedInAt = now
+        rsvp.updatedAt = now
+        updateStatus(night)
+        try save()
+    }
+
+    func walkInCandidates(nightID: UUID) throws -> [MemberSummary] {
+        guard let night = try fetchNight(id: nightID) else { throw GameNightStoreError.notFound }
+        let confirmedPlayers = Set(activeRSVPs(of: night)
+            .filter { $0.status == RSVPStatus.confirmed.rawValue }
+            .compactMap { $0.player?.objectID })
+        let request: NSFetchRequest<Player> = Player.fetchRequest()
+        if LeagueSettings.rsvpRequiresCompetitive {
+            request.predicate = NSPredicate(format: "membership == %@", AppConstants.competitiveMembership)
+        }
+        request.sortDescriptors = [NSSortDescriptor(key: "username", ascending: true)]
+        return try context.fetch(request)
+            .filter { !confirmedPlayers.contains($0.objectID) }
+            .map { MemberSummary(username: $0.username ?? "", rankPoints: $0.rankPoints) }
+    }
+
+    // MARK: RSVP helpers
+
+    private func allRSVPs(of night: GameNight) -> [RSVP] {
+        Array((night.rsvps as? Set<RSVP>) ?? [])
+    }
+
+    private func activeRSVPs(of night: GameNight) -> [RSVP] {
+        allRSVPs(of: night).filter { $0.status != RSVPStatus.cancelled.rawValue }
+    }
+
+    /// First come, first served; walk-ins after everyone who RSVP'd.
+    private static func rosterOrder(_ lhs: RSVP, _ rhs: RSVP) -> Bool {
+        if lhs.isWalkIn != rhs.isWalkIn { return !lhs.isWalkIn }
+        return (lhs.createdAt ?? .distantPast) < (rhs.createdAt ?? .distantPast)
+    }
+
+    /// Fills open spots from the front of the waitlist and updates the night's status. Doesn't
+    /// save. Returns the usernames moved up.
+    private func promoteFromWaitlist(_ night: GameNight, now: Date) -> [String] {
+        guard night.status != GameNightStatus.cancelled.rawValue else { return [] }
+        let active = activeRSVPs(of: night)
+        let confirmed = active.filter { $0.status == RSVPStatus.confirmed.rawValue }.count
+        let waitlist = active.filter { $0.status == RSVPStatus.waitlisted.rawValue }.sorted(by: Self.rosterOrder)
+        let count = RSVPPolicy.promotions(confirmedCount: confirmed, capacity: Int(night.capacity),
+                                          waitlistCount: waitlist.count)
+        let moving = waitlist.prefix(count)
+        for rsvp in moving {
+            rsvp.status = RSVPStatus.confirmed.rawValue
+            rsvp.updatedAt = now
+        }
+        updateStatus(night)
+        return moving.compactMap { $0.player?.username }
+    }
+
+    private func updateStatus(_ night: GameNight) {
+        guard let record = Self.record(night) else { return }
+        let confirmed = activeRSVPs(of: night).filter { $0.status == RSVPStatus.confirmed.rawValue }.count
+        night.status = RSVPPolicy.status(for: record, confirmedCount: confirmed).rawValue
+    }
+
+    static func record(_ rsvp: RSVP) -> RSVPRecord? {
+        guard let id = rsvp.id, let player = rsvp.player, let username = player.username,
+              let status = RSVPStatus(rawValue: rsvp.status ?? "") else { return nil }
+        return RSVPRecord(id: id, username: username, membership: player.membership,
+                          rankPoints: player.rankPoints, placementGamesRemaining: player.placementGamesRemaining,
+                          status: status, createdAt: rsvp.createdAt ?? .distantPast,
+                          checkedInAt: rsvp.checkedInAt, isWalkIn: rsvp.isWalkIn)
     }
 
     // MARK: Helpers
@@ -193,7 +407,9 @@ final class CoreDataGameNightStore: GameNightStore {
             status: GameNightStatus(rawValue: night.status ?? "") ?? .scheduled,
             notes: night.notes ?? "",
             seasonName: night.season?.name,
-            createdByUsername: night.createdBy?.username
+            createdByUsername: night.createdBy?.username,
+            confirmedCount: ((night.rsvps as? Set<RSVP>) ?? []).filter { $0.status == RSVPStatus.confirmed.rawValue }.count,
+            waitlistCount: ((night.rsvps as? Set<RSVP>) ?? []).filter { $0.status == RSVPStatus.waitlisted.rawValue }.count
         )
     }
 }

@@ -76,6 +76,14 @@ struct GameNightRecord: Identifiable, Equatable, Hashable {
     var notes: String = ""
     var seasonName: String? = nil
     var createdByUsername: String? = nil
+    /// Read-only counts filled in by the store (not saved from here).
+    var confirmedCount: Int = 0
+    var waitlistCount: Int = 0
+
+    var spotsLeft: Int { RSVPPolicy.spotsLeft(capacity: capacity, confirmedCount: confirmedCount) }
+    var availabilityText: String {
+        RSVPPolicy.availabilityText(capacity: capacity, confirmedCount: confirmedCount, waitlistCount: waitlistCount)
+    }
 
     /// The status players should see right now: a scheduled or full night whose end has passed
     /// reads as completed even before staff mark it.

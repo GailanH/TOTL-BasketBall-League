@@ -163,7 +163,7 @@ final class CoreDataGameNightStoreTests: XCTestCase {
         try store.saveGameNight(soon, createdBy: nil)
         try store.saveGameNight(farOff, createdBy: nil)
 
-        XCTAssertEqual(try store.cancelGameNight(id: soon.id), [.cancelled])
+        XCTAssertEqual(try store.cancelGameNight(id: soon.id).changes, [.cancelled])
         try store.cancelGameNight(id: farOff.id)
 
         let upcoming = try store.upcomingGameNights(now: now)
@@ -174,12 +174,12 @@ final class CoreDataGameNightStoreTests: XCTestCase {
     func testEditReportsMaterialChanges() throws {
         try store.saveVenue(venue)
         let original = night(inDays: 3)
-        XCTAssertEqual(try store.saveGameNight(original, createdBy: nil), [])
+        XCTAssertEqual(try store.saveGameNight(original, createdBy: nil).changes, [])
 
         var moved = original
         moved.startDate = moved.startDate.addingTimeInterval(3_600)
         moved.endDate = moved.endDate.addingTimeInterval(3_600)
-        XCTAssertEqual(try store.saveGameNight(moved, createdBy: nil), [.time])
+        XCTAssertEqual(try store.saveGameNight(moved, createdBy: nil).changes, [.time])
         XCTAssertEqual(try store.gameNight(id: original.id)?.startDate, moved.startDate)
     }
 
