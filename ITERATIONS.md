@@ -14,6 +14,14 @@ Open: what's left / next step
 
 ---
 
+## Iteration 16: 2026-11-06: Wireframes for the app and website
+Track: Both
+Changed:
+- First wireframes, on a claude.ai design canvas ("TOTL Wireframes", private to Gailan): 6 iPhone screens (Dashboard, Leaderboard, Game Night + RSVP, Rank Timeline + Season Stats, Staff Roster, Staff Record Game) and 4 website pages (Home, Schedule, Leaderboard, Join/Waitlist).
+- Proposes a bottom tab bar (Home, Nights, Ranks, Profile) in place of the dashboard's button list, and a website that can launch as Home + Join (waitlist) before the backend exists.
+Decided: none yet.
+Open: Gailan to review. Then a visual style (colors, logo, type) for mockups; pricing placeholders; website build waits on D5 except Home + waitlist.
+
 ## Iteration 15: 2026-10-25: RSVPs and check-in, closing nights, season history
 Track: App
 Changed:
