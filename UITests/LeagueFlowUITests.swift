@@ -82,6 +82,18 @@ final class LeagueFlowUITests: XCTestCase {
         return scroll.exists ? scroll : app
     }
 
+    /// Switches to a tab in the bottom tab bar (Home, Nights, Ranks, Profile, Staff).
+    private func openTab(_ name: String, file: StaticString = #filePath, line: UInt = #line) {
+        let tab = app.tabBars.buttons[name].firstMatch
+        if tab.waitForExistence(timeout: 3) {
+            tab.tap()
+        } else {
+            let fallback = app.buttons[name].firstMatch
+            XCTAssertTrue(fallback.waitForExistence(timeout: 3), "No \(name) tab", file: file, line: line)
+            fallback.tap()
+        }
+    }
+
     /// Opens a team's "Add Player" list and chooses a player.
     private func pick(_ username: String, forTeam team: String) {
         tap(app.buttons["addPlayer-\(team)"])
@@ -110,6 +122,8 @@ final class LeagueFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Welcome, coach_demo!"].waitForExistence(timeout: 10))
         snap("game/dashboard-staff")
 
+        openTab("Staff")
+        snap("game/staff-tab")
         tap(app.buttons["Record Game"])
         XCTAssertTrue(app.navigationBars["Record Game"].waitForExistence(timeout: 5))
         snap("game/record-game-empty")
@@ -146,8 +160,7 @@ final class LeagueFlowUITests: XCTestCase {
         XCTAssertTrue(alertText.contains("(SVP)"), "Expected an SVP in: \(alertText)")
         resultAlert.buttons["OK"].tap()
 
-        app.navigationBars.buttons.element(boundBy: 0).tap()  // back to Dashboard
-        tap(app.buttons["Leaderboard"])
+        openTab("Ranks")
         XCTAssertTrue(app.staticTexts["Season 1"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'casual_cass'")).firstMatch.exists,
                        "Casual members must not appear on the leaderboard")
@@ -155,7 +168,8 @@ final class LeagueFlowUITests: XCTestCase {
                        "Players still in placement must not appear on the leaderboard")
         snap("game/leaderboard")
 
-        app.navigationBars.buttons.element(boundBy: 0).tap()
+        openTab("Staff")
+        app.navigationBars.buttons.element(boundBy: 0).tap()  // Record Game → Staff
         tap(app.buttons["Seasons"])
         XCTAssertTrue(app.navigationBars["Seasons"].waitForExistence(timeout: 5))
         snap("game/seasons-before")
@@ -166,8 +180,7 @@ final class LeagueFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Season 2"].waitForExistence(timeout: 5), "Season 2 didn't start")
         snap("game/seasons-after-reset")
 
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        tap(app.buttons["Leaderboard"])
+        openTab("Ranks")
         XCTAssertTrue(app.staticTexts["Season 2"].waitForExistence(timeout: 5))
         snap("game/leaderboard-after-reset")
 
@@ -187,13 +200,12 @@ final class LeagueFlowUITests: XCTestCase {
         launch(["-loadSampleLeague", "-loginAs", "marcus_j"])
         XCTAssertTrue(app.staticTexts["Welcome, marcus_j!"].waitForExistence(timeout: 10))
 
-        tap(app.buttons["Leaderboard"])
+        openTab("Ranks")
         XCTAssertTrue(app.staticTexts["You're #1!"].waitForExistence(timeout: 5), "No celebration for 1st place")
         sleep(1)  // let the confetti fall a little
         snap("podium/leaderboard-first-place")
 
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        tap(app.buttons["Rank Timeline"])
+        tap(app.buttons["myTimeline"])
         XCTAssertTrue(app.staticTexts["Rank Changes"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["No ranked games yet this season. Your journey fills in after your first game."].exists)
         snap("podium/rank-journey-marcus")
@@ -203,12 +215,13 @@ final class LeagueFlowUITests: XCTestCase {
     func testRankJourneyForAClimber() {
         launch(["-loadSampleLeague", "-loginAs", "jaylen_w"])
         XCTAssertTrue(app.staticTexts["Welcome, jaylen_w!"].waitForExistence(timeout: 10))
+        openTab("Profile")
         tap(app.buttons["Rank Timeline"])
         XCTAssertTrue(app.staticTexts["Rank Changes"].waitForExistence(timeout: 5))
         snap("journey/rank-journey-jaylen")
 
         app.navigationBars.buttons.element(boundBy: 0).tap()
-        tap(app.buttons["Leaderboard"])
+        openTab("Ranks")
         XCTAssertTrue(app.staticTexts["5. jaylen_w"].waitForExistence(timeout: 5), "Leaderboard didn't load after the timeline")
         XCTAssertEqual(app.state, .runningForeground, "App crashed opening the leaderboard after the timeline")
         XCTAssertFalse(app.staticTexts["You're #1!"].exists || app.staticTexts["You're #2!"].exists || app.staticTexts["You're #3!"].exists,
@@ -236,6 +249,7 @@ final class LeagueFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Upcoming Game Nights"].exists)
         snap("nights/dashboard-empty")
 
+        openTab("Staff")
         tap(app.buttons["Game Nights"])
         tap(app.buttons["Venues"])
         tap(app.buttons["addVenue"])
@@ -255,10 +269,14 @@ final class LeagueFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'Test Rec Center'")).firstMatch.waitForExistence(timeout: 5))
         snap("nights/manage-list")
 
-        app.navigationBars.buttons.element(boundBy: 0).tap()  // Dashboard
+        openTab("Home")
         XCTAssertTrue(app.descendants(matching: .any)["gameNightRow"].firstMatch.waitForExistence(timeout: 5),
                       "New game night isn't on the dashboard")
         snap("nights/dashboard-with-night")
+        openTab("Nights")
+        XCTAssertTrue(app.descendants(matching: .any)["gameNightRow"].firstMatch.waitForExistence(timeout: 5),
+                      "New game night isn't on the Nights tab")
+        snap("nights/nights-tab")
     }
 
     /// A player sees the sample league's upcoming nights and opens one.
@@ -316,6 +334,7 @@ final class LeagueFlowUITests: XCTestCase {
     func testStaffChecksInAndRecordsFromRoster() {
         launch(["-seedDemoData", "-loadSampleLeague", "-loginAs", "coach_demo"])
         XCTAssertTrue(app.staticTexts["Welcome, coach_demo!"].waitForExistence(timeout: 10))
+        openTab("Staff")
         tap(app.buttons["Game Nights"])
         let nightRow = app.descendants(matching: .any)["manageNightRow"].firstMatch
         XCTAssertTrue(nightRow.waitForExistence(timeout: 5))
@@ -362,8 +381,11 @@ final class LeagueFlowUITests: XCTestCase {
         launch(["-seedDemoData", "-loginAs", "jordan_g"])
         XCTAssertTrue(app.staticTexts["Welcome, jordan_g!"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.buttons["Record Game"].exists, "Players must not see staff tools")
+        XCTAssertFalse(app.tabBars.buttons["Staff"].exists, "Players must not see the Staff tab")
         snap("player/dashboard-player")
 
+        openTab("Profile")
+        snap("player/profile")
         tap(app.buttons["Player Overview"])
         snap("player/overview")
     }

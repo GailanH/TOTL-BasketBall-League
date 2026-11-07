@@ -14,6 +14,15 @@ Open: what's left / next step
 
 ---
 
+## Iteration 17: 2026-11-06: Tab bar navigation
+Track: App
+Changed:
+- The signed-in app is now a tab bar (Gailan approved the wireframe proposal): Home (welcome, standing, upcoming nights, coaching), Nights (all upcoming game nights), Ranks (leaderboard, with My Timeline in the toolbar), Profile (overview, rank timeline, season history, coaching, edit profile, log out with confirmation), and Staff for staff accounts only (Record Game, Game Nights, Venues, Seasons, accounts, pending approvals with a badge on the tab).
+- Each tab has its own navigation stack; all routes are registered once in `AppDestinations` (DashboardView.swift). Screens themselves are unchanged.
+- UI tests navigate by tab.
+Decided: Gailan: switch to the tab bar.
+Open: Gailan's message about what else he liked was cut off.
+
 ## Iteration 16: 2026-11-06: Wireframes for the app and website
 Track: Both
 Changed:
