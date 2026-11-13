@@ -14,6 +14,14 @@ Open: what's left / next step
 
 ---
 
+## Iteration 19: 2026-11-12: Rank timeline front and center on the Ranks tab
+Track: App
+Changed:
+- Ranks tab now has a Leaderboard | My Rank switch (ranked members only; Casual members see just the leaderboard). My Rank is the rank timeline with season stats and past seasons.
+- Tapping your standing card, or the new "See My Journey" button under it, switches to My Rank. The corner toolbar icon is gone.
+Decided: Gailan: make the rank timeline clearly marked (switch + tappable standing card).
+Open: a mini timeline on Home, with the visual design pass.
+
 ## Iteration 18: 2026-11-12: Long-lived test game nights
 Track: App
 Changed:

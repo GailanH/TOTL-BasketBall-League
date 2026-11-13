@@ -5,6 +5,8 @@ struct LeaderboardView: View {
     /// The logged-in player. Placed players see a "Your Standing" card (a celebration in the
     /// top 3) that collapses into a pinned bar once it scrolls off screen.
     var viewer: Player? = nil
+    /// Set on the Ranks tab: tapping your standing (or "See My Journey") switches to My Rank.
+    var onShowJourney: (() -> Void)? = nil
 
     @State private var standingCardVisible = true
 
@@ -47,6 +49,8 @@ struct LeaderboardView: View {
                 }
 
                 standingHeader
+                    .contentShape(Rectangle())
+                    .onTapGesture { if standing != nil { onShowJourney?() } }
                     .padding(.horizontal)
                     // Track the card's bottom edge in the scroll view's space while scrolling.
                     // (onGeometryChange updates during scrolls; a preference key didn't, reliably.)
@@ -55,6 +59,17 @@ struct LeaderboardView: View {
                     } action: { bottom in
                         updateCardVisibility(bottom: bottom)
                     }
+
+                if let onShowJourney, viewer.map({ AppConstants.isRanked($0.membership) }) == true {
+                    Button(action: onShowJourney) {
+                        Label("See My Journey", systemImage: "chart.line.uptrend.xyaxis")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .padding(.horizontal)
+                    .accessibilityIdentifier("seeMyJourney")
+                }
 
                 if !inPlacement.isEmpty {
                     Text("\(inPlacement.count) player\(inPlacement.count == 1 ? "" : "s") still in placement games")

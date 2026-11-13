@@ -205,7 +205,7 @@ final class LeagueFlowUITests: XCTestCase {
         sleep(1)  // let the confetti fall a little
         snap("podium/leaderboard-first-place")
 
-        tap(app.buttons["myTimeline"])
+        tap(app.buttons["My Rank"])
         XCTAssertTrue(app.staticTexts["Rank Changes"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["No ranked games yet this season. Your journey fills in after your first game."].exists)
         snap("podium/rank-journey-marcus")
@@ -238,6 +238,13 @@ final class LeagueFlowUITests: XCTestCase {
         bar.tap()
         XCTAssertTrue(app.staticTexts["5. jaylen_w"].waitForExistence(timeout: 3))
         snap("journey/leaderboard-after-tapping-bar")
+
+        // "See My Journey" on the leaderboard switches to My Rank; the switch goes back.
+        tap(app.buttons["seeMyJourney"])
+        XCTAssertTrue(app.staticTexts["Rank Changes"].waitForExistence(timeout: 5), "See My Journey didn't open My Rank")
+        snap("journey/my-rank-from-leaderboard")
+        tap(app.buttons["Leaderboard"])
+        XCTAssertTrue(app.staticTexts["5. jaylen_w"].waitForExistence(timeout: 5))
     }
 
     // MARK: Game nights (MVP build step 1)

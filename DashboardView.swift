@@ -41,15 +41,7 @@ struct DashboardView: View {
                     .tag(AppTab.nights)
 
                     NavigationStack {
-                        LeaderboardView(viewer: player)
-                            .toolbar {
-                                ToolbarItem(placement: .navigationBarTrailing) {
-                                    NavigationLink(value: DashboardRoute.rankTimeline(player: player)) {
-                                        Label("My Timeline", systemImage: "chart.line.uptrend.xyaxis")
-                                    }
-                                    .accessibilityIdentifier("myTimeline")
-                                }
-                            }
+                        RanksView(player: player)
                             .modifier(AppDestinations(player: player))
                     }
                     .tabItem { Label("Ranks", systemImage: "trophy.fill") }
@@ -158,6 +150,43 @@ struct HomeView: View {
         }
         .background(Color("AppBackground").ignoresSafeArea())
         .navigationTitle("Home")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: Ranks tab
+
+/// Ranks: the league leaderboard and, for ranked members, your own journey (rank timeline,
+/// season stats, past seasons), one switch apart.
+struct RanksView: View {
+    @ObservedObject var player: Player
+    @State private var section: Section = .leaderboard
+
+    enum Section: Hashable { case leaderboard, myRank }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if AppConstants.isRanked(player.membership) {
+                Picker("Ranks view", selection: $section) {
+                    Text("Leaderboard").tag(Section.leaderboard)
+                    Text("My Rank").tag(Section.myRank)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .accessibilityIdentifier("ranksPicker")
+            }
+            switch section {
+            case .leaderboard:
+                LeaderboardView(viewer: player) {
+                    withAnimation { section = .myRank }
+                }
+            case .myRank:
+                RankHistoryTimelineView(player: player)
+            }
+        }
+        .background(Color("AppBackground").ignoresSafeArea())
+        .navigationTitle("Ranks")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
