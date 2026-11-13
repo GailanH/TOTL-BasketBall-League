@@ -14,6 +14,14 @@ Open: what's left / next step
 
 ---
 
+## Iteration 18: 2026-11-12: Long-lived test game nights
+Track: App
+Changed:
+- DebugTools: "Add Test Game Nights" button (next to Load Sample League) and `-addTestGameNights` launch argument. Adds 8 nights in January 2030 at 2 test venues, from empty to full with a waitlist, so the schedule always looks populated. Idempotent; RSVPs reuse existing Competitive members, no accounts created. Test in SampleLeagueTests.
+- Mac sync: iCloud had offloaded some repo files (including git objects), which broke git there; downloaded them back and Gailan set the folder to Keep Downloaded.
+Decided: Gailan asked for dummy game nights years ahead for troubleshooting.
+Open: none new.
+
 ## Iteration 17: 2026-11-06: Tab bar navigation
 Track: App
 Changed:

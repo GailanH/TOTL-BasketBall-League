@@ -10,6 +10,7 @@ import CoreData
 /// - `-seedDemoData`: fill the database with a staff account, Competitive players across
 ///   several ranks, a Casual member, and an active Season 1.
 /// - `-loadSampleLeague`: load the SampleLeague (16 players, 18 backdated games).
+/// - `-addTestGameNights`: add the long-lived test game nights (TestGameNights).
 /// - `-loginAs <username>`: start already logged in as that user.
 enum DemoData {
 
@@ -41,6 +42,7 @@ enum DemoData {
         if isUITesting { SessionStore.save(nil) }
         seedIfRequested(in: context)
         if arguments.contains("-loadSampleLeague") { _ = SampleLeague.load(in: context) }
+        if arguments.contains("-addTestGameNights") { _ = TestGameNights.add(in: context) }
         return loginPlayer(in: context)
     }
 

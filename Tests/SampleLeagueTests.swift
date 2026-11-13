@@ -50,3 +50,34 @@ final class SampleLeagueTests: XCTestCase {
     }
 }
 #endif
+
+#if DEBUG
+final class TestGameNightsTests: XCTestCase {
+
+    func testAddsLongLivedNightsOnceWithRealisticFill() throws {
+        let context = PersistenceController(inMemory: true).container.viewContext
+        _ = SampleLeague.load(in: context)
+        let store = CoreDataGameNightStore(context: context)
+        let before = try store.allGameNights().count
+
+        XCTAssertEqual(TestGameNights.add(in: context).title, "Test Game Nights Added")
+        XCTAssertEqual(TestGameNights.add(in: context).title, "Already Added", "Second run adds nothing")
+
+        let nights = try store.allGameNights().filter { $0.notes.hasPrefix(TestGameNights.marker) }
+        XCTAssertEqual(nights.count, 8)
+        XCTAssertEqual(try store.allGameNights().count, before + 8)
+        XCTAssertTrue(nights.allSatisfy { LeagueSettings.calendar.component(.year, from: $0.startDate) == 2030 })
+        XCTAssertTrue(nights.allSatisfy { GameNightFormat.time($0.startDate) == "7:00 PM" })
+
+        let byDay = Dictionary(uniqueKeysWithValues: nights.map { (LeagueSettings.calendar.component(.day, from: $0.startDate), $0) })
+        XCTAssertEqual(byDay[8]?.availabilityText, "Full · 3 waiting")
+        XCTAssertEqual(byDay[10]?.availabilityText, "2 of 18 spots left")
+        XCTAssertEqual(byDay[17]?.availabilityText, "36 of 36 spots left")
+        XCTAssertEqual(byDay[24]?.availabilityText, "Full")
+
+        // They show as upcoming for players.
+        let upcoming = try store.upcomingGameNights(now: Date())
+        XCTAssertEqual(upcoming.filter { $0.notes.hasPrefix(TestGameNights.marker) }.count, 8)
+    }
+}
+#endif

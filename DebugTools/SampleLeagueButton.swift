@@ -17,7 +17,16 @@ struct SampleLeagueButton: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(.orange)
-            Text("Testing only (Debug builds): adds 18 test players, 41 games, and sample venues with upcoming game nights.")
+            Button {
+                let result = TestGameNights.add(in: viewContext)
+                alert = CSVImportAlert(title: result.title, message: result.message)
+            } label: {
+                Label("Add Test Game Nights", systemImage: "calendar.badge.plus")
+            }
+            .buttonStyle(.bordered)
+            .tint(.orange)
+            .accessibilityIdentifier("addTestGameNights")
+            Text("Testing only (Debug builds): Load Sample League adds 18 test players, 41 games, and sample game nights. Add Test Game Nights adds 8 nights in January 2030 that never expire.")
                 .font(.caption2)
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)

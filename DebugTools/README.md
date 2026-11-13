@@ -4,9 +4,10 @@ Everything here exists only to try the app with realistic data. It's compiled in
 
 | File | What it does |
 |---|---|
-| `DemoData.swift` | Launch arguments for UI tests and demos: `-uiTesting` (fresh in-memory database), `-seedDemoData` (sample league), `-loginAs <username>`. |
+| `DemoData.swift` | Launch arguments for UI tests and demos: `-uiTesting` (fresh in-memory database), `-seedDemoData` (sample league), `-addTestGameNights`, `-loginAs <username>`. |
 | `SampleLeague.swift` | A built-in 16-player league plus 18 games (all test passwords: `totl-demo-123`). |
-| `SampleLeagueButton.swift` | The orange "Load Sample League" button on Edit Player Accounts. |
+| `TestGameNights.swift` | 8 dummy game nights in January 2030 (empty to full with a waitlist) that never expire. |
+| `SampleLeagueButton.swift` | The orange "Load Sample League" and "Add Test Game Nights" buttons on Edit Player Accounts. |
 
 ## How to remove it
 
