@@ -23,6 +23,7 @@ Unified plan for the business, the app, and the fundraising. These tracks move t
 | D10 | Launch path | **Decided 2026-10-21:** start with a proof of concept on rented courts. Coaching, merch and the 6-court facility are the end goal, not the MVP. Gailan keeps the TrueLoyal job meanwhile. |
 | D11 | MVP success gates | Open. Suggested: 2 seasons in a row with 60+ paid players, 60%+ returning, 500+ audience. |
 | D12 | Streaming | **Decided 2026-11-16:** stream games on Twitch and YouTube from the early games, with a score overlay that expands into box scores. Open: one stream per court or one switched stream; Twitch extension for viewer-clickable box scores (later); confirm current simulcast rules before going live. |
+| D13 | MVP/SVP picks | **Decided 2026-11-16:** staff can never choose or override MVP/SVP. The app picks them from the game data the statistician enters (correcting a stat re-scores the game and may change the pick). |
 
 ---
 
@@ -125,7 +126,7 @@ About $4k one-time setup plus $5–12k per season, depending on the venue. See `
 - [x] CI builds the app and passes all unit tests (fixed the CI workflow, `9c11591`).
 - [ ] Click through on the Simulator: record a game, start a season, and check that existing data migrated.
 - [ ] Decide whether to keep the owner-username auto-admin path (anyone registering "GailanH" on a fresh install becomes admin).
-- [ ] Staff override for MVP/SVP, if referees should pick them rather than the stats.
+- [x] ~~Staff override for MVP/SVP~~: not built. Decided 2026-11-16: the app always picks MVP/SVP from the statistician's entered stats.
 - [ ] Season history views: past-season final standings, per-season stats for each player.
 
 **Business**

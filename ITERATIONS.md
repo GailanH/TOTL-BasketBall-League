@@ -23,6 +23,12 @@ Changed:
 Decided: Gailan: stream games on Twitch and YouTube even in the early games, with an overlay that tracks the score and expands to show box scores.
 Open: live in-game stat entry in the app; backend feed (needs D5); one stream per court or one switched stream; confirm simulcast rules; camera/OBS kit and venue internet; later a Twitch extension for viewer-clickable box scores.
 
+## Iteration 23: 2026-11-16: Decision: no staff MVP/SVP override
+Track: App
+Changed: ROADMAP D13 added; the "staff override" item closed without building it.
+Decided: Gailan: staff can't change the MVP/SVP. The app picks them from the game data the statistician enters. (Already how it works: editing a game's stats re-scores it and re-picks MVP/SVP.)
+Open: none.
+
 ## Iteration 22: 2026-11-16: No-show penalty and late check-ins
 Track: App
 Changed:
