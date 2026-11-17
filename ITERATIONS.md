@@ -14,7 +14,7 @@ Open: what's left / next step
 
 ---
 
-## Iteration 20: 2026-11-16: No-show penalty and late check-ins
+## Iteration 22: 2026-11-16: No-show penalty and late check-ins
 Track: App
 Changed:
 - No-show penalty (Gailan): every 3rd no-show in a season (3rd, 6th, ...) means sitting out the next game night. They can't RSVP or walk in, and if they're already on it their spot goes to the waitlist. Counts reset each season. Settings in `LeagueSettings` (`noShowPenaltyThreshold`, `noShowPenaltyNights`); rule in `NoShowPolicy` (pure, tested).
@@ -22,6 +22,23 @@ Changed:
 - Players see "Sitting out" on that night; the roster shows each player's no-shows this season.
 Decided: Gailan: penalize after 3 no-shows (per season) with a one-night RSVP pause; mark late arrivals, no penalty.
 Open: "a day" read as the next game night; switch to a 24-hour pause if that's what Gailan meant.
+
+## Iteration 21: 2026-11-16: Waiver draft and TestFlight plan
+Track: Business + App
+Changed:
+- Drafted "TOTL Player Waiver (Draft)" as a Claude Doc (https://claude.ai/artifact/UK47xiME4Qddsfw7s8wEuN): Texas-oriented release with conspicuous negligence language, assumption of risk, rules, medical, photo/video/stats consent, electronic acceptance; how the app should collect it (unchecked box, 18+ check, version + timestamp stored, re-accept on new version); questions for the attorney. Not legal advice; needs a Texas attorney.
+- TestFlight steps: developer account (individual vs. LLC + D-U-N-S), Free Apps agreement, app record (bundle ID is com.totl.ProjectCompB; rename before first upload if wanted), ITSAppUsesNonExemptEncryption = NO, internal testers first, external testers need Beta App Review and a real test login; builds expire after 90 days.
+Decided: none.
+Open: individual vs. organization developer account; bundle ID rename; attorney review of the waiver.
+
+## Iteration 20: 2026-11-16: TOTL Dream Desk (3D overview)
+Track: Business
+Changed:
+- Published the "TOTL Dream Desk" artifact (https://claude.ai/artifact/LTpyPwNoCkmmrTiisAMGRX): a top-down 3D desk with a model of the 6-court gym. Every room, staff role and key object opens a panel with how it works, startup cost and what's still open. Desk items: the app (phone), costs (receipt), open questions (legal pad), MVP venues (map), the 3-stage roadmap (index cards) and the ranked ladder (ball).
+- Same day, v2: Gailan didn't like the desk look and chose an isometric cutaway instead. Rebuilt as a full-screen isometric model with a stage switch (1 rented gym, 2 own 2-court gym, 3 the 6-court dream), walls nearest the camera drop away, and a stage card with cost and open-question count. Desk props removed; their content moved to stage overviews and the open-questions view.
+- First rough 6-court cost estimate, scaled up from the 2-court model: about $1.6M–3.6M cash to open on ~50,000 sq ft.
+Decided: none.
+Open: replace the scaled estimates with real quotes when the gym stage gets closer; business plan doc still says 100 RP per level (app uses 50).
 
 ## Iteration 19: 2026-11-12: Rank timeline front and center on the Ranks tab
 Track: App
