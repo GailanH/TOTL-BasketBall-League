@@ -35,6 +35,15 @@ enum LeagueSettings {
     /// Staff can check players in from this long before the start until the night ends.
     static let checkInOpensBefore: TimeInterval = 2 * 60 * 60
 
+    // MARK: No-shows (decided by Gailan 2026-11-16)
+
+    /// Every this-many no-shows in a season (3rd, 6th, ...) the player sits out game nights.
+    /// A no-show is an RSVP that never checked in by the time staff close the night. Arriving
+    /// late is not a no-show.
+    static let noShowPenaltyThreshold = 3
+    /// How many of the following game nights they sit out (no RSVP, no walk-in).
+    static let noShowPenaltyNights = 1
+
     /// A Calendar for building and formatting dates in league time.
     static var calendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)

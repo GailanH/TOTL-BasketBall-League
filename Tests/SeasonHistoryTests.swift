@@ -195,3 +195,83 @@ final class CloseNightTests: XCTestCase {
         XCTAssertEqual(try store.roster(nightID: laterID).confirmed.first?.pastNoShows, 1)
     }
 }
+
+/// No-show penalty (3 per season → sit out the next night) and late check-ins.
+final class NoShowPenaltyTests: XCTestCase {
+
+    private func night(_ day: Double, cancelled: Bool = false) -> NoShowPolicy.Night {
+        NoShowPolicy.Night(id: UUID(), startDate: Date(timeIntervalSince1970: day * 86_400), isCancelled: cancelled)
+    }
+
+    func testThirdNoShowSitsOutTheNextNightOnly() {
+        let nights = (1...8).map { night(Double($0)) }
+        let dates = [1, 2, 3].map { nights[$0 - 1].startDate }
+        XCTAssertEqual(NoShowPolicy.sittingOutNights(noShowDates: Array(dates.prefix(2)), seasonNights: nights, threshold: 3, nightsOut: 1), [])
+        XCTAssertEqual(NoShowPolicy.sittingOutNights(noShowDates: dates, seasonNights: nights, threshold: 3, nightsOut: 1), [nights[3].id])
+    }
+
+    func testSixthNoShowTriggersAgainAndCancelledNightsAreSkipped() {
+        var nights = (1...12).map { night(Double($0)) }
+        nights[3] = night(4, cancelled: true)
+        let dates = [1, 2, 3, 5, 6, 7].map { Date(timeIntervalSince1970: Double($0) * 86_400) }
+        let out = NoShowPolicy.sittingOutNights(noShowDates: dates, seasonNights: nights, threshold: 3, nightsOut: 1)
+        XCTAssertEqual(out, [nights[4].id, nights[7].id], "Night 4 was cancelled, so night 5 is the one sat out; the 6th no-show (night 7) costs night 8")
+    }
+
+    func testStoreBlocksTheSitOutNightCancelsTheSpotAndMarksLate() throws {
+        let context = PersistenceController(inMemory: true).container.viewContext
+        let store = CoreDataGameNightStore(context: context)
+        _ = SeasonManager.ensureActiveSeason(in: context)
+        let venue = VenueRecord(name: "Gym", address: "1 Main St", courtCount: 2)
+        try store.saveVenue(venue)
+        for name in ["flaky", "w1", "w2", "w3", "late_guy"] {
+            let p = Player(context: context)
+            p.username = name; p.email = "\(name)@x.com"; p.role = AppConstants.playerRole
+            p.membership = AppConstants.competitiveMembership; p.rankPoints = 100
+        }
+        try context.save()
+
+        let base = Date().addingTimeInterval(86_400)
+        var ids: [UUID] = []
+        for i in 0..<5 {
+            let start = base.addingTimeInterval(Double(i) * 3 * 86_400)
+            let n = GameNightRecord(venue: venue, startDate: start, endDate: start.addingTimeInterval(7200), capacity: 1)
+            try store.saveGameNight(n, createdBy: nil)
+            ids.append(n.id)
+        }
+        var t = Date()
+        // flaky RSVPs to all five; w1 is waitlisted behind them on night 4.
+        for id in ids { t += 1; try store.rsvp(nightID: id, username: "flaky", now: t) }
+        t += 1; try store.rsvp(nightID: ids[3], username: "w1", now: t)
+
+        // Night 1: late_guy can't get in (capacity 1), so make night 1 a two-spot night for the late test.
+        for (i, id) in ids.prefix(3).enumerated() {
+            let start = try XCTUnwrap(store.gameNight(id: id)).startDate
+            if i == 0 {
+                var rec = try XCTUnwrap(store.gameNight(id: id)); rec.capacity = 2
+                try store.saveGameNight(rec, createdBy: nil)
+                try store.rsvp(nightID: id, username: "late_guy", now: t + 1)
+                try store.setCheckedIn(true, nightID: id, username: "late_guy", now: start.addingTimeInterval(1200))
+            }
+            try store.closeGameNight(id: id, now: start.addingTimeInterval(7000))
+        }
+
+        // Late is not a no-show.
+        let first = try store.roster(nightID: ids[0])
+        XCTAssertTrue(try XCTUnwrap(first.confirmed.first { $0.username == "late_guy" }).isLate)
+        XCTAssertEqual(try store.gameNight(id: ids[0])?.attendance?.late, 1)
+        XCTAssertEqual(try store.noShowStatus(username: "late_guy").count, 0)
+
+        // Three no-shows: flaky sits out night 4, loses that spot to w1, and can't come back.
+        let status = try store.noShowStatus(username: "flaky")
+        XCTAssertEqual(status.count, 3)
+        XCTAssertEqual(status.sittingOutNightIDs, [ids[3]])
+        XCTAssertEqual(try store.myRSVP(nightID: ids[3], username: "flaky"), .sittingOut)
+        XCTAssertEqual(try store.myRSVP(nightID: ids[3], username: "w1"), .confirmed(checkedIn: false))
+        XCTAssertThrowsError(try store.rsvp(nightID: ids[3], username: "flaky", now: Date()))
+        XCTAssertFalse(try store.walkInCandidates(nightID: ids[3]).map(\.username).contains("flaky"))
+
+        // Night 5 is unaffected.
+        XCTAssertEqual(try store.myRSVP(nightID: ids[4], username: "flaky"), .confirmed(checkedIn: false))
+    }
+}

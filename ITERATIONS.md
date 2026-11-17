@@ -14,6 +14,15 @@ Open: what's left / next step
 
 ---
 
+## Iteration 20: 2026-11-16: No-show penalty and late check-ins
+Track: App
+Changed:
+- No-show penalty (Gailan): every 3rd no-show in a season (3rd, 6th, ...) means sitting out the next game night. They can't RSVP or walk in, and if they're already on it their spot goes to the waitlist. Counts reset each season. Settings in `LeagueSettings` (`noShowPenaltyThreshold`, `noShowPenaltyNights`); rule in `NoShowPolicy` (pure, tested).
+- Late is not a no-show: an RSVP'd player checked in after the start shows a Late badge on the roster and counts as late in the night's attendance. Late never counts toward the penalty.
+- Players see "Sitting out" on that night; the roster shows each player's no-shows this season.
+Decided: Gailan: penalize after 3 no-shows (per season) with a one-night RSVP pause; mark late arrivals, no penalty.
+Open: "a day" read as the next game night; switch to a 24-hour pause if that's what Gailan meant.
+
 ## Iteration 19: 2026-11-12: Rank timeline front and center on the Ranks tab
 Track: App
 Changed:

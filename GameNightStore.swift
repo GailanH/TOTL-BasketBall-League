@@ -49,6 +49,8 @@ protocol GameNightStore {
     func reopenGameNight(id: UUID) throws
     /// How many recorded games each player has played at this night, by username (for rotation).
     func gamesPlayed(nightID: UUID) throws -> [String: Int]
+    /// The player's no-shows this season and the nights they sit out because of them.
+    func noShowStatus(username: String) throws -> NoShowStatus
 }
 
 struct GameNightSaveResult: Equatable {
@@ -208,6 +210,9 @@ final class CoreDataGameNightStore: GameNightStore {
         if roster.noShows.contains(where: { $0.username.caseInsensitiveCompare(username) == .orderedSame }) {
             return .noShow
         }
+        if try noShowStatus(username: username).sittingOutNightIDs.contains(nightID) {
+            return .sittingOut
+        }
         return .none
     }
 
@@ -221,6 +226,7 @@ final class CoreDataGameNightStore: GameNightStore {
                                                   alreadyActive: alreadyActive, now: now) {
             throw GameNightStoreError.refused(refusal)
         }
+        if sittingOutNightIDs(for: player).contains(nightID) { throw GameNightStoreError.refused(.sittingOut) }
         let confirmed = active.filter { $0.status == RSVPStatus.confirmed.rawValue }.count
         let status = RSVPPolicy.statusForNewRSVP(confirmedCount: confirmed, capacity: Int(night.capacity))
 
@@ -275,6 +281,7 @@ final class CoreDataGameNightStore: GameNightStore {
         if LeagueSettings.rsvpRequiresCompetitive && !AppConstants.isRanked(player.membership) {
             throw GameNightStoreError.refused(.notCompetitive)
         }
+        if sittingOutNightIDs(for: player).contains(nightID) { throw GameNightStoreError.refused(.sittingOut) }
         let active = activeRSVPs(of: night)
         if let existing = active.first(where: { $0.player == player }) {
             if existing.status == RSVPStatus.confirmed.rawValue { throw GameNightStoreError.refused(.alreadyIn) }
@@ -309,7 +316,7 @@ final class CoreDataGameNightStore: GameNightStore {
         }
         request.sortDescriptors = [NSSortDescriptor(key: "username", ascending: true)]
         return try context.fetch(request)
-            .filter { !confirmedPlayers.contains($0.objectID) }
+            .filter { !confirmedPlayers.contains($0.objectID) && !sittingOutNightIDs(for: $0).contains(nightID) }
             .map { MemberSummary(username: $0.username ?? "", rankPoints: $0.rankPoints) }
     }
 
@@ -317,12 +324,29 @@ final class CoreDataGameNightStore: GameNightStore {
     func closeGameNight(id: UUID, now: Date) throws -> AttendanceSummary {
         guard let night = try fetchNight(id: id), let record = Self.record(night) else { throw GameNightStoreError.notFound }
         if let refusal = RSVPPolicy.refusalToClose(night: record, now: now) { throw GameNightStoreError.refused(refusal) }
+        var newNoShows: [Player] = []
         for rsvp in activeRSVPs(of: night) where rsvp.status == RSVPStatus.confirmed.rawValue && rsvp.checkedInAt == nil {
             rsvp.status = RSVPStatus.noShow.rawValue
             rsvp.updatedAt = now
+            if let player = rsvp.player { newNoShows.append(player) }
         }
         night.status = GameNightStatus.completed.rawValue
         night.updatedAt = now
+        // Anyone who just reached the penalty loses their spot on the night(s) they sit out;
+        // the waitlist moves up.
+        for player in newNoShows {
+            let out = sittingOutNightIDs(for: player)
+            guard !out.isEmpty else { continue }
+            for rsvp in (player.rsvps as? Set<RSVP>) ?? [] {
+                guard let other = rsvp.gameNight, let otherID = other.id, out.contains(otherID),
+                      rsvp.status == RSVPStatus.confirmed.rawValue || rsvp.status == RSVPStatus.waitlisted.rawValue
+                else { continue }
+                rsvp.status = RSVPStatus.cancelled.rawValue
+                rsvp.checkedInAt = nil
+                rsvp.updatedAt = now
+                _ = promoteFromWaitlist(other, now: now)
+            }
+        }
         try save()
         return Self.attendance(of: night)
     }
@@ -347,10 +371,39 @@ final class CoreDataGameNightStore: GameNightStore {
             attended: attended.count,
             walkIns: attended.filter(\.isWalkIn).count,
             noShows: rsvps.filter { $0.status == RSVPStatus.noShow.rawValue }.count,
+            late: attended.filter { isLate($0) }.count,
             stillWaitlisted: rsvps.filter { $0.status == RSVPStatus.waitlisted.rawValue }.count,
             gamesRecorded: (night.matches as? Set<Match>)?.count ?? 0,
             capacity: night.capacity
         )
+    }
+
+    func noShowStatus(username: String) throws -> NoShowStatus {
+        guard let player = try fetchPlayer(username: username) else { return NoShowStatus() }
+        return NoShowStatus(count: seasonNoShows(of: player).count, sittingOutNightIDs: sittingOutNightIDs(for: player))
+    }
+
+    /// The player's no-show RSVPs on nights in the active season (or all nights, before any
+    /// season exists).
+    private func seasonNoShows(of player: Player) -> [RSVP] {
+        let season = SeasonManager.activeSeason(in: context)
+        return ((player.rsvps as? Set<RSVP>) ?? []).filter {
+            $0.status == RSVPStatus.noShow.rawValue && (season == nil || $0.gameNight?.season == season)
+        }
+    }
+
+    private func sittingOutNightIDs(for player: Player) -> Set<UUID> {
+        let noShows = seasonNoShows(of: player)
+        guard noShows.count >= LeagueSettings.noShowPenaltyThreshold else { return [] }
+        let season = SeasonManager.activeSeason(in: context)
+        let request: NSFetchRequest<GameNight> = GameNight.fetchRequest()
+        if let season { request.predicate = NSPredicate(format: "season == %@", season) }
+        let nights = ((try? context.fetch(request)) ?? []).compactMap { night -> NoShowPolicy.Night? in
+            guard let id = night.id, let start = night.startDate else { return nil }
+            return NoShowPolicy.Night(id: id, startDate: start, isCancelled: night.status == GameNightStatus.cancelled.rawValue)
+        }
+        return NoShowPolicy.sittingOutNights(noShowDates: noShows.compactMap { $0.gameNight?.startDate },
+                                             seasonNights: nights)
     }
 
     func gamesPlayed(nightID: UUID) throws -> [String: Int] {
@@ -413,7 +466,15 @@ final class CoreDataGameNightStore: GameNightStore {
                           status: status, createdAt: rsvp.createdAt ?? .distantPast,
                           checkedInAt: rsvp.checkedInAt, isWalkIn: rsvp.isWalkIn,
                           pastNoShows: ((player.rsvps as? Set<RSVP>) ?? [])
-                              .filter { $0 != rsvp && $0.status == RSVPStatus.noShow.rawValue }.count)
+                              .filter { $0 != rsvp && $0.status == RSVPStatus.noShow.rawValue
+                                  && $0.gameNight?.season == rsvp.gameNight?.season }.count,
+                          isLate: isLate(rsvp))
+    }
+
+    /// RSVP'd (not a walk-in) and checked in after the start.
+    static func isLate(_ rsvp: RSVP) -> Bool {
+        guard !rsvp.isWalkIn, let checkedIn = rsvp.checkedInAt, let start = rsvp.gameNight?.startDate else { return false }
+        return checkedIn > start
     }
 
     // MARK: Helpers

@@ -185,6 +185,13 @@ struct RosterView: View {
                             .background(Color.purple.opacity(0.15)).foregroundColor(.purple)
                             .clipShape(Capsule())
                     }
+                    if rsvp.isLate {
+                        Text("Late").font(.caption2).bold()
+                            .padding(.horizontal, 5).padding(.vertical, 1)
+                            .background(Color.orange.opacity(0.15)).foregroundColor(.orange)
+                            .clipShape(Capsule())
+                            .accessibilityIdentifier("late-\(rsvp.username)")
+                    }
                 }
                 Text(caption(rsvp)).font(.caption).foregroundColor(.secondary)
             }
@@ -360,7 +367,7 @@ struct RosterView: View {
     private func caption(_ rsvp: RSVPRecord) -> String {
         var parts = [rsvp.placementGamesRemaining > 0 ? "Placement" : "\(rsvp.rank) · \(rsvp.rankPoints) RP"]
         if let games = played[rsvp.username], games > 0 { parts.append("played \(games)") }
-        if rsvp.pastNoShows > 0 { parts.append("\(rsvp.pastNoShows) past no-show\(rsvp.pastNoShows == 1 ? "" : "s")") }
+        if rsvp.pastNoShows > 0 { parts.append(NoShowPolicy.countText(rsvp.pastNoShows)) }
         return parts.joined(separator: " · ")
     }
 

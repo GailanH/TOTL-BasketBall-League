@@ -24,6 +24,8 @@ struct RSVPRecord: Identifiable, Equatable {
     var isWalkIn: Bool
     /// Earlier nights this player RSVP'd to and didn't show up for (filled in by the store).
     var pastNoShows: Int = 0
+    /// RSVP'd and checked in after the start. Late is never a no-show.
+    var isLate: Bool = false
 
     var isCheckedIn: Bool { checkedInAt != nil }
     var rank: String { RankSystem.rankName(for: rankPoints) }
@@ -49,6 +51,50 @@ enum MyRSVPState: Equatable {
     case confirmed(checkedIn: Bool)
     case waitlisted(position: Int)
     case noShow
+    /// Sitting this night out after too many no-shows this season.
+    case sittingOut
+}
+
+/// No-show penalty: every `noShowPenaltyThreshold`th no-show in a season (3rd, 6th, ...) means
+/// sitting out the next `noShowPenaltyNights` game nights. Pure, so it's unit-tested.
+enum NoShowPolicy {
+
+    struct Night: Equatable {
+        let id: UUID
+        let startDate: Date
+        let isCancelled: Bool
+    }
+
+    /// The nights a player sits out, given when their no-show nights started and the season's
+    /// nights. Cancelled nights don't count as a night sat out.
+    static func sittingOutNights(noShowDates: [Date], seasonNights: [Night],
+                                 threshold: Int = LeagueSettings.noShowPenaltyThreshold,
+                                 nightsOut: Int = LeagueSettings.noShowPenaltyNights) -> Set<UUID> {
+        guard threshold > 0, nightsOut > 0 else { return [] }
+        let noShows = noShowDates.sorted()
+        let candidates = seasonNights.filter { !$0.isCancelled }.sorted { $0.startDate < $1.startDate }
+        var result: Set<UUID> = []
+        var index = threshold
+        while index <= noShows.count {
+            let trigger = noShows[index - 1]
+            for night in candidates.filter({ $0.startDate > trigger }).prefix(nightsOut) {
+                result.insert(night.id)
+            }
+            index += threshold
+        }
+        return result
+    }
+
+    /// "1 of 3", for the roster and the player's card.
+    static func countText(_ count: Int) -> String {
+        "\(count) no-show\(count == 1 ? "" : "s") this season"
+    }
+}
+
+/// A player's no-show standing this season.
+struct NoShowStatus: Equatable {
+    var count = 0
+    var sittingOutNightIDs: Set<UUID> = []
 }
 
 /// A closed night's turnout, for staff and (later) investor-facing numbers.
@@ -56,6 +102,7 @@ struct AttendanceSummary: Hashable {
     var attended = 0
     var walkIns = 0
     var noShows = 0
+    var late = 0
     var stillWaitlisted = 0
     var gamesRecorded = 0
     var capacity: Int16 = 0
@@ -69,6 +116,7 @@ struct AttendanceSummary: Hashable {
     var text: String {
         var parts = ["\(attended) attended"]
         if walkIns > 0 { parts.append("\(walkIns) walk-in\(walkIns == 1 ? "" : "s")") }
+        if late > 0 { parts.append("\(late) late") }
         parts.append("\(noShows) no-show\(noShows == 1 ? "" : "s")")
         parts.append("\(gamesRecorded) game\(gamesRecorded == 1 ? "" : "s")")
         return parts.joined(separator: " · ")
@@ -85,6 +133,7 @@ enum RSVPPolicy {
         case alreadyIn
         case nightFull
         case nightClosed
+        case sittingOut
         case notStarted
 
         var errorDescription: String? {
@@ -98,6 +147,9 @@ enum RSVPPolicy {
             case .alreadyIn: return "You're already on the list for this night."
             case .nightFull: return "The night is full."
             case .nightClosed: return "This night is closed. Reopen it to make changes."
+            case .sittingOut:
+                let n = LeagueSettings.noShowPenaltyThreshold
+                return "Sitting out this night: \(n) no-shows this season. You can RSVP again for the next one."
             case .notStarted: return "A night can be closed once it has started."
             }
         }

@@ -143,6 +143,8 @@ struct MyRSVPBadge: View {
             text = "Waitlist #\(position)"; color = .orange
         case .noShow:
             text = "No-show"; color = .red
+        case .sittingOut:
+            text = "Sitting out"; color = .red
         case .some(MyRSVPState.none), nil:
             return nil
         }
@@ -373,6 +375,10 @@ struct GameNightDetailView: View {
                 Text("If a spot opens up you move in automatically.")
                     .font(.caption).foregroundColor(.secondary)
                 cancelButton
+            case .sittingOut:
+                Label(RSVPPolicy.Refusal.sittingOut.localizedDescription, systemImage: "pause.circle.fill")
+                    .font(.subheadline).foregroundColor(.red)
+                    .accessibilityIdentifier("rsvpState")
             case .noShow:
                 Label("You RSVP'd but didn't check in.", systemImage: "person.fill.xmark")
                     .font(.headline).foregroundColor(.red)
