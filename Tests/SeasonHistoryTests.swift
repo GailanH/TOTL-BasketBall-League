@@ -235,24 +235,24 @@ final class NoShowPenaltyTests: XCTestCase {
         var ids: [UUID] = []
         for i in 0..<5 {
             let start = base.addingTimeInterval(Double(i) * 3 * 86_400)
-            let n = GameNightRecord(venue: venue, startDate: start, endDate: start.addingTimeInterval(7200), capacity: 1)
+            let n = GameNightRecord(venue: venue, startDate: start, endDate: start.addingTimeInterval(7200), capacity: 2)
             try store.saveGameNight(n, createdBy: nil)
             ids.append(n.id)
         }
         var t = Date()
-        // flaky RSVPs to all five; w1 is waitlisted behind them on night 4.
+        // flaky RSVPs to all five. Night 4 (capacity 2): flaky and w1 are in, w2 is waitlisted.
         for id in ids { t += 1; try store.rsvp(nightID: id, username: "flaky", now: t) }
         t += 1; try store.rsvp(nightID: ids[3], username: "w1", now: t)
+        t += 1; try store.rsvp(nightID: ids[3], username: "w2", now: t)
+        XCTAssertEqual(try store.myRSVP(nightID: ids[3], username: "w2"), .waitlisted(position: 1))
+        // Night 1: late_guy arrives 20 minutes after the start.
+        t += 1; try store.rsvp(nightID: ids[0], username: "late_guy", now: t)
+        let firstStart = try XCTUnwrap(store.gameNight(id: ids[0])).startDate
+        try store.setCheckedIn(true, nightID: ids[0], username: "late_guy", now: firstStart.addingTimeInterval(1200))
 
-        // Night 1: late_guy can't get in (capacity 1), so make night 1 a two-spot night for the late test.
-        for (i, id) in ids.prefix(3).enumerated() {
+        // flaky never checks in to nights 1-3.
+        for id in ids.prefix(3) {
             let start = try XCTUnwrap(store.gameNight(id: id)).startDate
-            if i == 0 {
-                var rec = try XCTUnwrap(store.gameNight(id: id)); rec.capacity = 2
-                try store.saveGameNight(rec, createdBy: nil)
-                try store.rsvp(nightID: id, username: "late_guy", now: t + 1)
-                try store.setCheckedIn(true, nightID: id, username: "late_guy", now: start.addingTimeInterval(1200))
-            }
             try store.closeGameNight(id: id, now: start.addingTimeInterval(7000))
         }
 
@@ -262,12 +262,12 @@ final class NoShowPenaltyTests: XCTestCase {
         XCTAssertEqual(try store.gameNight(id: ids[0])?.attendance?.late, 1)
         XCTAssertEqual(try store.noShowStatus(username: "late_guy").count, 0)
 
-        // Three no-shows: flaky sits out night 4, loses that spot to w1, and can't come back.
+        // Three no-shows: flaky sits out night 4, loses that spot to w2, and can't come back.
         let status = try store.noShowStatus(username: "flaky")
         XCTAssertEqual(status.count, 3)
         XCTAssertEqual(status.sittingOutNightIDs, [ids[3]])
         XCTAssertEqual(try store.myRSVP(nightID: ids[3], username: "flaky"), .sittingOut)
-        XCTAssertEqual(try store.myRSVP(nightID: ids[3], username: "w1"), .confirmed(checkedIn: false))
+        XCTAssertEqual(try store.myRSVP(nightID: ids[3], username: "w2"), .confirmed(checkedIn: false), "Waitlist moves up")
         XCTAssertThrowsError(try store.rsvp(nightID: ids[3], username: "flaky", now: Date()))
         XCTAssertFalse(try store.walkInCandidates(nightID: ids[3]).map(\.username).contains("flaky"))
 
