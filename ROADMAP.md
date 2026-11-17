@@ -1,6 +1,6 @@
 # TOTL Project Plan
 
-Unified plan for the business, the app, and the fundraising. These tracks move together: the app is the competitive league's engine *and* the fundraising demo, and the business plan supplies the rules the app enforces. Last updated 2026-10-21 (iteration 12). History lives in `ITERATIONS.md`.
+Unified plan for the business, the app, and the fundraising. These tracks move together: the app is the competitive league's engine *and* the fundraising demo, and the business plan supplies the rules the app enforces. Last updated 2026-11-16 (iteration 23). History lives in `ITERATIONS.md`.
 
 **End state:** a funded, opened TOTL gym running its Competitive league on this app.
 **Near-term goal (MVP):** a proof-of-concept ranked league on rented courts in San Antonio, with the app as the main selling point, plus a website and social media. See the MVP section below. It builds the proof of demand that fundraising needs.
@@ -22,6 +22,7 @@ Unified plan for the business, the app, and the fundraising. These tracks move t
 | D9 | Included coaching format (1-on-1, group clinics, or paid add-on) | Open, not needed for the MVP. At 1-on-1, Competitive members barely cover their own coaching (see cost model, Facility Monthly §1). |
 | D10 | Launch path | **Decided 2026-10-21:** start with a proof of concept on rented courts. Coaching, merch and the 6-court facility are the end goal, not the MVP. Gailan keeps the TrueLoyal job meanwhile. |
 | D11 | MVP success gates | Open. Suggested: 2 seasons in a row with 60+ paid players, 60%+ returning, 500+ audience. |
+| D12 | Streaming | **Decided 2026-11-16:** stream games on Twitch and YouTube from the early games, with a score overlay that expands into box scores. Open: one stream per court or one switched stream; Twitch extension for viewer-clickable box scores (later); confirm current simulcast rules before going live. |
 
 ---
 
@@ -86,6 +87,17 @@ Book a 12-week block at one venue, one night a week. Prefer a venue with 2 court
 - [ ] Build the audience from day one: email waitlist, social following, player testimonials.
 - [ ] Film every game. Footage serves stat checks, highlights and the campaign video.
 - [ ] After season 1, decide the campaign (D6) using real numbers: players, return rate, audience size.
+
+### M7. Live streaming (Twitch + YouTube, from the early games)
+Decided 2026-11-16 (D12). Streams double as fundraising footage and audience building (M6).
+- [x] Overlay prototype: `Streaming/overlay.html` (OBS Browser source). Score bug, a box score that expands out of it (operator hotkey or auto-cycle, since stream viewers can't click), live **RP pace** per player with projected MVP/SVP, pop-ups for big plays, finals and rank-ups. Runs on a demo feed. Setup and data format: `Streaming/README.md` (2026-11-16).
+- [ ] Live stat entry in the app during the game (today stats are entered after). The scorekeeper screen must be fast or the overlay lags.
+- [ ] Backend feed (needs D5): the app publishes each court's in-progress game, with RP pace from `MatchScoring`, and the overlay subscribes. The overlay never computes RP itself.
+- [ ] Kit: one fixed wide camera per court on a tall tripod, a laptop running OBS, a wired internet connection if the venue allows (ask when booking, M2).
+- [ ] Decide one stream per court vs. one stream switching between courts (D12).
+- [ ] Waiver covers streaming consent (in the waiver draft, iteration 21). Add a "may be streamed" notice at check-in.
+- [ ] Channels: claim the Twitch handle alongside the M4 handles; confirm each platform's current simulcast rules; pick a multistream method (e.g. Restream or an OBS plugin).
+- [ ] Later: Twitch extension so viewers can open any player's box score themselves; sponsor slot in the overlay; post-game highlight clips for social (M4).
 
 ### Rough cost to start
 About $4k one-time setup plus $5–12k per season, depending on the venue. See `Project Comp-B/TOTL Startup Cost Model.xlsx`, Pilot League tab. App running costs are small: $99/yr for Apple, $0–25/mo for the backend, about $20/yr for the domain.
@@ -182,6 +194,7 @@ CI runs `xcodebuild test` on every push/PR.
 ## Decisions log
 | Date | Decision |
 |---|---|
+| 2026-11-16 | D12: stream games on Twitch and YouTube from the early games, with an expanding score/box-score overlay (prototype in `Streaming/`). |
 | 2026-10-21 | Underdog win: +5 per metal of gap per winner, capped at +10, when every winner is a full metal below every loser. Favorites lose the normal amount. |
 | 2026-10-21 | D10: MVP is a proof-of-concept league on rented courts; the app is the main selling point. Backend (D5) moves into the MVP. Cost model v1 built. |
 | 2026-10-21 | D8 rebalanced against RP inflation: win +10, loss -15, SVP -7, MVP +5, stats ±2 both ways at half weight. |

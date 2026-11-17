@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TOTL Stream Overlay</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  TOTL live-stream overlay (prototype, iteration 23).
+  Add as an OBS "Browser" source at 1920x1080. The background is transparent in OBS.
+  Opened in a normal browser it shows a preview backdrop and a control panel.
+  Setup, hotkeys, URL options and the data format: Streaming/README.md.
+
+  Data comes from a feed object (see FEEDS below). Today only the demo feed exists; it makes up
+  plays so the overlay can be tested. Once the backend (ROADMAP D5) is live, a backend feed will
+  read the real game from the scorekeeper's app. RP numbers in the demo feed are an estimate made
+  for the demo only; the live feed will carry RP pace computed by the app (MatchScoring).
+-->
+<style>
+  :root {
+    --panel: rgba(9, 13, 22, 0.90);
+    --panel-2: rgba(20, 26, 40, 0.92);
+    --line: rgba(255, 255, 255, 0.09);
+    --text: #f3f5f8;
+    --muted: #8d97a8;
+    --accent: #ff7a1a;
+    --up: #3ddc84;
+    --down: #ff5d5d;
+    --font: "Inter", "SF Pro Display", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: transparent; color: var(--text); font-family: var(--font); overflow: hidden; }
+  body.preview { background: #05070b; display: flex; flex-direction: column; align-items: center; padding: 8px 0; gap: 8px; }
+
+  #frame { position: relative; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+  body.preview #frame { border-radius: 6px; box-shadow: 0 0 0 1px #1d2433; }
+
+  /* Preview-only stand-in for the camera feed */
+  #backdrop { position: absolute; inset: 0; display: none; }
+  body.preview #backdrop { display: block; }
+  #backdrop .floor { position: absolute; inset: 0; background:
+      linear-gradient(180deg, #1d1712 0%, #2b2018 28%, #7a5232 29%, #a8774b 60%, #c08c5a 100%); }
+  #backdrop .grain { position: absolute; inset: 29% 0 0 0; opacity: .18; background:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.35) 0 2px, transparent 2px 96px); }
+  #backdrop svg { position: absolute; inset: 0; }
+  #backdrop .label { position: absolute; top: 34px; left: 40px; font-size: 22px; letter-spacing: .12em; color: rgba(255,255,255,.35); text-transform: uppercase; }
+
+  /* ---------- Score bug ---------- */
+  #bug-wrap { position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
+  #bug { display: flex; align-items: stretch; height: 86px; background: var(--panel); border: 1px solid var(--line);
+         border-radius: 14px; overflow: hidden; box-shadow: 0 14px 40px rgba(0,0,0,.45); backdrop-filter: blur(6px); }
+  .mark { width: 96px; display: grid; place-items: center; background: var(--accent); color: #140b03; font-weight: 900; font-size: 27px; letter-spacing: .04em; }
+  .team { display: flex; align-items: center; gap: 16px; padding: 0 22px; width: 300px; position: relative; }
+  .team.b { flex-direction: row-reverse; text-align: right; }
+  .team .swatch { position: absolute; top: 0; bottom: 0; width: 6px; }
+  .team.a .swatch { left: 0; } .team.b .swatch { right: 0; }
+  .team .meta { flex: 1; min-width: 0; }
+  .team .name { font-size: 25px; font-weight: 800; letter-spacing: .06em; white-space: nowrap; }
+  .team .avg { font-size: 15px; color: var(--muted); margin-top: 3px; white-space: nowrap; }
+  .team .avg b { font-weight: 700; }
+  .score { font-size: 54px; font-weight: 900; font-variant-numeric: tabular-nums; min-width: 72px; text-align: center; transition: color .3s, transform .25s; }
+  .score.trailing { color: #aab3c2; }
+  .score.bump { transform: scale(1.18); }
+  .center { width: 190px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-left: 1px solid var(--line); border-right: 1px solid var(--line); background: var(--panel-2); }
+  .center .court { font-size: 16px; font-weight: 800; letter-spacing: .12em; }
+  .center .sub { font-size: 14px; color: var(--muted); margin-top: 5px; letter-spacing: .06em; }
+  .center.final .court { color: var(--accent); font-size: 24px; }
+  .live-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--down); margin-right: 7px; vertical-align: 1px; animation: pulse 1.6s infinite; }
+  @keyframes pulse { 50% { opacity: .25; } }
+  .team.winner .name::after { content: " ✓"; color: var(--accent); }
+
+  /* ---------- Box score (expands up out of the bug) ---------- */
+  #box { display: flex; gap: 14px; margin-bottom: 14px; padding: 18px; background: var(--panel); border: 1px solid var(--line);
+         border-radius: 14px; box-shadow: 0 14px 40px rgba(0,0,0,.45); backdrop-filter: blur(6px);
+         transform-origin: 50% 100%; transition: transform .38s cubic-bezier(.2,.8,.2,1), opacity .3s; }
+  #box.closed { transform: translateY(30px) scaleY(.85); opacity: 0; pointer-events: none; }
+  #box.single .tbl { width: 640px; }
+  .tbl { width: 600px; }
+  .tbl.hidden { display: none; }
+  .tbl-head { display: flex; align-items: center; gap: 12px; padding: 0 6px 12px; border-bottom: 1px solid var(--line); }
+  .tbl-head .sw { width: 14px; height: 30px; border-radius: 3px; }
+  .tbl-head .tn { font-size: 23px; font-weight: 800; letter-spacing: .06em; flex: 1; }
+  .tbl-head .ts { font-size: 30px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .1em; text-align: center; padding: 10px 4px 6px; }
+  th:first-child { text-align: left; padding-left: 6px; }
+  td { font-size: 22px; font-weight: 600; text-align: center; padding: 9px 4px; border-top: 1px solid var(--line); }
+  td.p { text-align: left; padding-left: 6px; }
+  .pname { font-size: 21px; font-weight: 800; letter-spacing: .02em; display: flex; align-items: center; gap: 8px; }
+  .tier { display: inline-block; margin-top: 4px; font-size: 13px; font-weight: 800; letter-spacing: .06em; padding: 2px 8px; border-radius: 99px; color: #0b0e14; }
+  .tag { font-size: 12px; font-weight: 900; letter-spacing: .08em; padding: 2px 7px; border-radius: 5px; }
+  .tag.mvp { background: var(--accent); color: #140b03; }
+  .tag.svp { background: #c9d1db; color: #0b0e14; }
+  td.rp { font-weight: 900; font-size: 24px; width: 92px; }
+  td.rp.up { color: var(--up); } td.rp.down { color: var(--down); } td.rp.even { color: var(--muted); }
+  td.hot { color: #fff; }
+  #foot { text-align: center; font-size: 14px; color: #c3cad6; margin: -4px 0 12px; padding: 6px 14px; border-radius: 99px; background: var(--panel); letter-spacing: .03em; transition: opacity .3s; }
+  #foot.closed { opacity: 0; }
+
+  /* ---------- Toasts (big plays, rank-ups, finals) ---------- */
+  #toasts { position: absolute; top: 44px; right: 44px; display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
+  .toast { display: flex; align-items: center; gap: 14px; padding: 14px 20px 14px 14px; background: var(--panel); border: 1px solid var(--line);
+           border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.45); animation: tin .35s cubic-bezier(.2,.8,.2,1); }
+  .toast.out { animation: tout .35s forwards; }
+  .toast .ic { min-width: 54px; height: 54px; border-radius: 10px; display: grid; place-items: center; font-weight: 900; font-size: 17px; color: #0b0e14; padding: 0 8px; }
+  .toast .t1 { font-size: 22px; font-weight: 800; }
+  .toast .t2 { font-size: 15px; color: var(--muted); margin-top: 3px; }
+  .toast.rankup { border-color: rgba(255,255,255,.25); }
+  .toast.rankup .t1 { font-size: 26px; }
+  @keyframes tin { from { transform: translateX(60px); opacity: 0; } }
+  @keyframes tout { to { transform: translateX(60px); opacity: 0; } }
+
+  /* ---------- Preview control panel (never shown in OBS) ---------- */
+  #controls { display: none; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; font-size: 13px; color: var(--muted); }
+  body.preview #controls { display: flex; }
+  #controls button { font: inherit; font-weight: 600; color: var(--text); background: #151b28; border: 1px solid #2a3346; border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+  #controls button:hover { border-color: var(--accent); }
+  #controls button.on { background: var(--accent); color: #140b03; border-color: var(--accent); }
+  #controls kbd { font-family: inherit; font-size: 11px; opacity: .7; margin-left: 5px; }
+</style>
+</head>
+<body>
+<div id="frame">
+  <div id="stage">
+    <div id="backdrop">
+      <div class="floor"></div><div class="grain"></div>
+      <svg viewBox="0 0 1920 1080" preserveAspectRatio="none">
+        <g fill="none" stroke="rgba(255,255,255,.75)" stroke-width="5">
+          <path d="M120 1080 L420 315 L1500 315 L1800 1080"/>
+          <path d="M760 315 L700 640 L1220 640 L1160 315"/>
+          <ellipse cx="960" cy="640" rx="260" ry="70"/>
+          <path d="M520 315 C 520 820, 1400 820, 1400 315"/>
+        </g>
+        <g fill="rgba(255,255,255,.18)"><rect x="880" y="120" width="160" height="110" rx="6"/></g>
+        <circle cx="960" cy="250" r="22" fill="none" stroke="#ff7a1a" stroke-width="5"/>
+      </svg>
+      <div class="label">Preview · the camera feed goes here in OBS</div>
+    </div>
+
+    <div id="toasts"></div>
+
+    <div id="bug-wrap">
+      <div id="box" class="closed">
+        <div class="tbl" id="tbl-A"></div>
+        <div class="tbl" id="tbl-B"></div>
+      </div>
+      <div id="foot" class="closed"></div>
+      <div id="bug">
+        <div class="mark">TOTL</div>
+        <div class="team a" id="team-A"><span class="swatch"></span><div class="meta"><div class="name"></div><div class="avg"></div></div><div class="score">0</div></div>
+        <div class="center" id="center"><div class="court"></div><div class="sub"></div></div>
+        <div class="team b" id="team-B"><span class="swatch"></span><div class="meta"><div class="name"></div><div class="avg"></div></div><div class="score">0</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="controls">
+  <button data-act="both">Box score<kbd>B</kbd></button>
+  <button data-act="A">Team A<kbd>1</kbd></button>
+  <button data-act="B">Team B<kbd>2</kbd></button>
+  <button data-act="cycle">Auto-cycle<kbd>C</kbd></button>
+  <span style="width:14px"></span>
+  <button data-act="play">Next play<kbd>N</kbd></button>
+  <button data-act="pause">Pause demo<kbd>P</kbd></button>
+  <button data-act="finish">End game<kbd>F</kbd></button>
+</div>
+
+<script>
+(() => {
+  // ---------------------------------------------------------------------------
+  // Options (URL query string). See README.md.
+  //   ?court=1        which court's game to show
+  //   ?feed=demo      data source (only "demo" exists until the backend is live)
+  //   ?cycle=90       auto-open the box score every N seconds (0 = off, operator only)
+  //   ?hold=12        how long an auto-opened box score stays up, in seconds
+  //   ?speed=2.2      demo only: seconds between made-up plays
+  //   ?preview=1|0    force the preview backdrop and controls on or off
+  // ---------------------------------------------------------------------------
+  const params = new URLSearchParams(location.search);
+  const num = (k, d) => { const v = parseFloat(params.get(k)); return Number.isFinite(v) ? v : d; };
+  const inOBS = !!window.obsstudio;
+  const preview = params.has('preview') ? params.get('preview') !== '0' : !inOBS;
+  const opts = {
+    court: num('court', 1),
+    feed: params.get('feed') || 'demo',
+    cycle: num('cycle', 0),
+    hold: num('hold', 12),
+    speed: num('speed', 2.2),
+  };
+  if (preview) document.body.classList.add('preview');
+
+  // Metal colors for tier badges. Display only; tier names come from the feed.
+  const METAL = { Rookie: '#9aa3ad', Bronze: '#d79158', Silver: '#cfd6e0', Gold: '#f2c14e', Diamond: '#86e1f7', Elite: '#ff6b81' };
+  const metalColor = tier => METAL[(tier || '').split(' ')[0]] || '#9aa3ad';
+
+  // ===========================================================================
+  // DEMO FEED. Makes up a 3-on-3 game to 21 so the overlay can be seen and tested.
+  // The estimate below mirrors CompetitiveRules.swift loosely and exists ONLY for the demo.
+  // The live feed must carry rpPace computed by the app; never port scoring rules here.
+  // ===========================================================================
+  class DemoFeed {
+    static TIERS = [
+      ['Rookie', 0, 100, [5, 3, 2, 0, 1]], ['Bronze III', 101, 150, [6, 3, 2, 0, 1]], ['Bronze II', 151, 200, [7, 4, 2, 0, 1]],
+      ['Bronze I', 201, 250, [8, 4, 3, 0, 1]], ['Silver III', 251, 300, [9, 4, 3, 1, 1]], ['Silver II', 301, 350, [10, 5, 3, 1, 2]],
+      ['Silver I', 351, 400, [11, 5, 3, 1, 2]], ['Gold III', 401, 450, [12, 5, 4, 1, 2]], ['Gold II', 451, 500, [13, 6, 4, 1, 2]],
+      ['Gold I', 501, 550, [14, 6, 4, 1, 2]], ['Diamond III', 551, 600, [15, 7, 4, 1, 3]], ['Diamond II', 601, 650, [16, 7, 5, 2, 3]],
+      ['Diamond I', 651, 700, [17, 8, 5, 2, 3]], ['Elite', 701, Infinity, [18, 9, 6, 2, 4]],
+    ];
+    static tier(rp) { return DemoFeed.TIERS.find(t => rp >= t[1] && rp <= t[2]) || DemoFeed.TIERS[0]; }
+
+    constructor(court, speed) {
+      this.court = court; this.speed = speed; this.listeners = []; this.eventId = 0; this.paused = false;
+      this.roster = {
+        A: [['M. Ortiz', 392], ['D. Kim', 268], ['J. Ramos', 418]],
+        B: [['T. Williams', 322], ['A. Patel', 246], ['C. Brooks', 471]],
+      };
+      for (const k of ['A', 'B']) this.roster[k] = this.roster[k].map(([name, rp], i) => ({ id: k + i, name, rp }));
+      this.newGame(3);
+      this.timer = setInterval(() => { if (!this.paused) this.play(); }, this.speed * 1000);
+    }
+    subscribe(cb) { this.listeners.push(cb); cb(this.snapshot()); }
+    emit() { const s = this.snapshot(); this.listeners.forEach(cb => cb(s)); }
+    event(type, text, extra = {}) { this.events.push({ id: ++this.eventId, type, text, ...extra }); this.events = this.events.slice(-10); }
+
+    newGame(n) {
+      this.gameNumber = n; this.status = 'live'; this.finalPace = null; this.events = this.events || [];
+      this.score = { A: 0, B: 0 };
+      this.stats = {};
+      for (const k of ['A', 'B']) for (const p of this.roster[k]) this.stats[p.id] = [0, 0, 0, 0, 0]; // pts reb ast blk stl
+      this.emit();
+    }
+
+    play() {
+      if (this.status !== 'live') return;
+      const k = Math.random() < 0.5 ? 'A' : 'B', other = k === 'A' ? 'B' : 'A';
+      const team = this.roster[k], pick = arr => arr[Math.floor(Math.random() * arr.length)];
+      const shooter = pick(team), r = Math.random();
+      const assist = () => { if (Math.random() < 0.55) this.stats[pick(team.filter(p => p !== shooter)).id][2]++; };
+      if (r < 0.45) { this.stats[shooter.id][0] += 2; this.score[k] += 2; assist(); }
+      else if (r < 0.58) { this.stats[shooter.id][0] += 3; this.score[k] += 3; assist(); this.event('play', shooter.name, { badge: '3PT', sub: 'From deep', team: k }); }
+      else if (r < 0.80) { this.stats[pick([...team, ...this.roster[other]]).id][1]++; }
+      else if (r < 0.89) { this.stats[shooter.id][3]++; this.event('play', shooter.name, { badge: 'BLK', sub: 'Rejected', team: k }); }
+      else { this.stats[shooter.id][4]++; this.event('play', shooter.name, { badge: 'STL', sub: 'Picked off', team: k }); }
+      if (Math.max(this.score.A, this.score.B) >= 21) this.finish(); else this.emit();
+    }
+
+    finish() {
+      if (this.status !== 'live') return;
+      if (this.score.A === this.score.B) this.score.A += 1;
+      this.status = 'final';
+      const pace = this.finalPace = this.pace();
+      const winner = this.score.A > this.score.B ? 'A' : 'B';
+      this.event('final', `Final · Team ${winner} wins`, { sub: `${this.score.A} – ${this.score.B}` });
+      for (const k of ['A', 'B']) for (const p of this.roster[k]) {
+        const before = DemoFeed.tier(p.rp)[0];
+        p.rp = Math.max(0, p.rp + pace[p.id].rp);
+        const after = DemoFeed.tier(p.rp)[0];
+        if (after !== before && DemoFeed.TIERS.findIndex(t => t[0] === after) > DemoFeed.TIERS.findIndex(t => t[0] === before))
+          this.event('rankup', p.name, { tier: after, sub: `Ranked up to ${after}` });
+      }
+      this.emit();
+      clearTimeout(this.next);
+      this.next = setTimeout(() => this.newGame(this.gameNumber + 1), 16000);
+    }
+
+    // Demo-only RP estimate: "what each player would get if the game ended now".
+    pace() {
+      const lead = this.score.A === this.score.B ? null : (this.score.A > this.score.B ? 'A' : 'B');
+      const out = {}, clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v)), t = Math.trunc;
+      for (const k of ['A', 'B']) {
+        const s = this.roster[k].map(p => {
+          const avg = DemoFeed.tier(p.rp)[3];
+          const raw = this.stats[p.id].reduce((sum, v, i) => sum + clamp(2 * (v - avg[i]), -15, 15), 0);
+          return { p, s: clamp(raw, -20, 50) };
+        });
+        const best = s.reduce((a, b) => (b.s > a.s ? b : a));
+        for (const { p, s: score } of s) {
+          let rp = 0, tag = null;
+          if (lead === k) { rp = Math.max(3, 10 + t(score / 2)); if (p === best.p) { rp += 5; tag = 'MVP'; } }
+          else if (lead) { if (p === best.p) { rp = Math.min(5, -7 + t(score / 2)); tag = 'SVP'; } else rp = Math.min(0, -15 + t(score / 2)); }
+          out[p.id] = { rp: lead ? Math.max(rp, -30) : null, tag };
+        }
+      }
+      return out;
+    }
+
+    // The shape every feed delivers. A backend feed must produce exactly this.
+    snapshot() {
+      const pace = this.finalPace || this.pace(), teamAvg = k => DemoFeed.tier(this.roster[k].reduce((a, p) => a + p.rp, 0) / 3)[0];
+      const team = (k, name, color) => ({
+        name, color, score: this.score[k], avgTier: teamAvg(k),
+        players: this.roster[k].map(p => {
+          const [pts, reb, ast, blk, stl] = this.stats[p.id];
+          return { id: p.id, name: p.name, tier: DemoFeed.tier(p.rp)[0], stats: { pts, reb, ast, blk, stl }, rpPace: pace[p.id].rp, tag: pace[p.id].tag };
+        }),
+      });
+      return {
+        court: this.court, gameNumber: this.gameNumber, target: 21, status: this.status,
+        teams: { A: team('A', 'TEAM A', '#f4f4f4'), B: team('B', 'TEAM B', '#2f6bff') },
+        events: this.events.slice(),
+      };
+    }
+  }
+
+  const FEEDS = {
+    demo: () => new DemoFeed(opts.court, opts.speed),
+    // backend: () => new BackendFeed(opts.court),   // after D5: subscribe to the live game row
+  };
+  const feed = (FEEDS[opts.feed] || FEEDS.demo)();
+
+  // ===========================================================================
+  // RENDERING
+  // ===========================================================================
+  const $ = s => document.querySelector(s);
+  const box = $('#box'), foot = $('#foot');
+  let state = null, boxMode = 'none', lastEvent = 0, autoClose = null, cycleTimer = null, cycleOn = false;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  function render(s) {
+    const prev = state; state = s;
+    const final = s.status === 'final';
+    const lead = s.teams.A.score === s.teams.B.score ? null : (s.teams.A.score > s.teams.B.score ? 'A' : 'B');
+
+    for (const k of ['A', 'B']) {
+      const t = s.teams[k], el = $('#team-' + k);
+      el.querySelector('.swatch').style.background = t.color;
+      el.querySelector('.name').textContent = t.name;
+      el.querySelector('.avg').innerHTML = `Avg <b style="color:${metalColor(t.avgTier)}">${esc(t.avgTier)}</b>`;
+      const sc = el.querySelector('.score');
+      if (prev && prev.gameNumber === s.gameNumber && prev.teams[k].score !== t.score) { sc.classList.add('bump'); setTimeout(() => sc.classList.remove('bump'), 260); }
+      sc.textContent = t.score;
+      sc.classList.toggle('trailing', !!lead && lead !== k);
+      el.classList.toggle('winner', final && lead === k);
+      renderTable(k, t, final);
+    }
+    const c = $('#center');
+    c.classList.toggle('final', final);
+    c.querySelector('.court').innerHTML = final ? 'FINAL' : `<span class="live-dot"></span>COURT ${esc(s.court)}`;
+    c.querySelector('.sub').textContent = final ? `Court ${s.court} · Game ${s.gameNumber}` : `Game ${s.gameNumber} · To ${s.target}`;
+    foot.textContent = final
+      ? 'RP = Ranked Points each player earned this game (confirmed after the stat check)'
+      : 'RP pace = Ranked Points each player would earn if the game ended now';
+
+    for (const e of s.events) if (e.id > lastEvent) { if (prev) toast(e, s); lastEvent = e.id; }
+
+    if (final && (!prev || prev.status !== 'final')) setBox('both', 15);
+    if (!final && prev && prev.gameNumber !== s.gameNumber) setBox('none');
+  }
+
+  function renderTable(k, t, final) {
+    const rows = t.players.map(p => {
+      const st = p.stats, rp = p.rpPace;
+      const cls = rp == null ? 'even' : rp > 0 ? 'up' : rp < 0 ? 'down' : 'even';
+      const rpTxt = rp == null ? '—' : (rp > 0 ? '+' + rp : rp < 0 ? '−' + Math.abs(rp) : '0');
+      const tag = p.tag ? `<span class="tag ${p.tag.toLowerCase()}">${esc(p.tag)}</span>` : '';
+      const maxPts = Math.max(...t.players.map(x => x.stats.pts));
+      return `<tr>
+        <td class="p"><div class="pname">${esc(p.name)} ${tag}</div><span class="tier" style="background:${metalColor(p.tier)}">${esc(p.tier)}</span></td>
+        <td class="${st.pts && st.pts === maxPts ? 'hot' : ''}">${st.pts}</td><td>${st.reb}</td><td>${st.ast}</td><td>${st.blk}</td><td>${st.stl}</td>
+        <td class="rp ${cls}">${rpTxt}</td></tr>`;
+    }).join('');
+    $('#tbl-' + k).innerHTML = `
+      <div class="tbl-head"><span class="sw" style="background:${t.color}"></span><span class="tn">${esc(t.name)}</span><span class="ts">${t.score}</span></div>
+      <table><thead><tr><th>PLAYER</th><th>PTS</th><th>REB</th><th>AST</th><th>BLK</th><th>STL</th><th>${final ? 'RP' : 'RP PACE'}</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+  }
+
+  // mode: 'none' | 'both' | 'A' | 'B'. holdSec closes it again automatically.
+  function setBox(mode, holdSec) {
+    clearTimeout(autoClose);
+    boxMode = mode;
+    const open = mode !== 'none';
+    box.classList.toggle('closed', !open);
+    foot.classList.toggle('closed', !open);
+    box.classList.toggle('single', mode === 'A' || mode === 'B');
+    $('#tbl-A').classList.toggle('hidden', mode === 'B');
+    $('#tbl-B').classList.toggle('hidden', mode === 'A');
+    if (open && holdSec) autoClose = setTimeout(() => setBox('none'), holdSec * 1000);
+    syncButtons();
+  }
+  const toggleBox = mode => setBox(boxMode === mode ? 'none' : mode);
+
+  function setCycle(on) {
+    cycleOn = on; clearInterval(cycleTimer);
+    const every = opts.cycle || 30;
+    if (on) cycleTimer = setInterval(() => { if (boxMode === 'none' && state && state.status === 'live') setBox('both', opts.hold); }, every * 1000);
+    syncButtons();
+  }
+
+  function toast(e, s) {
+    const el = document.createElement('div');
+    let icon, bg, t1 = esc(e.text), t2 = esc(e.sub || '');
+    if (e.type === 'rankup') { el.className = 'toast rankup'; icon = '▲'; bg = metalColor(e.tier); t1 = esc(e.text); }
+    else if (e.type === 'final') { el.className = 'toast'; icon = 'FIN'; bg = 'var(--accent)'; }
+    else { el.className = 'toast'; icon = esc(e.badge || ''); bg = s.teams[e.team] ? s.teams[e.team].color : '#fff'; }
+    el.innerHTML = `<div class="ic" style="background:${bg}">${icon}</div><div><div class="t1">${t1}</div><div class="t2">${t2}</div></div>`;
+    const stack = $('#toasts');
+    stack.prepend(el);
+    while (stack.children.length > 4) stack.lastChild.remove();
+    setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 400); }, e.type === 'rankup' ? 7000 : 4200);
+  }
+
+  // ===========================================================================
+  // CONTROLS: keyboard (works in OBS via right-click → Interact) and preview buttons
+  // ===========================================================================
+  const actions = {
+    both: () => toggleBox('both'), A: () => toggleBox('A'), B: () => toggleBox('B'),
+    cycle: () => setCycle(!cycleOn),
+    play: () => feed.play && feed.play(),
+    pause: () => { if ('paused' in feed) { feed.paused = !feed.paused; syncButtons(); } },
+    finish: () => feed.finish && feed.finish(),
+  };
+  const keys = { b: 'both', '1': 'A', '2': 'B', c: 'cycle', n: 'play', p: 'pause', f: 'finish', escape: null };
+  document.addEventListener('keydown', ev => {
+    const k = ev.key.toLowerCase();
+    if (k === 'escape') return setBox('none');
+    if (keys[k]) { actions[keys[k]](); ev.preventDefault(); }
+  });
+  document.querySelectorAll('#controls button').forEach(b => b.addEventListener('click', () => actions[b.dataset.act]()));
+  function syncButtons() {
+    document.querySelectorAll('#controls button').forEach(b => {
+      const a = b.dataset.act;
+      b.classList.toggle('on', a === boxMode || (a === 'cycle' && cycleOn) || (a === 'pause' && feed.paused));
+    });
+  }
+
+  // Scale the 1920x1080 stage to the window (exactly 1:1 in a 1920x1080 OBS source).
+  function fit() {
+    const ctrl = preview ? $('#controls').offsetHeight + 24 : 0;
+    const s = Math.min(innerWidth / 1920, (innerHeight - ctrl) / 1080);
+    $('#stage').style.transform = `scale(${s})`;
+    $('#frame').style.width = 1920 * s + 'px';
+    $('#frame').style.height = 1080 * s + 'px';
+  }
+  addEventListener('resize', fit); fit();
+
+  feed.subscribe(render);
+  if (opts.cycle > 0) setCycle(true);
+  window.TOTLOverlay = { setBox, setCycle, feed }; // handy for OBS scripts and testing
+})();
+</script>
+</body>
+</html>

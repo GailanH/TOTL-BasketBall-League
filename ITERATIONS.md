@@ -14,6 +14,15 @@ Open: what's left / next step
 
 ---
 
+## Iteration 23: 2026-11-16: Stream overlay for Twitch and YouTube
+Track: Both (App + Business/marketing)
+Changed:
+- New `Streaming/overlay.html`: a 1920x1080 OBS Browser-source overlay with a transparent background. Score bug (teams, average tier, score, court, game, target) that expands into a box score (PTS/REB/AST/BLK/STL, tier badge, **RP pace** with projected MVP/SVP). Pop-ups for 3PT/BLK/STL, finals and rank-ups. The box score opens by hotkey (B, 1, 2), on an auto-cycle timer, or automatically at the final, because stream viewers can't click. Outside OBS it shows a fake court and a control panel for previewing.
+- Data comes through a feed. Only a demo feed exists (made-up 3-on-3 game to 21, with an RP estimate for the demo only). The live feed's data format is documented in `Streaming/README.md`, along with OBS setup, hotkeys and URL options.
+- ROADMAP: new MVP track M7 (live streaming) and decision D12.
+Decided: Gailan: stream games on Twitch and YouTube even in the early games, with an overlay that tracks the score and expands to show box scores.
+Open: live in-game stat entry in the app; backend feed (needs D5); one stream per court or one switched stream; confirm simulcast rules; camera/OBS kit and venue internet; later a Twitch extension for viewer-clickable box scores.
+
 ## Iteration 22: 2026-11-16: No-show penalty and late check-ins
 Track: App
 Changed:
