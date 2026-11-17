@@ -18,6 +18,7 @@ Open: what's left / next step
 Track: Business
 Changed:
 - Published the "TOTL Dream Desk" artifact (https://claude.ai/artifact/LTpyPwNoCkmmrTiisAMGRX): a top-down 3D desk with a model of the 6-court gym. Every room, staff role and key object opens a panel with how it works, startup cost and what's still open. Desk items: the app (phone), costs (receipt), open questions (legal pad), MVP venues (map), the 3-stage roadmap (index cards) and the ranked ladder (ball).
+- Same day, v2: Gailan didn't like the desk look and chose an isometric cutaway instead. Rebuilt as a full-screen isometric model with a stage switch (1 rented gym, 2 own 2-court gym, 3 the 6-court dream), walls nearest the camera drop away, and a stage card with cost and open-question count. Desk props removed; their content moved to stage overviews and the open-questions view.
 - First rough 6-court cost estimate, scaled up from the 2-court model: about $1.6M–3.6M cash to open on ~50,000 sq ft.
 Decided: none.
 Open: replace the scaled estimates with real quotes when the gym stage gets closer; business plan doc still says 100 RP per level (app uses 50).
