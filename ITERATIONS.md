@@ -14,6 +14,14 @@ Open: what's left / next step
 
 ---
 
+## Iteration 21: 2026-11-16: Waiver draft and TestFlight plan
+Track: Business + App
+Changed:
+- Drafted "TOTL Player Waiver (Draft)" as a Claude Doc (https://claude.ai/artifact/UK47xiME4Qddsfw7s8wEuN): Texas-oriented release with conspicuous negligence language, assumption of risk, rules, medical, photo/video/stats consent, electronic acceptance; how the app should collect it (unchecked box, 18+ check, version + timestamp stored, re-accept on new version); questions for the attorney. Not legal advice; needs a Texas attorney.
+- TestFlight steps: developer account (individual vs. LLC + D-U-N-S), Free Apps agreement, app record (bundle ID is com.totl.ProjectCompB; rename before first upload if wanted), ITSAppUsesNonExemptEncryption = NO, internal testers first, external testers need Beta App Review and a real test login; builds expire after 90 days.
+Decided: none.
+Open: individual vs. organization developer account; bundle ID rename; attorney review of the waiver.
+
 ## Iteration 20: 2026-11-16: TOTL Dream Desk (3D overview)
 Track: Business
 Changed:
